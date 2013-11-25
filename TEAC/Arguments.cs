@@ -8,16 +8,24 @@ namespace TEAC
 {
     internal class Arguments
     {
+        /// <summary>
+        /// List of search directories for includes.
+        /// </summary>
+        private List<string> includes = new List<string>();
+
         public string InputFile { get; private set; }
 
         public string OutputListing { get; private set; }
+
+        public IList<string> Includes { get { return this.includes; } }
 
         public static bool TryParse(string[] args, out Arguments result)
         {
             result = null;
             string inputFile = null;
             string outputListing = null;
-            if (args.Length > 2 || args.Length < 1)
+            List<string> includes = new List<string>();
+            if (args.Length < 1)
             {
                 return false;
             }
@@ -39,6 +47,11 @@ namespace TEAC
                 if (arg.StartsWith("/Fa", StringComparison.Ordinal))
                 {
                     outputListing = arg.Substring(3);
+                }
+                else if (arg.StartsWith("/I", StringComparison.Ordinal))
+                {
+                    string includeDir = arg.Substring(2);
+                    includes.Add(includeDir);
                 }
                 else
                 {
@@ -65,14 +78,15 @@ namespace TEAC
                 }
             }
 
-            result = new Arguments(inputFile, outputListing);
+            result = new Arguments(inputFile, outputListing, includes);
             return true;
         }
 
-        private Arguments(string inputFile, string outputListing)
+        private Arguments(string inputFile, string outputListing, IEnumerable<string> includeDirs)
         {
             this.InputFile = inputFile;
             this.OutputListing = outputListing;
+            this.includes.AddRange(includeDirs);
         }
     }
 }

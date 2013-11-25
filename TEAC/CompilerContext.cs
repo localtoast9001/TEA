@@ -9,6 +9,7 @@ namespace TEAC
     internal class CompilerContext
     {
         private List<string> uses = new List<string>();
+        private List<string> includes = new List<string>();
         private Dictionary<string, TypeDefinition> types = new Dictionary<string, TypeDefinition>();
 
         public CompilerContext()
@@ -77,6 +78,13 @@ namespace TEAC
         public string Namespace { get; set; }
         
         public IEnumerable<string> Uses { get { return this.uses; } }
+
+        public IEnumerable<string> Includes { get { return this.includes; } }
+
+        public void AddIncludePaths(IEnumerable<string> paths)
+        {
+            this.includes.AddRange(paths);
+        }
 
         public void AddUses(string ns)
         {

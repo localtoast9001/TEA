@@ -12,16 +12,9 @@ type
             static function Main(
                 argc : integer; 
                 argv : array of array of character) : integer;
-        private
-            static function GetText() : array of character;
     end;
 
 (* Implementation *)
-
-function Program.GetText() : array of character;
-begin
-    GetText := 'Hello, world!';
-end;
 
 (**
   Program.Main - Program entry point.
@@ -33,7 +26,7 @@ function Program.Main(
     argc : integer;
     argv : array of array of character) : integer;
 begin
-    Console.WriteLine(GetText());
+    Console.WriteLine('Hello World!');
     Main := 0;
 end;
 

@@ -22,6 +22,7 @@ namespace TEAC
 
                 MessageLog log = new MessageLog();
                 CompilerContext context = new CompilerContext();
+                context.AddIncludePaths(arguments.Includes);
                 using (TokenReader reader = new TokenReader(arguments.InputFile, log))
                 {
                     Parser parser = new Parser(log);

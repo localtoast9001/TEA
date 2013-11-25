@@ -19,13 +19,26 @@ namespace TEAC
             bool failed = false;
             foreach (string uses in programUnit.Uses)
             {
-                string includePath = System.IO.Path.Combine(
-                    System.IO.Path.GetDirectoryName(programUnit.Start.Path),
-                    uses + ".th");
-                if (System.IO.File.Exists(includePath))
+                List<string> searchDirs = new List<string>();
+                searchDirs.Add(System.IO.Path.GetDirectoryName(programUnit.Start.Path));
+                searchDirs.AddRange(context.Includes);
+                string headerPath = null;
+                foreach (string dir in searchDirs)
+                {
+                    string includePath = System.IO.Path.Combine(
+                        dir,
+                        uses + ".th");
+                    if (System.IO.File.Exists(includePath))
+                    {
+                        headerPath = includePath;
+                        break;
+                    }
+                }
+
+                if (headerPath != null)
                 {
                     ProgramUnit usedProgramUnit = null;
-                    using (TokenReader reader = new TokenReader(includePath, this.log))
+                    using (TokenReader reader = new TokenReader(headerPath, this.log))
                     {
                         Parser includeParser = new Parser(this.log);
                         if (includeParser.TryParse(reader, out usedProgramUnit))
