@@ -1,0 +1,8 @@
+namespace System;
+uses System;
+
+function Memory.Alloc(size : integer) : ^byte;
+extern 'malloc';
+
+procedure Memory.Free(p : ^byte);
+extern 'free';

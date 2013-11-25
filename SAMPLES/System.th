@@ -1,0 +1,61 @@
+namespace System;
+
+type
+    Console = public static class
+        public
+            static procedure WriteLine(text : array of character);
+            static procedure Write(text : array of character);
+    end;
+    Math = public static class
+        public
+            static function Sqrt(value : double) : double;
+            static function Sin(value : double) : double;
+            static function Cos(value : double) : double;
+    end;
+    Memory = public static class
+        public
+            static function Alloc(size : integer) : ^byte;
+            static procedure Free(p : ^byte);
+    end;
+    StringBuffer = class
+        public
+            constructor();
+            static function Create(source : array of character) : ^StringBuffer;
+            static function GetEmpty() : ^StringBuffer;
+            procedure AddRef();
+            procedure Release();
+            destructor(); 
+            function GetBuffer() : array of character;
+        var
+            _refCount : integer;
+            _buffer : array of character;
+    end;
+    String = public class
+        public
+            constructor();
+            constructor(source : ^String);
+            destructor();
+
+            procedure assign(source : ^String);
+            function Length() : integer;
+            function Characters() : array of character;
+            function TryAssign(
+                source : array of character) : boolean;
+        var
+            _bufferRef : ^StringBuffer;
+    end;
+    LinkedListNode = class
+        var
+            _next : ^LinkedListNode;
+            _data : integer;
+    end;
+    LinkedList = public class
+        public 
+            constructor();
+            destructor();
+            procedure AddHead(data : integer);
+            procedure Add(data : integer);
+        var
+            _head : ^LinkedListNode;
+            _tail : ^LinkedListNode;
+    end;

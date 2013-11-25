@@ -1,0 +1,53 @@
+namespace RayTracer;
+
+type
+    Vector3D = public class
+        public
+            constructor();
+            constructor(x, y, z : double);
+            function GetX() : double;
+            function GetY() : double;
+            function GetZ() : double;
+        var
+            _x, _y, _z : double;
+    end;
+    Ray3D = public class
+        var
+            _origin, _direction : Vector3D;
+    end;
+    Matrix4x4 = public class
+        var
+            _mat : array[16] of double;
+    end;
+    Color = public class
+        var
+            _r, _g, _b, _a : double;
+    end;
+    Texture = public abstract class
+        public
+            abstract procedure GetColor(
+                textureCoord : ^Vector3D,
+                color : ^Color);
+    end; 
+    Shape = public abstract class
+        public
+            abstract function Intersect(
+                ray : ^Ray3D,
+                point, normal, textureCoord : ^Vector3D) : boolean; 
+            function GetTexture() : ^Texture;
+            procedure SetTexture(texture : ^Texture);
+        var
+            _texture : ^Texture;
+    end;
+    Light = public abstract class
+    end;
+    Camera = public class
+        var
+            _focalPoint : Vector3D;
+            _nearPlane : double;
+            _xResolution, _yResolution : integer;
+    end;
+    Scene = public class
+        var
+            _camera : ^Camera;
+    end;

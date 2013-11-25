@@ -1,0 +1,164 @@
+namespace System;
+uses System;
+
+constructor StringBuffer();
+begin
+    _buffer := nil;
+    _refCount := 0;
+end;
+
+function StringBuffer.Create(source : array of character) : ^StringBuffer;
+var
+    bufferLen, index : integer = 0;    
+    charBuffer : array of character = nil;
+begin
+    Create := nil;
+    if source <> nil then
+    begin
+        while source[bufferLen] <> 0 do
+        begin
+            bufferLen := bufferLen + 1;
+        end;
+        bufferLen := bufferLen + 1;
+        charBuffer := Memory.Alloc(bufferLen * 2);
+        if charBuffer <> nil then
+        begin
+            Create := new StringBuffer();
+            if Create <> nil then
+            begin
+                Create^.AddRef();
+                Create^._buffer := charBuffer;
+                while index < bufferLen do
+                begin
+                    charBuffer[index] := source[index];
+                    index := index + 1;
+                end;
+            end
+            else
+            begin
+                Memory.Free(charBuffer);
+            end;
+        end;
+    end
+    else
+    begin
+        Create := nil;
+    end;
+end;
+
+procedure StringBuffer.AddRef();
+begin
+    _refCount := _refCount + 1;
+end;
+
+procedure StringBuffer.Release();
+var
+    refCount : integer;
+begin
+    refCount := _refCount - 1;
+    if refCount <= 0 then
+    begin
+        delete this;
+    end
+    else
+    begin
+        _refCount := refCount;
+    end;
+end;
+
+destructor StringBuffer(); 
+begin
+    if _buffer <> nil then
+    begin
+        Memory.Free(_buffer);
+        _buffer := nil;
+    end;
+end;
+
+function StringBuffer.GetBuffer() : array of character;
+begin
+    GetBuffer := _buffer;
+end;
+
+constructor String();
+begin
+    _bufferRef := nil;
+end;
+
+constructor String(source : ^String);
+begin
+    _bufferRef := nil;
+    if source <> nil then
+    begin
+        _bufferRef := source^._bufferRef;
+        if _bufferRef <> nil then
+        begin
+            _bufferRef^.AddRef();
+        end;
+    end;
+end;
+
+destructor String();
+begin
+    if _bufferRef <> nil then
+    begin
+        _bufferRef^.Release();
+        _bufferRef := nil;
+    end;
+end;
+
+procedure String.assign(source : ^String);
+begin
+    if source <> nil then
+    begin
+        if _bufferRef <> nil then
+        begin
+            _bufferRef^.Release();
+        end;
+        _bufferRef := source^._bufferRef;
+        if _bufferRef <> nil then
+        begin
+            _bufferRef^.AddRef();
+        end;
+    end;
+end;
+
+function String.TryAssign(source : array of character) : boolean;
+var 
+    newBuffer : ^StringBuffer;
+begin
+    newBuffer := StringBuffer.Create(source);
+    if newBuffer <> nil then
+    begin
+        if _bufferRef <> nil then
+        begin
+            _bufferRef^.Release();
+        end;
+        _bufferRef := newBuffer;
+        TryAssign := true;
+    end
+    else
+    begin
+        TryAssign := false;
+    end;
+end;
+
+function String.Length() : integer;
+var
+    charBuffer : array of character;
+begin
+    Length := 0;
+    if _bufferRef <> nil then
+    begin
+        charBuffer := _bufferRef^.GetBuffer();
+        while charBuffer[Length] <> 0 do
+            Length := Length + 1;
+    end;
+end;
+
+function String.Characters() : array of character;
+begin
+    Characters := '';
+    if _bufferRef <> nil then
+        Characters := _bufferRef^.GetBuffer();
+end;

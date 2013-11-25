@@ -1,0 +1,39 @@
+(******************************************************************************
+ Copyright (C) 2013 Jon Rowlett. All rights reserved.
+ HelloWorld.tea - A sample program in TEA.
+******************************************************************************)
+namespace Samples; (* Declare the namespace *)
+uses System; (* Reference other libraries and namespaces. *)
+
+(* Declare types *)
+type
+    Program = static class
+        public
+            static function Main(
+                argc : integer; 
+                argv : array of array of character) : integer;
+        private
+            static function GetText() : array of character;
+    end;
+
+(* Implementation *)
+
+function Program.GetText() : array of character;
+begin
+    GetText := 'Hello, world!';
+end;
+
+(**
+  Program.Main - Program entry point.
+  argc - number of arguments.
+  argv - array of null terminated strings for the arguments.
+  returns - program error code. 0 for success.
+ **)
+function Program.Main(
+    argc : integer;
+    argv : array of array of character) : integer;
+begin
+    Console.WriteLine(GetText());
+    Main := 0;
+end;
+

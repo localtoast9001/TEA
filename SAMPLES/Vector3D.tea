@@ -1,0 +1,123 @@
+(******************************************************************************
+ Copyright (C) 2013 Jon Rowlett. All rights reserved.
+ Vector3D.tea - A 3D vector in TEA.
+******************************************************************************)
+namespace Samples; (* Declare the namespace *)
+uses System;
+
+(* Declare types *)
+type
+    Vector3D = public class
+        public
+            constructor();
+            constructor(x, y, z : double);
+            function GetX() : double;
+            function GetY() : double;
+            function GetZ() : double;
+            function GetLength() : double;
+            function GetLengthSq() : double;
+            static function DotP(v0, v1 : ^Vector3D) : double;
+            static function CrossP(v0, v1 : ^Vector3D) : Vector3D;
+            
+            procedure SetX(x : double);
+            procedure SetY(y : double);
+            procedure SetZ(z : double);
+        private
+        var
+            _x, _y, _z : double;
+    end;
+    Program = public static class
+        public
+            static function Main(argc : integer; argv : array of array of character) : integer;
+    end;
+
+(* Implementation *)
+constructor Vector3D();
+begin
+    _x := 0.0;
+    _y := 0.0;
+    _z := 0.0;
+end;
+
+constructor Vector3D(x, y, z : double);
+begin
+    _x := x;
+    _y := y;
+    _z := z;
+end;
+
+function Vector3D.GetX() : double;
+begin
+    GetX := _x;
+end;
+
+function Vector3D.GetY() : double;
+begin
+    GetY := _y;
+end;
+
+function Vector3D.GetZ() : double;
+begin
+    GetZ := _z;
+end;
+
+procedure Vector3D.SetX(x : double);
+begin
+    _x := x;
+end;
+
+procedure Vector3D.SetY(y : double);
+begin
+    _y := y;
+end;
+
+procedure Vector3D.SetZ(z : double);
+begin
+    _z := z;
+end;
+
+function Vector3D.GetLength() : double;
+begin
+    GetLength := Math.Sqrt(GetLengthSq());
+end;
+
+function Vector3D.GetLengthSq() : double;
+begin
+    GetLengthSq := _x * _x + _y * _y + _z * _z;
+end;
+{
+function Vector3D.DotP(v0, v1 : ^Vector3D) : double;
+begin
+    DotP := v0^._x * v1^._x + v0^._y * v1^._y + v0^._z * v1^._z;
+end;
+
+function Vector3D.CrossP(v0, v1 : ^Vector3D) : Vector3D;
+begin
+    CrossP._x := v0^._y * v1^._z - v0^._z * v1^._y;
+    CrossP._y := v0^._z * v1^._x - v0^._x * v1^._z;
+    CrossP._z := v0^._x * v1^._y - v0^._y * v1^._x;
+end;
+}
+function Program.Main(argc : integer; argv : array of array of character) : integer;
+var
+    v : Vector3D;
+    l2: double;
+    l : double;
+    test : integer;
+begin
+    v.SetX(1.0);
+    v.SetY(2.0);
+    v.SetZ(3.0);
+    l2 := v.GetLengthSq();
+    l := v.GetLength();
+    test := 4;
+    if test > 0 then
+    begin
+        Console.WriteLine('true');
+    end
+    else
+    begin
+        Console.WriteLine('false');
+    end;
+    Main := 0;
+end;

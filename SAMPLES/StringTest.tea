@@ -1,0 +1,22 @@
+namespace Samples;
+uses System;
+
+type
+    Program = public static class
+        public
+            static function Main(
+                argc : integer; 
+                argv : array of array of character) : integer;
+    end;
+
+function Program.Main(
+    argc : integer;
+    argv : array of array of character) : integer;
+var
+    a, b : String;
+begin
+    a.TryAssign('Hello World!');
+    b.assign(@a);
+    Console.WriteLine(b.Characters());
+    Main := 0;
+end;

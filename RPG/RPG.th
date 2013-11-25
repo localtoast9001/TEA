@@ -1,0 +1,6 @@
+namespace RPG;
+uses System;
+
+type
+    Entity = public abstract class
+    end;

@@ -1,0 +1,11 @@
+namespace System;
+uses System;
+
+procedure Console.Write(text : array of character);
+extern '_putws';
+
+procedure Console.WriteLine(text : array of character);
+begin
+    Write(text);
+    Write(#0013#0010);
+end;

@@ -1,0 +1,27 @@
+namespace Samples;
+uses System;
+
+type
+    Program = public static class
+        public
+            static function Main(argc : integer; argv : array of array of character) : integer;
+    end;
+
+function Program.Main(
+    argc : integer; 
+    argv : array of array of character) : integer;
+var
+    buffer : array [100] of character;
+    index : integer;
+begin
+    index := 0;
+    while index < 99 do
+    begin
+        buffer[index] := index + 65;
+        index := index + 1;
+    end;
+
+    buffer[99] := 0;
+    Console.WriteLine(buffer);
+    Main := 0;
+end;

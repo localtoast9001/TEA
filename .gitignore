@@ -1,0 +1,14 @@
+*~
+*.obj
+Thumbs.db
+*.pch
+*.suo
+*.cache
+*.ncb
+*.user.*
+*.ilk
+*.log
+obj/
+*.sdf
+*.filters
+ipch/
