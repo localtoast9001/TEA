@@ -12,3 +12,10 @@ obj/
 *.sdf
 *.filters
 ipch/
+*.user
+Debug/
+Release/
+bin/
+*.lib
+*.exp
+*.bak
