@@ -84,6 +84,11 @@ namespace TEAC
                     mainMethod = method.Method.MangledName;
                 }
 
+                foreach (string symbol in method.Symbols.Keys)
+                {
+                    writer.WriteLine("{0}={1}", symbol, method.Symbols[symbol]);
+                }
+
                 writer.Write(method.Method.MangledName);
                 writer.Write(" PROC C");
                 if (method.Method.IsProtected || method.Method.IsPublic)

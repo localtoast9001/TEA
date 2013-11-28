@@ -5,7 +5,8 @@
 
 int derp(short a, int b, short c, bool d)
 {
-    return 0;
+    int length = 0;
+    return length;
 }
 
 int _tmain(int argc, _TCHAR* argv[])

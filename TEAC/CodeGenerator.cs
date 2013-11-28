@@ -267,17 +267,17 @@ namespace TEAC
 
                             if (varType.IsPointer || varType.IsArray && varType.ArrayElementCount == 0)
                             {
-                                method.Statements.Add(new AsmStatement { Instruction = string.Format("mov [ebp-{0}],eax", localVar.Offset) });
+                                method.Statements.Add(new AsmStatement { Instruction = string.Format("mov _{0}$[ebp],eax", localVar.Name) });
                             }
                             else if (varType.IsFloatingPoint)
                             {
                                 if (varType.Size == 4)
                                 {
-                                    method.Statements.Add(new AsmStatement { Instruction = string.Format("fstp dword ptr[ebp-{0}]", localVar.Offset) });
+                                    method.Statements.Add(new AsmStatement { Instruction = string.Format("fstp dword ptr _{0}$[ebp]", localVar.Name) });
                                 }
                                 else
                                 {
-                                    method.Statements.Add(new AsmStatement { Instruction = string.Format("fstp qword ptr[ebp-{0}]", localVar.Offset) });
+                                    method.Statements.Add(new AsmStatement { Instruction = string.Format("fstp qword ptr _{0}$[ebp]", localVar.Name) });
                                 }
                             }
                             else if (!varType.IsClass)
@@ -285,13 +285,13 @@ namespace TEAC
                                 switch (varType.Size)
                                 {
                                     case 1:
-                                        method.Statements.Add(new AsmStatement { Instruction = string.Format("mov byte ptr[ebp-{0}],al", localVar.Offset) });
+                                        method.Statements.Add(new AsmStatement { Instruction = string.Format("mov byte ptr _{0}$[ebp],al", localVar.Name) });
                                         break;
                                     case 2:
-                                        method.Statements.Add(new AsmStatement { Instruction = string.Format("mov word ptr[ebp-{0}],ax", localVar.Offset) });
+                                        method.Statements.Add(new AsmStatement { Instruction = string.Format("mov word ptr _{0}$[ebp],ax", localVar.Name) });
                                         break;
                                     case 4:
-                                        method.Statements.Add(new AsmStatement { Instruction = string.Format("mov [ebp-{0}],eax", localVar.Offset) });
+                                        method.Statements.Add(new AsmStatement { Instruction = string.Format("mov _{0}$[ebp],eax", localVar.Name) });
                                         break;
                                 }
                             }
@@ -299,7 +299,7 @@ namespace TEAC
                         else if (defaultConstructor != null)
                         {
                             method.Module.AddProto(defaultConstructor);
-                            method.Statements.Add(new AsmStatement { Instruction = string.Format("lea eax,[ebp-{0}]", localVar.Offset) });
+                            method.Statements.Add(new AsmStatement { Instruction = string.Format("lea eax,_{0}$[ebp]", localVar.Name) });
                             method.Statements.Add(new AsmStatement { Instruction = "push eax" });
                             method.Statements.Add(new AsmStatement { Instruction = "call " + defaultConstructor.MangledName });
                             method.Statements.Add(new AsmStatement { Instruction = "add esp,4" });
@@ -336,7 +336,7 @@ namespace TEAC
                 LocalVariable destructable = destructables.Pop();
                 MethodInfo destructor = destructable.Type.GetDestructor();
                 method.Module.AddProto(destructor);
-                method.Statements.Add(new AsmStatement { Instruction = string.Format("lea eax,[ebp-{0}]", destructable.Offset) });
+                method.Statements.Add(new AsmStatement { Instruction = string.Format("lea eax,_{0}$[ebp]", destructable.Name) });
                 method.Statements.Add(new AsmStatement { Instruction = "push eax" });
                 method.Statements.Add(new AsmStatement { Instruction = "call " + destructor.MangledName });
                 method.Statements.Add(new AsmStatement { Instruction = "add esp,4" });
@@ -349,11 +349,11 @@ namespace TEAC
                 {
                     if (method.Method.ReturnType.Size == 8)
                     {
-                        method.Statements.Add(new AsmStatement { Instruction = string.Format("fld qword ptr [ebp-{0}]", returnVar.Offset) });
+                        method.Statements.Add(new AsmStatement { Instruction = string.Format("fld qword ptr _{0}$[ebp]", returnVar.Name) });
                     }
                     else
                     {
-                        method.Statements.Add(new AsmStatement { Instruction = string.Format("fld dword ptr [ebp-{0}]", returnVar.Offset) });
+                        method.Statements.Add(new AsmStatement { Instruction = string.Format("fld dword ptr _{0}$[ebp]", returnVar.Name) });
                     }
                 }
                 else if (method.Method.ReturnType.Size <= 4 && !method.Method.ReturnType.IsClass)
@@ -361,13 +361,13 @@ namespace TEAC
                     switch (method.Method.ReturnType.Size)
                     {
                         case 4:
-                            method.Statements.Add(new AsmStatement { Instruction = string.Format("mov eax, dword ptr[ebp-{0}]", returnVar.Offset) });
+                            method.Statements.Add(new AsmStatement { Instruction = string.Format("mov eax, dword ptr _{0}$[ebp]", returnVar.Name) });
                             break;
                         case 2:
-                            method.Statements.Add(new AsmStatement { Instruction = string.Format("mov ax, word ptr[ebp-{0}]", returnVar.Offset) });
+                            method.Statements.Add(new AsmStatement { Instruction = string.Format("mov ax, word ptr _{0}$[ebp]", returnVar.Name) });
                             break;
                         case 1:
-                            method.Statements.Add(new AsmStatement { Instruction = string.Format("mov al, byte ptr[ebp-{0}]", returnVar.Offset) });
+                            method.Statements.Add(new AsmStatement { Instruction = string.Format("mov al, byte ptr _{0}$[ebp]", returnVar.Name) });
                             break;
                     }
                 }
@@ -376,6 +376,7 @@ namespace TEAC
             method.Statements.Add(new AsmStatement { Instruction = "mov esp,ebp" });
             method.Statements.Add(new AsmStatement { Instruction = "pop ebp" });
             method.Statements.Add(new AsmStatement { Instruction = "ret" });
+            scope.SaveSymbols(method.Symbols);
             return !failed;
         }
 
@@ -674,22 +675,22 @@ namespace TEAC
                 {
                     case 1:
                         {
-                            method.Statements.Add(new AsmStatement { Instruction = string.Format("mov byte ptr [{0}],al", location) });
+                            method.Statements.Add(new AsmStatement { Instruction = string.Format("mov byte ptr {0},al", location) });
                         } break;
                     case 2:
                         {
-                            method.Statements.Add(new AsmStatement { Instruction = string.Format("mov word ptr [{0}],ax", location) });
+                            method.Statements.Add(new AsmStatement { Instruction = string.Format("mov word ptr {0},ax", location) });
                         } break;
                     default:
                         {
-                            method.Statements.Add(new AsmStatement { Instruction = string.Format("mov [{0}],eax", location) });
+                            method.Statements.Add(new AsmStatement { Instruction = string.Format("mov {0},eax", location) });
                         } break;
                 }
             }
             else
             {
                 method.Statements.Add(new AsmStatement { Instruction = "mov esi,esp" });
-                method.Statements.Add(new AsmStatement { Instruction = string.Format("lea edi,[{0}]", location) });
+                method.Statements.Add(new AsmStatement { Instruction = string.Format("lea edi,{0}", location) });
                 method.Statements.Add(new AsmStatement { Instruction = string.Format("mov ecx,{0}", valueType.Size) });
                 method.Statements.Add(new AsmStatement { Instruction = "cld" });
                 method.Statements.Add(new AsmStatement { Instruction = "rep movsb" });
@@ -848,24 +849,24 @@ namespace TEAC
                 {
                     if (storageType.Size == 8)
                     {
-                        method.Statements.Add(new AsmStatement { Instruction = "fld qword ptr [" + location + "]" });
+                        method.Statements.Add(new AsmStatement { Instruction = "fld qword ptr " + location });
                     }
                     else
                     {
-                        method.Statements.Add(new AsmStatement { Instruction = "fld dword ptr [" + location + "]" });
+                        method.Statements.Add(new AsmStatement { Instruction = "fld dword ptr " + location });
                     }
                 }
                 else if (storageType.IsArray)
                 {
                     if (storageType.ArrayElementCount > 0)
                     {
-                        method.Statements.Add(new AsmStatement { Instruction = "lea eax,[" + location + "]" });
+                        method.Statements.Add(new AsmStatement { Instruction = "lea eax," + location });
                         valueType = context.GetArrayType(storageType.InnerType, 0);
                         return true;
                     }
                     else
                     {
-                        method.Statements.Add(new AsmStatement { Instruction = "mov eax,[" + location + "]" });
+                        method.Statements.Add(new AsmStatement { Instruction = "mov eax," + location });
                     }
                 }
                 else if (storageType.Size <= 4 && !storageType.IsClass)
@@ -873,13 +874,13 @@ namespace TEAC
                     switch (storageType.Size)
                     {
                         case 4:
-                            method.Statements.Add(new AsmStatement { Instruction = "mov eax,dword ptr[" + location + "]" });
+                            method.Statements.Add(new AsmStatement { Instruction = "mov eax,dword ptr " + location });
                             break;
                         case 2:
-                            method.Statements.Add(new AsmStatement { Instruction = "mov ax,word ptr[" + location + "]" });
+                            method.Statements.Add(new AsmStatement { Instruction = "mov ax,word ptr " + location });
                             break;
                         case 1:
-                            method.Statements.Add(new AsmStatement { Instruction = "mov al,byte ptr[" + location + "]" });
+                            method.Statements.Add(new AsmStatement { Instruction = "mov al,byte ptr " + location });
                             break;
                     }
                 }
@@ -998,7 +999,7 @@ namespace TEAC
                     LocalVariable tempPtr = scope.DefineTempVariable(valueType);
                     string jumpLabel = method.Module.GetNextJumpLabel();
                     List<AsmStatement> saveAlloc = new List<AsmStatement>();
-                    saveAlloc.Add(new AsmStatement { Instruction = string.Format("mov [ebp-{0}],eax", tempPtr.Offset) });
+                    saveAlloc.Add(new AsmStatement { Instruction = string.Format("mov _{0}$[ebp],eax", tempPtr.Name) });
                     saveAlloc.Add(new AsmStatement { Instruction = "test eax,eax" });
                     saveAlloc.Add(new AsmStatement { Instruction = "jz " + jumpLabel });
                     method.Statements.InsertRange(nullTestStart, saveAlloc);
@@ -1006,7 +1007,7 @@ namespace TEAC
                     method.Module.AddProto(constructor);
                     method.Statements.Add(new AsmStatement { Instruction = "call " + constructor.MangledName });
                     method.Statements.Add(new AsmStatement { Instruction = string.Format("add esp,{0}", argSize + 4) });
-                    method.Statements.Add(new AsmStatement { Instruction = string.Format("mov eax,[ebp-{0}]", tempPtr.Offset), Label = jumpLabel });
+                    method.Statements.Add(new AsmStatement { Instruction = string.Format("mov eax,_{0}$[ebp]", tempPtr.Name), Label = jumpLabel });
                 }
             }
 
@@ -1058,7 +1059,7 @@ namespace TEAC
                 return false;
             }
 
-            method.Statements.Add(new AsmStatement { Instruction = string.Format("lea eax,[{0}]", innerLoc) });
+            method.Statements.Add(new AsmStatement { Instruction = string.Format("lea eax,{0}", innerLoc) });
             valueType = context.GetPointerType(storageType);
             return true;
         }
@@ -1347,7 +1348,7 @@ namespace TEAC
                     LocalVariable localVar = symbol as LocalVariable;
                     if (localVar != null)
                     {
-                        location = "ebp-" + localVar.Offset;
+                        location = string.Format("_{0}$[ebp]", localVar.Name);
                         return true;
                     }
                     else
@@ -1355,7 +1356,7 @@ namespace TEAC
                         ParameterVariable parVar = symbol as ParameterVariable;
                         if (parVar != null)
                         {
-                            location = "ebp+" + parVar.Offset;
+                            location = string.Format("_{0}$[ebp]", parVar.Name);
                             return true;
                         }
                     }
@@ -1376,7 +1377,7 @@ namespace TEAC
                         method.Statements.Add(
                             new AsmStatement 
                             { 
-                                Instruction = string.Format("mov ecx,[ebp+{0}]", ((ParameterVariable)symThis).Offset)
+                                Instruction = "mov ecx,_this$[ebp]"
                             });
                         if (field.Offset > 0)
                         {
@@ -1385,7 +1386,7 @@ namespace TEAC
                         }
 
                         storageType = field.Type;
-                        location = "ecx";
+                        location = "[ecx]";
                         return true;
                     }
                 }
@@ -1408,7 +1409,7 @@ namespace TEAC
                             method.Statements.Add(
                                 new AsmStatement
                                 {
-                                    Instruction = string.Format("mov ecx,[ebp+{0}]", ((ParameterVariable)symThis).Offset)
+                                    Instruction = "mov ecx,_this$[ebp]"
                                 });
 
                             method.Statements.Add(new AsmStatement { Instruction = "push ecx" });
@@ -1453,7 +1454,7 @@ namespace TEAC
                             method.Statements.Add(
                                 new AsmStatement
                                 {
-                                    Instruction = string.Format("lea ecx,[{0}]", innerLoc)
+                                    Instruction = string.Format("lea ecx,{0}", innerLoc)
                                 });
                             if (field.Offset > 0)
                             {
@@ -1462,7 +1463,7 @@ namespace TEAC
                             }
 
                             storageType = field.Type;
-                            location = "ecx";
+                            location = "[ecx]";
                             return true;
                         }
                     }
@@ -1474,7 +1475,7 @@ namespace TEAC
                             method.Module.AddProto(memberMethod);
                             if (!memberMethod.IsStatic)
                             {
-                                method.Statements.Add(new AsmStatement { Instruction = string.Format("lea eax,[{0}]", innerLoc) });
+                                method.Statements.Add(new AsmStatement { Instruction = string.Format("lea eax,{0}", innerLoc) });
                                 method.Statements.Add(new AsmStatement { Instruction = "push eax" });
                             }
 
@@ -1567,18 +1568,51 @@ namespace TEAC
 
                 if (innerType.Size > 4)
                 {
-                    method.Statements.Add(new AsmStatement { Instruction = "lea ecx,[" + innerLoc + "]" });
+                    method.Statements.Add(new AsmStatement { Instruction = "lea ecx," + innerLoc });
                 }
                 else
                 {
-                    method.Statements.Add(new AsmStatement { Instruction = "mov ecx,[" + innerLoc + "]" });
+                    method.Statements.Add(new AsmStatement { Instruction = "mov ecx," + innerLoc });
                 }
 
                 method.Statements.Add(new AsmStatement { Instruction = "pop eax" });
-                method.Statements.Add(new AsmStatement { Instruction = "mov ebx," + innerType.InnerType.Size.ToString() });
-                method.Statements.Add(new AsmStatement { Instruction = "imul eax,ebx" });
+                int elementSize = innerType.InnerType.Size;
+                if(elementSize > 1)
+                {
+                    int shiftSize = 0;
+                    switch(elementSize)
+                    {
+                        case 2:
+                            shiftSize = 1;
+                            break;
+                        case 4:
+                            shiftSize = 2;
+                            break;
+                        case 8:
+                            shiftSize = 3;
+                            break;
+                        case 16:
+                            shiftSize = 4;
+                            break;
+                        case 32:
+                            shiftSize = 5;
+                            break;
+                        case 64:
+                            shiftSize = 6;
+                            break;
+                        default:
+                            method.Statements.Add(new AsmStatement { Instruction = string.Format("imul eax,{0}", elementSize) });
+                            break;
+                    }
+
+                    if (shiftSize != 0)
+                    {
+                        method.Statements.Add(new AsmStatement { Instruction = string.Format("shl eax,{0}", shiftSize) });
+                    }
+                }
+
                 method.Statements.Add(new AsmStatement { Instruction = "add ecx,eax" });
-                location = "ecx";
+                location = "[ecx]";
                 storageType = innerType.InnerType;
                 return true;
             }
@@ -1616,8 +1650,8 @@ namespace TEAC
                     return false;
                 }
 
-                method.Statements.Add(new AsmStatement { Instruction = "mov ecx,[" + innerLoc + "]" });
-                location = "ecx";
+                method.Statements.Add(new AsmStatement { Instruction = "mov ecx," + innerLoc });
+                location = "[ecx]";
                 storageType = innerType.InnerType;
                 return true;
             }

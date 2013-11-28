@@ -10,7 +10,7 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG4527	DB	'Hello World!', 00H
+$SG4528	DB	'Hello World!', 00H
 CONST	ENDS
 PUBLIC	?derp@@YAHFHF_N@Z				; derp
 PUBLIC	_main
@@ -23,22 +23,22 @@ _argc$ = 8						; size = 4
 _argv$ = 12						; size = 4
 _main	PROC
 ; File c:\code\tea\teastest\teastest.cpp
-; Line 12
+; Line 13
 	push	ebp
 	mov	ebp, esp
 	sub	esp, 8
-; Line 13
+; Line 14
 	push	0
 	push	2
 	push	1
 	push	0
 	call	?derp@@YAHFHF_N@Z			; derp
 	add	esp, 16					; 00000010H
-; Line 14
-	push	OFFSET $SG4527
+; Line 15
+	push	OFFSET $SG4528
 	call	_puts
 	add	esp, 4
-; Line 15
+; Line 16
 	cmp	DWORD PTR _argc$[ebp], 0
 	jle	SHORT $LN3@main
 	mov	DWORD PTR tv70[ebp], 1
@@ -48,9 +48,9 @@ $LN3@main:
 $LN4@main:
 	mov	al, BYTE PTR tv70[ebp]
 	mov	BYTE PTR _fResult$[ebp], al
-; Line 16
-	xor	eax, eax
 ; Line 17
+	xor	eax, eax
+; Line 18
 	mov	esp, ebp
 	pop	ebp
 	ret	0
@@ -58,6 +58,7 @@ _main	ENDP
 _TEXT	ENDS
 ; Function compile flags: /Odtp
 _TEXT	SEGMENT
+_length$ = -4						; size = 4
 _a$ = 8							; size = 2
 _b$ = 12						; size = 4
 _c$ = 16						; size = 2
@@ -67,9 +68,13 @@ _d$ = 20						; size = 1
 ; Line 7
 	push	ebp
 	mov	ebp, esp
+	push	ecx
 ; Line 8
-	xor	eax, eax
+	mov	DWORD PTR _length$[ebp], 0
 ; Line 9
+	mov	eax, DWORD PTR _length$[ebp]
+; Line 10
+	mov	esp, ebp
 	pop	ebp
 	ret	0
 ?derp@@YAHFHF_N@Z ENDP					; derp

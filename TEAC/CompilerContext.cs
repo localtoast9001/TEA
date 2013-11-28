@@ -315,7 +315,7 @@ namespace TEAC
             }
 
             localOffset += type.Size;
-            LocalVariable l = new LocalVariable
+            LocalVariable l = new LocalVariable(name)
             {
                 Offset = this.localOffset,
                 Type = type
@@ -327,7 +327,7 @@ namespace TEAC
 
         public void DefineParameter(string name, TypeDefinition type)
         {
-            ParameterVariable p = new ParameterVariable
+            ParameterVariable p = new ParameterVariable(name)
             {
                 Offset = this.parameterOffset,
                 Type = type
@@ -341,20 +341,54 @@ namespace TEAC
         {
             return this.symbols.TryGetValue(symbol, out value);
         }
+
+        public void SaveSymbols(IDictionary<string, int> dictionary)
+        {
+            foreach (string symbolName in this.symbols.Keys)
+            {
+                var symbol = symbols[symbolName];
+                LocalVariable localVar = symbol as LocalVariable;
+                if (localVar != null)
+                {
+                    dictionary.Add("_" + symbolName + "$", -localVar.Offset);
+                }
+                else
+                {
+                    ParameterVariable parVar = (ParameterVariable)symbol;
+                    dictionary.Add("_" + symbolName + "$", parVar.Offset);
+                }
+            }
+        }
     }
 
-    class SymbolEntry
+    abstract class SymbolEntry
     {
+        protected SymbolEntry(string name)
+        {
+            this.Name = name;
+        }
+
+        public string Name { get; private set; }
         public TypeDefinition Type { get; set; }
     }
 
     class LocalVariable : SymbolEntry
     {
+        public LocalVariable(string name)
+            : base(name)
+        {
+        }
+
         public int Offset { get; set; }
     }
 
     class ParameterVariable : SymbolEntry
     {
+        public ParameterVariable(string name)
+            : base(name)
+        {
+        }
+
         public int Offset { get; set; }
     }
 
