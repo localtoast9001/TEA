@@ -53,16 +53,21 @@
     <Compile Include="DeleteStatement.cs" />
     <Compile Include="EnumDeclaration.cs" />
     <Compile Include="Expression.cs" />
+    <Compile Include="FieldInfo.cs" />
     <Compile Include="IfStatement.cs" />
     <Compile Include="LiteralExpression.cs" />
+    <Compile Include="LocalVariable.cs" />
     <Compile Include="Message.cs" />
     <Compile Include="MessageLog.cs" />
     <Compile Include="MethodDeclaration.cs" />
     <Compile Include="MethodDefinition.cs" />
+    <Compile Include="MethodInfo.cs" />
     <Compile Include="Module.cs" />
     <Compile Include="ModuleWriter.cs" />
     <Compile Include="NewExpression.cs" />
     <Compile Include="ParameterDeclaration.cs" />
+    <Compile Include="ParameterInfo.cs" />
+    <Compile Include="ParameterVariable.cs" />
     <Compile Include="ParseNode.cs" />
     <Compile Include="Parser.cs" />
     <Compile Include="Program.cs" />
@@ -75,12 +80,15 @@
     </Compile>
     <Compile Include="ReferenceExpression.cs" />
     <Compile Include="RelationalExpression.cs" />
+    <Compile Include="Scope.cs" />
     <Compile Include="SimpleExpression.cs" />
     <Compile Include="Statement.cs" />
+    <Compile Include="SymbolEntry.cs" />
     <Compile Include="TermExpression.cs" />
     <Compile Include="Token.cs" />
     <Compile Include="TokenReader.cs" />
     <Compile Include="TypeDeclaration.cs" />
+    <Compile Include="TypeDefinition.cs" />
     <Compile Include="TypeReference.cs" />
     <Compile Include="VarBlock.cs" />
     <Compile Include="WhileStatement.cs" />
