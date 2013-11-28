@@ -1,11 +1,36 @@
 namespace System;
 uses System;
 
-procedure Console.Write(text : array of character);
-extern '_putws';
+type
+    Print = static class
+        public
+            static function PrintString(
+                format : array of character;
+                text : array of character) : integer;
+            static function PrintChar(
+                format : array of character;
+                ch : character) : integer; 
+    end; 
 
-procedure Console.WriteLine(text : array of character);
+function Print.PrintString(
+    format : array of character;
+    text : array of character) : integer;
+extern 'wprintf';
+
+function Print.PrintChar(
+    format : array of character;
+    ch : character) : integer;
+extern 'wprintf';
+
+function Console.Write(text : array of character) : integer;
 begin
-    Write(text);
-    Write(#0013#0010);
+    Write := Print.PrintString('%s', text);
 end;
+
+function Console.Write(ch : character) : integer;
+begin
+    Write := Print.PrintChar('%c', ch);
+end;
+
+function Console.WriteLine(text : array of character) : integer;
+extern '_putws';

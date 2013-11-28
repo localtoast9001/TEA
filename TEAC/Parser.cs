@@ -665,6 +665,7 @@ namespace TEAC
                         tok = reader.Peek();
                         while (tok.Is(Keyword.Comma))
                         {
+                            reader.Read();
                             if (!this.ParseExpression(reader, out arg))
                             {
                                 result = null;

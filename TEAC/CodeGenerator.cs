@@ -804,7 +804,7 @@ namespace TEAC
                         return false;
                     }
 
-                    argSize += argType.Size;
+                    argSize += ((argType.Size + 3) / 4) * 4;
                     this.PushResult(method, argType);
                 }
 
@@ -970,7 +970,7 @@ namespace TEAC
                     }
 
                     this.PushResult(method, argType);
-                    argSize += argType.Size;
+                    argSize += ((argType.Size + 3) / 4) * 4;
                     argTypes.Insert(0, argType);
                 }
 

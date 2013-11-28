@@ -3,8 +3,9 @@ namespace System;
 type
     Console = public static class
         public
-            static procedure WriteLine(text : array of character);
-            static procedure Write(text : array of character);
+            static function WriteLine(text : array of character) : integer;
+            static function Write(text : array of character) : integer;
+            static function Write(ch : character) : integer;
     end;
     Math = public static class
         public
