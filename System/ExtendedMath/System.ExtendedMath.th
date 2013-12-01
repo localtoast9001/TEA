@@ -1,0 +1,20 @@
+namespace System.ExtendedMath;
+uses System;
+
+type
+    Complex = public class
+        public
+            constructor();
+            constructor(r, i : double);
+
+            function Real() : double;
+            function Imaginary() : double;
+            static function add(a, b : Complex) : Complex;
+            static function subtract(a, b : Complex) : Complex;
+            static function multiply(a : Complex; b : double) : Complex;
+            static function multiply(a, b : Complex) : Complex;
+            static function divide(a : Complex; b : double) : Complex;
+            static function negative(a : Complex) : Complex; 
+        var
+            _r, _i : double;
+    end;

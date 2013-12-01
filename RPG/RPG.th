@@ -3,4 +3,12 @@ uses System;
 
 type
     Entity = public abstract class
+        public
+            virtual destructor();
+        protected
+            constructor(name : ^String);
+        var
+            _name : String;
+    end;
+    Item = public abstract class(Entity)
     end;

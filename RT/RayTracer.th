@@ -20,14 +20,18 @@ type
             _mat : array[16] of double;
     end;
     Color = public class
+        public 
+            function GetRed() : double;
+            function GetGreen() : double;
+            function GetBlue() : double;
+            function GetAlpha() : double;
         var
             _r, _g, _b, _a : double;
     end;
     Texture = public abstract class
         public
-            abstract procedure GetColor(
-                textureCoord : ^Vector3D,
-                color : ^Color);
+            abstract function GetColor(
+                textureCoord : ^Vector3D) : Color;
     end; 
     Shape = public abstract class
         public

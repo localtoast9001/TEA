@@ -88,6 +88,15 @@ namespace TEAC.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The type {0} cannot be used as a base type because it is not a class..
+        /// </summary>
+        internal static string CodeGenerator_BaseTypeNotClass {
+            get {
+                return ResourceManager.GetString("CodeGenerator_BaseTypeNotClass", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The condition provided does not evaluate to a boolean value. Alter the expression to evaluate to a boolean value..
         /// </summary>
         internal static string CodeGenerator_BooleanConditionExpected {
@@ -138,6 +147,24 @@ namespace TEAC.Properties {
         internal static string CodeGenerator_DeleteOperandMustBePointerOrArray {
             get {
                 return ResourceManager.GetString("CodeGenerator_DeleteOperandMustBePointerOrArray", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The negative operator (-) is not supported on type {0}..
+        /// </summary>
+        internal static string CodeGenerator_NegativeNotSupported {
+            get {
+                return ResourceManager.GetString("CodeGenerator_NegativeNotSupported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The not operator (not) is not supported on type {0}..
+        /// </summary>
+        internal static string CodeGenerator_NotNotSupported {
+            get {
+                return ResourceManager.GetString("CodeGenerator_NotNotSupported", resourceCulture);
             }
         }
         

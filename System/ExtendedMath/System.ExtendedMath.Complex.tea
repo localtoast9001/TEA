@@ -1,0 +1,57 @@
+namespace System.ExtendedMath;
+uses System.ExtendedMath;
+
+constructor Complex();
+begin
+    _r := 0.0;
+    _i := 0.0;
+end;
+
+constructor Complex(r, i : double);
+begin
+    _r := r;
+    _i := i;
+end;
+
+function Complex.Real() : double;
+begin
+    Real := _r;
+end;
+
+function Complex.Imaginary() : double;
+begin
+    Imaginary := _i;
+end;
+
+function Complex.add(a, b : Complex) : Complex;
+begin
+    add := Complex(a._r + b._r, a._i + b._i);
+end;
+
+function Complex.subtract(a, b : Complex) : Complex;
+begin
+    subtract := Complex(a._r - b._r, a._i - b._i);
+end;
+
+function Complex.multiply(a : Complex; b : double) : Complex;
+begin
+    multiply := Complex(a._r * b, a._i * b);
+end;
+
+function Complex.multiply(a, b : Complex) : Complex;
+begin
+    multiply := Complex(
+        a._r * b._r - a._i * b._i,
+        a._r * b._i + a._i * b._r);
+end;
+
+function Complex.divide(a : Complex; b : double) : Complex;
+begin
+    divide := Complex(a._r / b, a._i / b);
+end;
+
+function Complex.negative(a : Complex) : Complex; 
+begin
+    negative := Complex(-a._r, -a._i);
+end;
+

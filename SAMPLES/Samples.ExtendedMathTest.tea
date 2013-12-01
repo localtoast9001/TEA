@@ -1,0 +1,21 @@
+namespace Samples;
+uses System.ExtendedMath;
+
+type
+    Program = static class
+        public
+            static function Main(
+                argc : integer; 
+                argv : array of array of character) : integer;
+    end;
+
+function Program.Main(
+    argc : integer;
+    argv : array of array of character) : integer;
+var
+    a, b : Complex;
+begin
+    a := Complex(4.5, 9.0);
+    b := Complex.negative(a);
+    Main := 0;
+end;

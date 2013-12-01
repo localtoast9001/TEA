@@ -12,16 +12,24 @@ namespace TEAC
         private List<MethodDeclaration> protectedMethods = new List<MethodDeclaration>();
         private List<MethodDeclaration> privateMethods = new List<MethodDeclaration>();
 
-        public ClassDeclaration(Token start, string name, bool isStatic, bool isPublic)
+        public ClassDeclaration(
+            Token start, 
+            string name, 
+            string baseType,
+            bool isStatic, 
+            bool isPublic)
             : base(start, name)
         {
             this.IsPublic = isPublic;
             this.IsStatic = isStatic;
+            this.BaseType = baseType;
         }
 
         public bool IsStatic { get; private set; }
 
         public bool IsPublic { get; private set; }
+
+        public string BaseType { get; private set; }
 
         public VarBlock Fields { get; set; }
 

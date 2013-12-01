@@ -808,10 +808,12 @@ namespace TEAC
 
             if (tok.Is(Keyword.Not))
             {
+                return this.ParseNotExpression(reader, out result);
             }
 
             if (tok.Is(Keyword.Minus))
             {
+                return this.ParseNegativeExpression(reader, out result);
             }
 
             if (tok.Is(Keyword.New))
@@ -873,6 +875,44 @@ namespace TEAC
             this.log.Write(new Message(reader.Path, reader.Line, reader.Column, Severity.Error, message));
             result = null;
             return false;
+        }
+
+        private bool ParseNotExpression(TokenReader reader, out Expression expression)
+        {
+            expression = null;
+            Token start = reader.Peek();
+            if (!this.Expect(reader, Keyword.Not))
+            {
+                return false;
+            }
+
+            Expression inner = null;
+            if (!this.ParseFactorExpression(reader, out inner))
+            {
+                return false;
+            }
+
+            expression = new NotExpression(start, inner);
+            return true;
+        }
+
+        private bool ParseNegativeExpression(TokenReader reader, out Expression expression)
+        {
+            expression = null;
+            Token start = reader.Peek();
+            if (!this.Expect(reader, Keyword.Minus))
+            {
+                return false;
+            }
+
+            Expression inner = null;
+            if (!this.ParseFactorExpression(reader, out inner))
+            {
+                return false;
+            }
+
+            expression = new NegativeExpression(start, inner);
+            return true;
         }
 
         private bool ParseAddressExpression(TokenReader reader, out Expression expression)
@@ -1060,7 +1100,29 @@ namespace TEAC
                 return false;
             }
 
-            ClassDeclaration classDecl = new ClassDeclaration(typeName, typeName.Value, isStatic, isPublic);
+            string baseType = null;
+            tok = reader.Peek();
+            if (tok.Is(Keyword.LeftParen))
+            {
+                reader.Read();
+
+                if (!this.ParseFullNameDeclaration(reader, out baseType))
+                {
+                    return false;
+                }
+
+                if (!this.Expect(reader, Keyword.RightParen))
+                {
+                    return false;
+                }
+            }
+
+            ClassDeclaration classDecl = new ClassDeclaration(
+                typeName, 
+                typeName.Value,
+                baseType,
+                isStatic, 
+                isPublic);
 
             tok = reader.Peek();
             if (tok.Is(Keyword.Public))

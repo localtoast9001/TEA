@@ -126,6 +126,9 @@
   <data name="CodeGenerator_ArrayTypeIntElementExpected" xml:space="preserve">
     <value>The element range for an array type must be a constant integer expression.</value>
   </data>
+  <data name="CodeGenerator_BaseTypeNotClass" xml:space="preserve">
+    <value>The type {0} cannot be used as a base type because it is not a class.</value>
+  </data>
   <data name="CodeGenerator_BooleanConditionExpected" xml:space="preserve">
     <value>The condition provided does not evaluate to a boolean value. Alter the expression to evaluate to a boolean value.</value>
   </data>
@@ -143,6 +146,12 @@
   </data>
   <data name="CodeGenerator_DeleteOperandMustBePointerOrArray" xml:space="preserve">
     <value>The type of operand used for delete must be a pointer or array operand.</value>
+  </data>
+  <data name="CodeGenerator_NegativeNotSupported" xml:space="preserve">
+    <value>The negative operator (-) is not supported on type {0}.</value>
+  </data>
+  <data name="CodeGenerator_NotNotSupported" xml:space="preserve">
+    <value>The not operator (not) is not supported on type {0}.</value>
   </data>
   <data name="CodeGenerator_SystemMemoryMissingAlloc" xml:space="preserve">
     <value>The System.Memory class does not define a method Alloc.</value>

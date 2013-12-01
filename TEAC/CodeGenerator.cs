@@ -81,11 +81,50 @@ namespace TEAC
                 }
 
                 ClassDeclaration classDecl = typeDecl as ClassDeclaration;
-                if (typeDecl != null)
+                if (classDecl != null)
                 {
                     typeDef.IsClass = true;
                     typeDef.IsPublic = classDecl.IsPublic;
                     typeDef.IsStaticClass = classDecl.IsStatic;
+                    if (classDecl.BaseType != null)
+                    {
+                        TypeDefinition baseType = null;
+                        if (!context.TryFindTypeByName(classDecl.BaseType, out baseType))
+                        {
+                            string message = string.Format(
+                                System.Globalization.CultureInfo.CurrentCulture,
+                                Properties.Resources.CodeGenerator_UndefinedType,
+                                classDecl.BaseType);
+                            this.log.Write(new Message(
+                                classDecl.Start.Path,
+                                classDecl.Start.Line,
+                                classDecl.Start.Column,
+                                Severity.Error,
+                                message));
+                            failed = true;
+                        }
+                        else
+                        {
+                            if (!baseType.IsClass)
+                            {
+                                string message = string.Format(
+                                    System.Globalization.CultureInfo.CurrentCulture,
+                                    Properties.Resources.CodeGenerator_BaseTypeNotClass,
+                                    baseType.FullName);
+                                this.log.Write(new Message(
+                                    classDecl.Start.Path,
+                                    classDecl.Start.Line,
+                                    classDecl.Start.Column,
+                                    Severity.Error,
+                                    message));
+                                failed = true;
+                            }
+                            else
+                            {
+                                typeDef.BaseClass = baseType;
+                            }
+                        }
+                    }
 
                     foreach (MethodDeclaration meth in classDecl.PublicMethods)
                     {
@@ -795,7 +834,9 @@ namespace TEAC
             if (callExpr != null)
             {
                 int argSize = 0;
-                Expression[] arguments = callExpr.Arguments.ToArray();
+                int argStatementStart = method.Statements.Count;
+                Expression[] arguments = callExpr.Arguments.Reverse().ToArray();
+                List<TypeDefinition> argTypes = new List<TypeDefinition>();
                 for (int i = arguments.Length - 1; i >= 0; i--)
                 {
                     TypeDefinition argType = null;
@@ -805,6 +846,7 @@ namespace TEAC
                         return false;
                     }
 
+                    argTypes.Insert(0, argType);
                     argSize += ((argType.Size + 3) / 4) * 4;
                     this.PushResult(method, argType);
                 }
@@ -816,6 +858,38 @@ namespace TEAC
                 {
                     valueType = null;
                     return false;
+                }
+
+                if (callLoc == null && storageType != null)
+                {
+                    // must be a constructor call.
+                    MethodInfo constructor = storageType.FindConstructor(argTypes);
+                    if (constructor == null)
+                    {
+                        string message = string.Format(
+                            System.Globalization.CultureInfo.CurrentCulture,
+                            Properties.Resources.CodeGenerator_CannotFindConstructor,
+                            storageType.FullName);
+                        log.Write(new Message(
+                            callExpr.Start.Path,
+                            callExpr.Start.Line,
+                            callExpr.Start.Column,
+                            Severity.Error,
+                            message));
+                        valueType = null;
+                        return false;
+                    }
+
+                    // create room on the stack for the result.
+                    AsmStatement resultPush = new AsmStatement { Instruction = string.Format("sub esp,{0}", storageType.Size) };
+                    method.Statements.Insert(argStatementStart, resultPush);
+                    calleeMethod = constructor;
+                    callLoc = constructor.MangledName;
+                    method.Module.AddProto(constructor);
+
+                    // push the ref to the storage for the class on the stack.
+                    method.Statements.Add(new AsmStatement { Instruction = string.Format("lea eax,[esp+{0}]", argSize) });
+                    method.Statements.Add(new AsmStatement { Instruction = "push eax" });
                 }
 
                 method.Statements.Add(new AsmStatement { Instruction = "call " + callLoc });
@@ -884,6 +958,31 @@ namespace TEAC
                             break;
                     }
                 }
+                else if (storageType.IsClass)
+                {
+                    // construct a new copy on the stack.
+                    method.Statements.Add(new AsmStatement { Instruction = string.Format("lea eax,{0}", location) });
+                    method.Statements.Add(new AsmStatement { Instruction = string.Format("sub esp,{0}", storageType.Size) });
+                    MethodInfo copyConstructor = storageType.GetCopyConstructor(context);
+                    if (copyConstructor != null)
+                    {
+                        method.Module.AddProto(copyConstructor);
+                        method.Statements.Add(new AsmStatement { Instruction = "lea ecx,[esp]" });
+                        method.Statements.Add(new AsmStatement { Instruction = "push eax" });
+                        method.Statements.Add(new AsmStatement { Instruction = "push ecx" });
+                        method.Statements.Add(new AsmStatement { Instruction = "call " + copyConstructor.MangledName });
+                        method.Statements.Add(new AsmStatement { Instruction = "add esp,8" });
+                    }
+                    else
+                    {
+                        // raw copy.
+                        method.Statements.Add(new AsmStatement { Instruction = "mov edi,esp" });
+                        method.Statements.Add(new AsmStatement { Instruction = "mov esi,eax" });
+                        method.Statements.Add(new AsmStatement { Instruction = string.Format("mov ecx,{0}", storageType.Size) });
+                        method.Statements.Add(new AsmStatement { Instruction = "cld" });
+                        method.Statements.Add(new AsmStatement { Instruction = "rep movsb" });
+                    }
+                }
 
                 valueType = storageType;
                 return true;
@@ -919,8 +1018,93 @@ namespace TEAC
                 return this.TryEmitNewExpression(newExpr, context, scope, method, out valueType);
             }
 
+            NotExpression notExpr = expression as NotExpression;
+            if (notExpr != null)
+            {
+                return this.TryEmitNotExpression(notExpr, context, scope, method, out valueType);
+            }
+
+            NegativeExpression negExpr = expression as NegativeExpression;
+            if (negExpr != null)
+            {
+                return this.TryEmitNegativeExpression(negExpr, context, scope, method, out valueType);
+            }
+
             valueType = null;
             return false;
+        }
+
+        private bool TryEmitNegativeExpression(
+            NegativeExpression expression, 
+            CompilerContext context, 
+            Scope scope, 
+            MethodImpl method, 
+            out TypeDefinition valueType)
+        {
+            if (!this.TryEmitExpression(expression.Inner, context, scope, method, out valueType))
+            {
+                return false;
+            }
+
+            if (valueType.IsFloatingPoint)
+            {
+                method.Statements.Add(new AsmStatement { Instruction = "fldz" });
+                method.Statements.Add(new AsmStatement { Instruction = "fsubrp" });
+            }
+            else if (valueType.IsPointer || valueType.IsClass || valueType.IsArray || valueType.IsInterface)
+            {
+                string message = string.Format(
+                    System.Globalization.CultureInfo.CurrentCulture,
+                    Properties.Resources.CodeGenerator_NegativeNotSupported,
+                    valueType.FullName);
+                this.log.Write(new Message(
+                    expression.Start.Path,
+                    expression.Start.Line,
+                    expression.Start.Column,
+                    Severity.Error,
+                    message));
+                return false;
+            }
+            else
+            {
+                method.Statements.Add(new AsmStatement { Instruction = "neg eax" });
+            }
+
+            return true;
+        }
+
+        private bool TryEmitNotExpression(
+            NotExpression expression, 
+            CompilerContext context, 
+            Scope scope, 
+            MethodImpl method, 
+            out TypeDefinition valueType)
+        {
+            if (!this.TryEmitExpression(expression.Inner, context, scope, method, out valueType))
+            {
+                return false;
+            }
+
+            if (valueType.IsPointer || valueType.IsClass || valueType.IsArray || valueType.IsInterface || valueType.IsFloatingPoint)
+            {
+                string message = string.Format(
+                    System.Globalization.CultureInfo.CurrentCulture,
+                    Properties.Resources.CodeGenerator_NotNotSupported,
+                    valueType.FullName);
+                this.log.Write(new Message(
+                    expression.Start.Path,
+                    expression.Start.Line,
+                    expression.Start.Column,
+                    Severity.Error,
+                    message));
+                return false;
+            }
+            else
+            {
+                method.Statements.Add(new AsmStatement { Instruction = "not eax" });
+            }
+
+            return true;
         }
 
         private bool TryEmitNewExpression(

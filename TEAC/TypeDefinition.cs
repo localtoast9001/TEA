@@ -87,5 +87,43 @@
 
             return null;
         }
+
+        public MethodInfo FindConstructor(IList<TypeDefinition> argTypes)
+        {
+            foreach (MethodInfo method in this.Methods)
+            {
+                if (string.CompareOrdinal("constructor", method.Name) == 0)
+                {
+                    if (method.Parameters.Count != argTypes.Count)
+                    {
+                        continue;
+                    }
+
+                    bool match = true;
+                    for (int i = 0; i < method.Parameters.Count; i++)
+                    {
+                        if (string.CompareOrdinal(method.Parameters[i].Type.FullName, argTypes[i].FullName) != 0)
+                        {
+                            match = false;
+                            break;
+                        }
+                    }
+
+                    if (match)
+                    {
+                        return method;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        public MethodInfo GetCopyConstructor(CompilerContext context)
+        {
+            List<TypeDefinition> argTypes = new List<TypeDefinition>();
+            argTypes.Add(context.GetPointerType(this));
+            return FindConstructor(argTypes);
+        }
     }
 }

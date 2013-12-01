@@ -42,6 +42,8 @@ type
             function Characters() : array of character;
             function TryAssign(
                 source : array of character) : boolean;
+            function TryAppend(
+                source : ^String) : boolean;
         var
             _bufferRef : ^StringBuffer;
     end;

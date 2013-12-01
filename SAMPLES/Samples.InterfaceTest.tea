@@ -1,0 +1,108 @@
+namespace Samples;
+uses System;
+
+type
+    IObject = public interface
+        function AddRef() : integer;
+        function Release() : integer;
+    end;
+    IEnumerator;
+    IEnumerable = public interface
+        function GetEnumerator() : ^IEnumerator;
+    end;
+    IEnumerator = public interface(IObject)
+        function Current() : ^IObject;
+        function MoveNext() : boolean;
+        procedure Reset();
+    end; 
+    ICollection = public interface(IEnumerable)
+        function Count() : integer;
+        function IsReadOnly() : boolean;
+        procedure Add(item : ^IObject);
+        procedure Clear();
+        function Contains(item : ^IObject) : boolean;
+        procedure CopyTo(targetArray : array of ^IObject; arrayIndex : integer);
+        function Remove(item : ^IObject) : boolean;
+    end;
+    IList = public interface(ICollection)
+        function IndexOf(item : ^IObject) : integer;
+        procedure Insert(index : integer; item : ^IObject);
+        procedure RemoveAt(index : integer);
+    end;
+    LinkedListNode = class 
+        public
+            constructor(obj : ^IObject);
+            destructor();
+            function Next() : ^LinkedListNode;
+        var
+            _next : ^LinkedListNode;
+            _obj : ^IObject;
+    end;
+    LinkedList = public class interface(ICollection)
+        public
+            constructor();
+            virtual destructor();
+        var
+            _head : ^LinkedListNode;
+            _count : integer;
+    end;
+    Vector = public class interface(IList)
+        public 
+            constructor();
+            virtual destructor();
+        var
+            _storage : array of ^IObject;
+            _count : integer;
+    end;
+    RefCountedObject = abstract class interface(IObject)
+        public 
+            virtual destructor();
+        protected
+            constructor();
+        var
+            _refCount : integer;
+    end;
+    LinkedListEnumerator = class(RefCountedObject) interface(IEnumerator)
+        var
+            _head, _current : ^LinkedListNode;
+            _started : boolean;
+    end;
+    VectorEnumerator = class(RefCountedObject) interface(IEnumerator)
+        var
+            _vector : array of ^IObject;
+            _index, _count : integer;
+    end;
+
+constructor LinkedListNode(obj : ^IObject);
+begin
+    _next := nil;
+    _obj := obj;
+    _obj^.AddRef();
+end;
+
+destructor LinkedListNode();
+begin
+    if _obj <> nil then
+    begin
+        _obj^.Release();
+        _obj := nil;
+    end;
+end;
+
+constructor LinkedList();
+begin
+    _head := nil;
+    _count := 0;
+end;
+
+destructor LinkedList();
+var 
+    node : ^LinkedListNode;
+begin
+    while _head <> nil do
+    begin
+        node := _head;
+        _head := _head^.Next();
+        delete node;
+    end;
+end;
