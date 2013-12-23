@@ -318,6 +318,47 @@ namespace TEAC
             }
 
             tok = reader.Peek();
+            if (tok.Is(Keyword.Inherited))
+            {
+                reader.Read();
+                if (!this.Expect(reader, Keyword.LeftParen))
+                {
+                    return false;
+                }
+
+                tok = reader.Peek();
+                while (!tok.Is(Keyword.RightParen))
+                {
+                    Expression arg = null;
+                    if (!this.ParseExpression(reader, out arg))
+                    {
+                        return false;
+                    }
+
+                    methodDef.BaseConstructorArguments.Add(arg);
+                    tok = reader.Peek();
+                    if (!tok.Is(Keyword.Comma))
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        reader.Read();
+                    }
+                }
+
+                if (!this.Expect(reader, Keyword.RightParen))
+                {
+                    return false;
+                }
+
+                if (!this.Expect(reader, Keyword.SemiColon))
+                {
+                    return false;
+                }
+            }
+
+            tok = reader.Peek();
             if (tok.Is(Keyword.Var))
             {
                 VarBlock varBlock = null;
@@ -635,13 +676,22 @@ namespace TEAC
             ReferenceExpression inner = null;
             Token tok = reader.Peek();
             string identifier = null;
-            if (!this.ExpectIdentifier(reader, out identifier))
+            if (tok.Is(Keyword.Inherited))
             {
-                result = null;
-                return false;
+                inner = new InheritedReferenceExpression(tok);
+                reader.Read();
+            }
+            else
+            {
+                if (!this.ExpectIdentifier(reader, out identifier))
+                {
+                    result = null;
+                    return false;
+                }
+
+                inner = new NamedReferenceExpression(tok, identifier);
             }
 
-            inner = new NamedReferenceExpression(tok, identifier);
             tok = reader.Peek();
             while (true)
             {
@@ -855,7 +905,7 @@ namespace TEAC
                 return this.ParseAddressExpression(reader, out result);
             }
 
-            if (tok is IdentifierToken)
+            if (tok is IdentifierToken || tok.Is(Keyword.Inherited))
             {
                 ReferenceExpression refExpr = null;
                 if (!this.ParseReferenceExpression(reader, out refExpr))
@@ -1133,6 +1183,7 @@ namespace TEAC
                     tok.Is(Keyword.Procedure) || 
                     tok.Is(Keyword.Function) || 
                     tok.Is(Keyword.Static) ||
+                    tok.Is(Keyword.Virtual) ||
                     tok.Is(Keyword.Constructor) ||
                     tok.Is(Keyword.Destructor))
                 {
@@ -1161,6 +1212,7 @@ namespace TEAC
                     tok.Is(Keyword.Procedure) ||
                     tok.Is(Keyword.Function) ||
                     tok.Is(Keyword.Static) ||
+                    tok.Is(Keyword.Virtual) ||
                     tok.Is(Keyword.Constructor) ||
                     tok.Is(Keyword.Destructor))
                 {

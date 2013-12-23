@@ -105,6 +105,7 @@ namespace TEAC
         Function,
         If,
         In,
+        Inherited,
         Mod,
         Namespace,
         New,

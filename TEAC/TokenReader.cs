@@ -31,6 +31,7 @@ namespace TEAC
             { "function", Keyword.Function },
             { "if", Keyword.If },
             { "in", Keyword.In },
+            { "inherited", Keyword.Inherited },
             { "mod", Keyword.Mod },
             { "namespace", Keyword.Namespace },
             { "new", Keyword.New },

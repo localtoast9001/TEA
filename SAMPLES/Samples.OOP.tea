@@ -1,0 +1,122 @@
+namespace Samples;
+uses System;
+
+type
+    Program = static class
+        public
+            static function Main(
+                argc : integer; 
+                argv : array of array of character) : integer;
+    end;
+    A = class
+        public
+            virtual destructor();
+        protected 
+            constructor();
+    end;
+    B = class(A)
+        public
+            constructor(x : integer); 
+            virtual destructor();
+            virtual function GetValue() : integer;
+        var
+            _x : integer;
+    end;
+    C = class(B)
+        public
+            constructor(x, y : integer);
+            virtual destructor();
+            virtual function GetValue() : integer;
+        var
+            _y : integer;
+    end;         
+    D = class(B)
+        public 
+            constructor(x : integer; t : double);
+            virtual destructor();
+            virtual function GetValue() : integer;
+        var
+            _t : double;
+    end;
+
+constructor A();
+begin
+end;
+
+destructor A();
+begin
+end;
+
+constructor B(x : integer);
+begin
+    _x := x;
+end;
+
+destructor B();
+begin
+    Console.WriteLine('Destroying B');
+end;
+
+function B.GetValue() : integer;
+begin
+    Console.WriteLine('B GetValue');
+    GetValue := _x;
+end;
+
+constructor C(x, y : integer);
+inherited(x);
+begin
+    _y := y;
+end;
+
+destructor C();
+begin
+    Console.WriteLine('Destroying C');
+end;
+
+function C.GetValue() : integer;
+begin
+    Console.WriteLine('C GetValue');
+    GetValue := inherited.GetValue() + _y;
+end;
+
+constructor D(x : integer; t : double);
+inherited(x);
+begin
+    _t := t;
+end;
+
+destructor D();
+begin
+    Console.WriteLine('Destroying D');
+end;
+
+function D.GetValue() : integer;
+begin
+    Console.WriteLine('D GetValue');
+    GetValue := inherited.GetValue() + Math.Floor(_t);
+end;
+
+function Program.Main(
+    argc : integer;
+    argv : array of array of character) : integer;
+var
+    a : array [3] of ^A;
+    b : array [3] of ^B;
+    c : array [3] of integer;
+    i : integer;
+begin
+    b[0] := new B(1);
+    b[1] := new C(2, 3);
+    b[2] := new D(4, 5.5);
+    a[0] := b[0];
+    a[1] := b[1];
+    a[2] := b[2];
+    i := 0;
+    while i < 3 do
+    begin
+        c[i] := b[i]^.GetValue();
+        delete b[i];
+        i := i + 1;
+    end;
+end;

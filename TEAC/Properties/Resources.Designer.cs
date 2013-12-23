@@ -160,6 +160,15 @@ namespace TEAC.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot reference inherited members of type {0} because it has no base class..
+        /// </summary>
+        internal static string CodeGenerator_NoBaseTypeForInherited {
+            get {
+                return ResourceManager.GetString("CodeGenerator_NoBaseTypeForInherited", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The not operator (not) is not supported on type {0}..
         /// </summary>
         internal static string CodeGenerator_NotNotSupported {

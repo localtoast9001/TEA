@@ -8,6 +8,8 @@
 
     internal class TypeDefinition
     {
+        private const string VTablePointerFieldName = "?vtblptr";
+
         private List<MethodInfo> methods = new List<MethodInfo>();
         private List<FieldInfo> fields = new List<FieldInfo>();
 
@@ -124,6 +126,49 @@
             List<TypeDefinition> argTypes = new List<TypeDefinition>();
             argTypes.Add(context.GetPointerType(this));
             return FindConstructor(argTypes);
+        }
+
+        public FieldInfo GetVTablePointer()
+        {
+            Stack<TypeDefinition> typeHierarchy = new Stack<TypeDefinition>();
+            TypeDefinition type = this;
+            while (type != null)
+            {
+                typeHierarchy.Push(type);
+                type = type.BaseClass;
+            }
+
+            while (typeHierarchy.Count > 0)
+            {
+                type = typeHierarchy.Pop();
+                foreach (FieldInfo field in type.Fields)
+                {
+                    if (!field.IsStatic && string.CompareOrdinal(
+                        field.Name,
+                        VTablePointerFieldName) == 0)
+                    {
+                        return field;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        public FieldInfo AddVTablePointer(CompilerContext context, int offset)
+        {
+            TypeDefinition ptrType = null;
+            context.TryFindTypeByName("^", out ptrType);
+            FieldInfo field = new FieldInfo
+            {
+                Name = VTablePointerFieldName, 
+                IsPublic = true,
+                Offset = offset,
+                Type = context.GetArrayType(ptrType, 0)
+            };
+
+            this.fields.Add(field);
+            return field;
         }
     }
 }

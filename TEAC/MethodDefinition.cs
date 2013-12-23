@@ -10,6 +10,8 @@ namespace TEAC
     {
         private List<ParameterDeclaration> parameters = new List<ParameterDeclaration>();
 
+        private List<Expression> baseConstructorArgs = new List<Expression>();
+
         public MethodDefinition(Token start, string name)
             : base(start)
         {
@@ -27,6 +29,8 @@ namespace TEAC
         public BlockStatement Body { get; set; }
 
         public IList<ParameterDeclaration> Parameters { get { return this.parameters; } }
+
+        public IList<Expression> BaseConstructorArguments { get { return this.baseConstructorArgs; } }
 
         public void AddParameter(ParameterDeclaration parameterDecl)
         {

@@ -12,6 +12,14 @@ namespace TEAC
             : base(start)
         {
         }
+
+        public virtual bool UseVirtualDispatch
+        {
+            get
+            {
+                return true;
+            }
+        }
     }
 
     class NamedReferenceExpression : ReferenceExpression
@@ -23,6 +31,22 @@ namespace TEAC
         }
 
         public string Identifier { get; private set; }
+    }
+
+    class InheritedReferenceExpression : ReferenceExpression
+    {
+        public InheritedReferenceExpression(Token start)
+            : base(start)
+        {
+        }
+
+        public override bool UseVirtualDispatch
+        {
+            get
+            {
+                return false;
+            }
+        }
     }
 
     class MemberReferenceExpression : ReferenceExpression
@@ -37,6 +61,14 @@ namespace TEAC
         public string MemberName { get; private set; }
 
         public ReferenceExpression Inner { get; private set; }
+
+        public override bool UseVirtualDispatch
+        {
+            get
+            {
+                return this.Inner.UseVirtualDispatch;
+            }
+        }
     }
 
     class CallReferenceExpression : ReferenceExpression

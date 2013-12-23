@@ -12,6 +12,17 @@ type
             static function Sqrt(value : double) : double;
             static function Sin(value : double) : double;
             static function Cos(value : double) : double;
+            static function Tan(value : double) : double;
+            static function Abs(value : double) : double;
+            static function Log10(value : double) : double;
+            static function Log2(value : double) : double;
+            static function Ln(value : double) : double;
+            static function Sqr(value : double) : double;
+            static function Exp(value, power : double) : double;
+            static function Round(value : double) : integer;
+            static function Floor(value : double) : integer;
+            static function Ceiling(value : double) : integer;
+            static function Pi() : double;
     end;
     Memory = public static class
         public

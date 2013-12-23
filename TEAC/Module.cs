@@ -89,6 +89,40 @@ namespace TEAC
             this.DataSegment.Add(new DataEntry { Label = symbolName, Value = scrub });
             return symbolName;
         }
+
+        public void DefineVTable(TypeDefinition type)
+        {
+            string[] entries = new string[0];
+            Stack<TypeDefinition> typeStack = new Stack<TypeDefinition>();
+            TypeDefinition t = type;
+            while (t != null)
+            {
+                typeStack.Push(t);
+                t = t.BaseClass;
+            }
+
+            while (typeStack.Count > 0)
+            {
+                t = typeStack.Pop();
+                foreach (MethodInfo m in t.Methods)
+                {
+                    if (m.IsVirtual)
+                    {
+                        if (entries.Length <= m.VTableIndex)
+                        {
+                            string[] newEntries = new string[m.VTableIndex + 1];
+                            Array.Copy(entries, newEntries, entries.Length);
+                            entries = newEntries;
+                        }
+
+                        entries[m.VTableIndex] = m.MangledName;
+                    }
+                }
+            }
+
+            string label = "$Vtbl_" + type.MangledName;
+            this.DataSegment.Add(new DataEntry { Label = label, Value = entries });
+        }
     }
 
     internal class DataEntry

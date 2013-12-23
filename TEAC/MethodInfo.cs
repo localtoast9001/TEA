@@ -28,6 +28,72 @@
         public bool IsPublic { get; set; }
         public bool IsProtected { get; set; }
         public TypeDefinition ReturnType { get; set; }
+        public int VTableIndex { get; set; }
+
+        public void AssignVTableIndex()
+        {
+            if (!IsVirtual)
+            {
+                return;
+            }
+
+            TypeDefinition type = this.Type.BaseClass;
+            int maxIndex = -1;
+            while (type != null)
+            {
+                foreach (MethodInfo method in type.Methods)
+                {
+                    if (!method.IsVirtual)
+                    {
+                        continue;
+                    }
+
+                    maxIndex = maxIndex > method.VTableIndex ? maxIndex : method.VTableIndex;
+                    if (string.CompareOrdinal(method.Name, this.Name) == 0)
+                    {
+                        bool match = true;
+                        if (method.Parameters.Count != this.Parameters.Count)
+                        {
+                            continue;
+                        }
+
+                        for (int i = 0; i < method.Parameters.Count; i++)
+                        {
+                            if (string.CompareOrdinal(method.Parameters[i].Type.FullName, this.Parameters[i].Type.FullName) != 0)
+                            {
+                                match = false;
+                                break;
+                            }
+                        }
+
+                        if (match)
+                        {
+                            this.VTableIndex = method.VTableIndex;
+                            return;
+                        }
+                    }
+                }
+
+                type = type.BaseClass;
+            }
+
+            foreach (MethodInfo method in this.Type.Methods)
+            {
+                if (!method.IsVirtual)
+                {
+                    continue;
+                }
+
+                if (string.CompareOrdinal(method.MangledName, this.MangledName) == 0)
+                {
+                    continue;
+                }
+
+                maxIndex = maxIndex > method.VTableIndex ? maxIndex : method.VTableIndex;
+            }
+
+            this.VTableIndex = maxIndex + 1;
+        }
 
         public string MangledName
         {

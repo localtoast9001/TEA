@@ -150,6 +150,9 @@
   <data name="CodeGenerator_NegativeNotSupported" xml:space="preserve">
     <value>The negative operator (-) is not supported on type {0}.</value>
   </data>
+  <data name="CodeGenerator_NoBaseTypeForInherited" xml:space="preserve">
+    <value>Cannot reference inherited members of type {0} because it has no base class.</value>
+  </data>
   <data name="CodeGenerator_NotNotSupported" xml:space="preserve">
     <value>The not operator (not) is not supported on type {0}.</value>
   </data>

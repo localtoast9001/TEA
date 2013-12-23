@@ -105,7 +105,7 @@ namespace TEAC
                         }
                         else
                         {
-                            if (!baseType.IsClass)
+                            if (!baseType.IsClass || baseType.IsStaticClass)
                             {
                                 string message = string.Format(
                                     System.Globalization.CultureInfo.CurrentCulture,
@@ -126,6 +126,7 @@ namespace TEAC
                         }
                     }
 
+                    bool hasVirtualMethods = false;
                     foreach (MethodDeclaration meth in classDecl.PublicMethods)
                     {
                         MethodInfo methodInfo = null;
@@ -137,6 +138,10 @@ namespace TEAC
 
                         methodInfo.IsPublic = true;
                         typeDef.Methods.Add(methodInfo);
+                        if (methodInfo.IsVirtual)
+                        {
+                            hasVirtualMethods = true;
+                        }
                     }
 
                     foreach (MethodDeclaration meth in classDecl.ProtectedMethods)
@@ -150,6 +155,10 @@ namespace TEAC
 
                         methodInfo.IsProtected = true;
                         typeDef.Methods.Add(methodInfo);
+                        if (methodInfo.IsVirtual)
+                        {
+                            hasVirtualMethods = true;
+                        }
                     }
 
                     foreach (MethodDeclaration meth in classDecl.PrivateMethods)
@@ -163,9 +172,28 @@ namespace TEAC
 
                         methodInfo.IsProtected = true;
                         typeDef.Methods.Add(methodInfo);
+                        if (methodInfo.IsVirtual)
+                        {
+                            hasVirtualMethods = true;
+                        }
                     }
 
                     int size = 0;
+                    if (typeDef.BaseClass != null)
+                    {
+                        size = typeDef.BaseClass.Size;
+                    }
+
+                    if (hasVirtualMethods)
+                    {
+                        FieldInfo vtblPtr = typeDef.GetVTablePointer();
+                        if (vtblPtr == null)
+                        {
+                            vtblPtr = typeDef.AddVTablePointer(context, size);
+                            size += vtblPtr.Type.Size;
+                        }
+                    }
+
                     if (classDecl.Fields != null)
                     {
                         foreach (var field in classDecl.Fields.Variables)
@@ -265,6 +293,15 @@ namespace TEAC
             TypeDefinition typeDef)
         {
             bool failed = false;
+            if (string.CompareOrdinal(method.Method.MangledName, method.Method.Type.Methods[0].MangledName) == 0)
+            {
+                // define the VTBL in the module that defines the 1st method.
+                if (method.Method.Type.GetVTablePointer() != null)
+                {
+                    method.Module.DefineVTable(method.Method.Type);
+                }
+            }
+
             if (!string.IsNullOrEmpty(methodDef.ExternImpl))
             {
                 method.Module.AddExtern(methodDef.ExternImpl);
@@ -274,6 +311,74 @@ namespace TEAC
 
             Stack<LocalVariable> destructables = new Stack<LocalVariable>();
             Scope scope = context.BeginScope(method.Method);
+            if (string.CompareOrdinal(method.Method.Name, "constructor") == 0)
+            {
+                if (method.Method.Type.BaseClass != null)
+                {
+                    MethodInfo baseInit = null;
+                    int argSize = 0;
+                    if (methodDef.BaseConstructorArguments.Count > 0)
+                    {
+                        List<TypeDefinition> argTypes = new List<TypeDefinition>();
+                        foreach (Expression arg in methodDef.BaseConstructorArguments.Reverse())
+                        {
+                            TypeDefinition valueType = null;
+                            if (!this.TryEmitExpression(arg, context, scope, method, out valueType))
+                            {
+                                return false;
+                            }
+
+                            PushResult(method, valueType);
+                            argSize += ((valueType.Size + 3) / 4) * 4;
+                            argTypes.Insert(0, valueType);
+                        }
+
+                        baseInit = method.Method.Type.BaseClass.FindConstructor(argTypes);
+                        if (baseInit == null)
+                        {
+                            string message = string.Format(
+                                System.Globalization.CultureInfo.CurrentCulture,
+                                Properties.Resources.CodeGenerator_CannotFindConstructor,
+                                method.Method.Type.BaseClass);
+                            log.Write(new Message(
+                                methodDef.Start.Path,
+                                methodDef.Start.Line,
+                                methodDef.Start.Column,
+                                Severity.Error,
+                                message));
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        baseInit = method.Method.Type.BaseClass.GetDefaultConstructor();
+                    }
+
+                    if (baseInit != null)
+                    {
+                        method.Statements.Add(new AsmStatement { Instruction = "mov ecx,_this$[ebp]" });
+                        method.Statements.Add(new AsmStatement { Instruction = "push ecx" });
+                        argSize += 4;
+                        method.Statements.Add(new AsmStatement { Instruction = "call " + baseInit.MangledName });
+                        method.Statements.Add(new AsmStatement { Instruction = "add esp," + argSize });
+                    }
+                }
+
+                FieldInfo vtable = method.Method.Type.GetVTablePointer();
+                if (vtable != null)
+                {
+                    // method.Module.ExternList.Add("$Vtbl_" + method.Method.Type.MangledName);
+                    method.Statements.Add(new AsmStatement { Instruction = string.Format("lea eax,[$Vtbl_{0}]", method.Method.Type.MangledName) });
+                    method.Statements.Add(new AsmStatement { Instruction = "mov ecx,_this$[ebp]" });
+                    if (vtable.Offset > 0)
+                    {
+                        method.Statements.Add(new AsmStatement { Instruction = string.Format("add ecx,{0}", vtable.Offset) });
+                    }
+
+                    method.Statements.Add(new AsmStatement { Instruction = "mov [ecx],eax" });
+                }
+            }
+
             if (methodDef.LocalVariables != null)
             {
                 foreach (VariableDeclaration varDecl in methodDef.LocalVariables.Variables)
@@ -412,6 +517,24 @@ namespace TEAC
                 }
             }
 
+            if (string.CompareOrdinal("destructor", method.Method.Name) == 0)
+            {
+                // call base class destructor at the end.
+                TypeDefinition baseClass = method.Method.Type.BaseClass;
+                if (baseClass != null)
+                {
+                    MethodInfo baseDestructor = baseClass.GetDestructor();
+                    if (baseDestructor != null)
+                    {
+                        method.Module.AddProto(baseDestructor);
+                        method.Statements.Add(new AsmStatement { Instruction = "mov eax,_this$[ebp]" });
+                        method.Statements.Add(new AsmStatement { Instruction = "push eax" });
+                        method.Statements.Add(new AsmStatement { Instruction = "call " + baseDestructor.MangledName });
+                        method.Statements.Add(new AsmStatement { Instruction = "add esp,4" });
+                    }
+                }
+            }
+
             method.Statements.Add(new AsmStatement { Instruction = "mov esp,ebp" });
             method.Statements.Add(new AsmStatement { Instruction = "pop ebp" });
             method.Statements.Add(new AsmStatement { Instruction = "ret" });
@@ -523,7 +646,27 @@ namespace TEAC
                     {
                         this.PushResult(method, valueType);
                         method.Module.AddProto(destructor);
-                        method.Statements.Add(new AsmStatement { Instruction = string.Format("call {0}", destructor.MangledName) });
+                        if (destructor.IsVirtual)
+                        {
+                            FieldInfo vtblPointer = innerType.GetVTablePointer();
+                            if (vtblPointer.Offset > 0)
+                            {
+                                method.Statements.Add(new AsmStatement { Instruction = string.Format("add eax,{0}", vtblPointer.Offset) });
+                            }
+
+                            method.Statements.Add(new AsmStatement { Instruction = "mov ecx,[eax]" });
+                            if (destructor.VTableIndex > 0)
+                            {
+                                method.Statements.Add(new AsmStatement { Instruction = string.Format("add ecx,{0}", destructor.VTableIndex * 4) });
+                            }
+
+                            method.Statements.Add(new AsmStatement { Instruction = "call dword ptr [ecx]" });                     
+                        }
+                        else
+                        {
+                            method.Statements.Add(new AsmStatement { Instruction = string.Format("call {0}", destructor.MangledName) });
+                        }
+
                         method.Statements.Add(new AsmStatement { Instruction = string.Format("add esp,{0}", valueType.Size) });
                     }
                 }
@@ -892,7 +1035,27 @@ namespace TEAC
                     method.Statements.Add(new AsmStatement { Instruction = "push eax" });
                 }
 
-                method.Statements.Add(new AsmStatement { Instruction = "call " + callLoc });
+                if (calleeMethod.IsVirtual && callExpr.Inner.UseVirtualDispatch)
+                {
+                    FieldInfo vtablePtr = calleeMethod.Type.GetVTablePointer();
+                    if (vtablePtr.Offset > 0)
+                    {
+                        method.Statements.Add(new AsmStatement { Instruction = string.Format("add eax,{0}", vtablePtr.Offset) });
+                    }
+
+                    method.Statements.Add(new AsmStatement { Instruction = "mov ecx,[eax]" });
+                    if (calleeMethod.VTableIndex > 0)
+                    {
+                        method.Statements.Add(new AsmStatement { Instruction = string.Format("add ecx,{0}", calleeMethod.VTableIndex * 4) });
+                    }
+
+                    method.Statements.Add(new AsmStatement { Instruction = "call dword ptr [ecx]" });
+                }
+                else
+                {
+                    method.Statements.Add(new AsmStatement { Instruction = "call " + callLoc });
+                }
+
                 if (!calleeMethod.IsStatic)
                 {
                     argSize += 4;
@@ -1048,8 +1211,7 @@ namespace TEAC
 
             if (valueType.IsFloatingPoint)
             {
-                method.Statements.Add(new AsmStatement { Instruction = "fldz" });
-                method.Statements.Add(new AsmStatement { Instruction = "fsubrp" });
+                method.Statements.Add(new AsmStatement { Instruction = "fchs" });
             }
             else if (valueType.IsPointer || valueType.IsClass || valueType.IsArray || valueType.IsInterface)
             {
@@ -1187,6 +1349,7 @@ namespace TEAC
                     saveAlloc.Add(new AsmStatement { Instruction = "test eax,eax" });
                     saveAlloc.Add(new AsmStatement { Instruction = "jz " + jumpLabel });
                     method.Statements.InsertRange(nullTestStart, saveAlloc);
+                    method.Statements.Add(new AsmStatement { Instruction = string.Format("mov eax,_{0}$[ebp]", tempPtr.Name) });
                     method.Statements.Add(new AsmStatement { Instruction = "push eax" });
                     method.Module.AddProto(constructor);
                     method.Statements.Add(new AsmStatement { Instruction = "call " + constructor.MangledName });
@@ -1840,6 +2003,40 @@ namespace TEAC
                 return true;
             }
 
+            InheritedReferenceExpression inhRefExpr = referenceExpression as InheritedReferenceExpression;
+            if (inhRefExpr != null)
+            {
+                storageType = method.Method.Type.BaseClass;
+                if (storageType == null)
+                {
+                    string message = string.Format(
+                        System.Globalization.CultureInfo.CurrentCulture,
+                        Properties.Resources.CodeGenerator_NoBaseTypeForInherited,
+                        method.Method.Type.FullName);
+                    this.log.Write(new Message(
+                        inhRefExpr.Start.Path,
+                        inhRefExpr.Start.Line,
+                        inhRefExpr.Start.Column,
+                        Severity.Error,
+                        message));
+                    location = null;
+                    return false;
+                }
+
+                SymbolEntry thisSymbol = null;
+                if (!scope.TryLookup("this", out thisSymbol))
+                {
+                    // reference a static on the base class.
+                    location = null;
+                }
+                else
+                {
+                    location = "_this$[ebp]";
+                }
+
+                return true;
+            }
+
             location = null;
             storageType = null;
             return false;
@@ -1854,8 +2051,14 @@ namespace TEAC
             methodInfo = new MethodInfo(type)
             {
                 Name = methodDecl.MethodName, 
-                IsStatic = methodDecl.IsStatic
+                IsStatic = methodDecl.IsStatic,
+                IsVirtual = methodDecl.IsVirtual
             };
+
+            if (methodInfo.IsVirtual)
+            {
+                methodInfo.AssignVTableIndex();
+            }
 
             TypeDefinition returnType = null;
             if (methodDecl.ReturnType != null)
