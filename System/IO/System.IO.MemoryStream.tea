@@ -1,0 +1,222 @@
+namespace System.IO;
+uses System, System.IO;
+
+constructor MemoryStream();
+begin
+    _buffer := nil;
+    _index := 0;
+    _count := 0;
+    _capacity := 4096;
+    _currentIndex := 0;
+    _ownsBuffer := true;
+    _canWrite := true;
+end;
+
+constructor MemoryStream(capacity : integer);
+begin
+    _buffer := nil;
+    _index := 0;
+    _count := 0;
+    if capacity > 0 then
+    begin
+        _capacity := capacity;
+    end
+    else
+    begin
+        _capacity := 4096;
+    end;
+    _currentIndex := 0;
+    _ownsBuffer := true;
+    _canWrite := true;
+end;
+
+constructor MemoryStream(
+    buffer : array of byte; 
+    index, count : integer);
+begin
+    _buffer := buffer;
+    _index := index;
+    _count := count;
+    _capacity := count;
+    _currentIndex := index;
+    _ownsBuffer := false;
+    _canWrite := true;
+end;
+
+constructor MemoryStream(
+    buffer : array of byte;
+    index, count : integer;
+    write : boolean);
+begin
+    _buffer := buffer;
+    _index := index;
+    _count := count;
+    _capacity := count;
+    _currentIndex := index;
+    _ownsBuffer := false;
+    _canWrite := write;
+end;
+
+destructor MemoryStream();
+begin
+    Close();
+end;
+
+procedure MemoryStream.Close();
+begin
+    if _ownsBuffer and (_buffer <> nil) then
+    begin
+        Memory.Free(_buffer);
+        _buffer := nil;
+        _count := 0;
+        _index := 0;
+        _currentIndex := 0;
+    end;
+end;
+
+function MemoryStream.Read(
+    buffer : array of byte;
+    offset, count : integer) : integer;
+var
+    bytesToRead, eos : integer;
+begin
+    Read := 0;
+    bytesToRead := count;
+    if (buffer <> nil) and (offset >= 0) and (count > 0) then
+    begin
+        if _currentIndex + count > _count then
+            bytesToRead := _count - _currentIndex;
+        {copy}
+        _currentIndex := _currentIndex + bytesToRead;
+        Read := bytesToRead;
+    end;    
+end;
+
+function MemoryStream.Write(
+    buffer : array of byte;
+    offset, count : integer) : boolean;
+var
+    safeToCopy : boolean;
+    expectedSize : integer;
+begin
+    safeToCopy := false;
+    expectedSize := _currentIndex + count;
+    Write := false;
+    if _canWrite then
+    begin
+        if expectedSize > _index + _count then
+        begin
+            if _ownsBuffer then
+            begin
+                safeToCopy := Resize(expectedSize);
+            end;
+        end
+        else
+            safeToCopy := true;
+        if safeToCopy then
+        begin
+            {copy}
+            _currentIndex := _currentIndex + count;
+            Write := true;
+        end;
+    end;
+end;
+
+function MemoryStream.GetLength() : long;
+begin
+    GetLength := Convert.ToLong(_count);
+end;
+
+function MemoryStream.Resize(
+    length : long) : boolean;
+var
+    intLength : integer;
+    newBuffer : array of byte;
+begin
+    intLength := Convert.Lo(length);
+    Resize := false;
+    if _ownsBuffer then
+    begin
+        if intLength < _count then
+        begin
+            _count := intLength;
+            if _currentIndex > _count then
+                _currentIndex := _count;
+            Resize := true;
+        end
+        else
+        begin
+            newBuffer := Memory.Alloc(intLength);
+            if newBuffer <> nil then
+            begin
+                {copy}
+                Memory.Free(_buffer);
+                _buffer := newBuffer;
+                _count := intLength;
+                Resize := true;
+            end;
+        end;
+    end;
+end;
+
+function MemoryStream.SeekBegin(
+    offset : integer) : boolean;  
+begin
+    if offset > _count then
+    begin
+        SeekBegin := false;
+    end
+    else
+    begin
+        _index := offset;
+        SeekBegin := true;
+    end;
+end;
+
+function MemoryStream.SeekCurrent(
+    offset : integer) : boolean;  
+var
+    newIndex : integer;
+begin
+    SeekCurrent := false;
+    newIndex := _index + offset;
+    if (newIndex <= _count) and (newIndex >= 0) then
+    begin
+        _index := newIndex;
+        SeekCurrent := true;
+    end;
+end;
+
+function MemoryStream.SeekEnd(
+    offset : integer) : boolean;
+var
+    newIndex : integer;
+begin
+    SeekEnd := false;
+    newIndex := _count + offset;
+    if (newIndex <= _count) and (newIndex >= 0) then
+    begin
+        _index := newIndex;
+        SeekCurrent := true;
+    end;
+end;
+
+function MemoryStream.CanWrite() : boolean;
+begin
+    CanWrite := _canWrite;
+end;
+
+function MemoryStream.CanRead() : boolean;
+begin
+    CanRead := true;
+end;
+
+function MemoryStream.CanSeek() : boolean;
+begin
+    CanSeek := true;
+end;
+
+function MemoryStream.CanResize() : boolean;               
+begin
+    CanResize := _ownsBuffer;
+end;

@@ -1,0 +1,42 @@
+namespace System;
+uses System;
+
+function Convert.Lo(value : long) : integer;
+extern '_loi8';
+
+function Convert.Hi(value : long) : integer;
+extern '_hii8';
+
+function Convert.Lo(value : integer) : short;
+extern '_loi';
+
+function Convert.Hi(value : integer) : short;
+extern '_hii';
+
+function Convert.Lo(value : short) : byte;
+extern '_loi2';
+
+function Convert.Hi(value : short) : byte;
+extern '_hii2';
+
+function Convert.ToCharacter(value : integer) : character;
+extern '_tocharacteri';
+
+function Convert.ToCharacter(value : short) : character;
+extern '_tocharacteri2';
+
+function Convert.ToInteger(value : character) : integer;
+extern '_tointegerc';
+
+function Convert.ToInteger(value : short) : integer;
+extern '_tointegeri2';
+
+function Convert.ToShort(value : byte) : short;
+extern '_toshortb';
+
+function Convert.ToShort(value : character) : short;
+extern '_toshortc';
+
+function Convert.ToLong(value : integer) : long;
+extern '_tolongi';
+

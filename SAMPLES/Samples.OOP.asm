@@ -1,28 +1,192 @@
 .model flat,C
 
-_ZN6System7Console9WriteLineEAc PROTO C
 _ZN7Samples1A10destructorEv PROTO C
 _ZN7Samples1B10destructorEv PROTO C
 _ZN7Samples1B8GetValueEv PROTO C
+_ZN7Samples1A11constructorEv PROTO C
+_ZN6System7Console9WriteLineEAc PROTO C
+_ZN7Samples1C10destructorEv PROTO C
+_ZN7Samples1C8GetValueEv PROTO C
+_ZN7Samples1B11constructorEi PROTO C
+_ZN7Samples1D10destructorEv PROTO C
+_ZN7Samples1D8GetValueEv PROTO C
 _ZN6System4Math5FloorEd PROTO C
 _ZN6System6Memory5AllocEi PROTO C
-_ZN7Samples1B11constructorEi PROTO C
 _ZN7Samples1C11constructorEii PROTO C
 _ZN7Samples1D11constructorEid PROTO C
 _ZN6System6Memory4FreeEPb PROTO C
 
 .data
 $Vtbl__ZN7Samples1A	dd	_ZN7Samples1A10destructorEv
-$Vtbl__ZN7Samples1B	dd	_ZN7Samples1B10destructorEv,_ZN7Samples1B8GetValueEv
-$String_0	db	68,0,101,0,115,0,116,0,114,0,111,0,121,0,105,0,110,0,103,0,32,0,66,0,0,0
-$String_1	db	66,0,32,0,71,0,101,0,116,0,86,0,97,0,108,0,117,0,101,0,0,0
-$Vtbl__ZN7Samples1C	dd	_ZN7Samples1C10destructorEv,_ZN7Samples1C8GetValueEv
-$String_2	db	68,0,101,0,115,0,116,0,114,0,111,0,121,0,105,0,110,0,103,0,32,0,67,0,0,0
-$String_3	db	67,0,32,0,71,0,101,0,116,0,86,0,97,0,108,0,117,0,101,0,0,0
-$Vtbl__ZN7Samples1D	dd	_ZN7Samples1D10destructorEv,_ZN7Samples1D8GetValueEv
-$String_4	db	68,0,101,0,115,0,116,0,114,0,111,0,121,0,105,0,110,0,103,0,32,0,68,0,0,0
-$String_5	db	68,0,32,0,71,0,101,0,116,0,86,0,97,0,108,0,117,0,101,0,0,0
-$Double_0	db	0,0,0,0,0,0,22,64
+
+$Vtbl__ZN7Samples1B	dd	_ZN7Samples1B10destructorEv
+	dd	_ZN7Samples1B8GetValueEv
+
+$String_0	db	68
+	db	0
+	db	101
+	db	0
+	db	115
+	db	0
+	db	116
+	db	0
+	db	114
+	db	0
+	db	111
+	db	0
+	db	121
+	db	0
+	db	105
+	db	0
+	db	110
+	db	0
+	db	103
+	db	0
+	db	32
+	db	0
+	db	66
+	db	0
+	db	0
+	db	0
+
+$String_1	db	66
+	db	0
+	db	32
+	db	0
+	db	71
+	db	0
+	db	101
+	db	0
+	db	116
+	db	0
+	db	86
+	db	0
+	db	97
+	db	0
+	db	108
+	db	0
+	db	117
+	db	0
+	db	101
+	db	0
+	db	0
+	db	0
+
+$Vtbl__ZN7Samples1C	dd	_ZN7Samples1C10destructorEv
+	dd	_ZN7Samples1C8GetValueEv
+
+$String_2	db	68
+	db	0
+	db	101
+	db	0
+	db	115
+	db	0
+	db	116
+	db	0
+	db	114
+	db	0
+	db	111
+	db	0
+	db	121
+	db	0
+	db	105
+	db	0
+	db	110
+	db	0
+	db	103
+	db	0
+	db	32
+	db	0
+	db	67
+	db	0
+	db	0
+	db	0
+
+$String_3	db	67
+	db	0
+	db	32
+	db	0
+	db	71
+	db	0
+	db	101
+	db	0
+	db	116
+	db	0
+	db	86
+	db	0
+	db	97
+	db	0
+	db	108
+	db	0
+	db	117
+	db	0
+	db	101
+	db	0
+	db	0
+	db	0
+
+$Vtbl__ZN7Samples1D	dd	_ZN7Samples1D10destructorEv
+	dd	_ZN7Samples1D8GetValueEv
+
+$String_4	db	68
+	db	0
+	db	101
+	db	0
+	db	115
+	db	0
+	db	116
+	db	0
+	db	114
+	db	0
+	db	111
+	db	0
+	db	121
+	db	0
+	db	105
+	db	0
+	db	110
+	db	0
+	db	103
+	db	0
+	db	32
+	db	0
+	db	68
+	db	0
+	db	0
+	db	0
+
+$String_5	db	68
+	db	0
+	db	32
+	db	0
+	db	71
+	db	0
+	db	101
+	db	0
+	db	116
+	db	0
+	db	86
+	db	0
+	db	97
+	db	0
+	db	108
+	db	0
+	db	117
+	db	0
+	db	101
+	db	0
+	db	0
+	db	0
+
+$Double_0	db	0
+	db	0
+	db	0
+	db	0
+	db	0
+	db	0
+	db	22
+	db	64
+
 
 .code
 _this$=8
@@ -192,12 +356,12 @@ _ZN7Samples1D11constructorEid PROC C EXPORT
 	fstp qword ptr [esp]
 	mov ecx,_this$[ebp]
 	add ecx,8
-	mov esi,esp
-	lea edi,[ecx]
-	mov ecx,8
-	cld
-	rep movsb
-	add esp,8
+	pop eax
+	pop edx
+	lea ecx,[ecx]
+	mov [ecx],eax
+	add ecx,4
+	mov [ecx],edx
 	mov esp,ebp
 	pop ebp
 	ret

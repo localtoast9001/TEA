@@ -1,0 +1,42 @@
+namespace RayTracer;
+uses System, RayTracer;
+
+constructor Vector3D();
+begin
+    _x := 0.0;
+    _y := 0.0;
+    _z := 0.0;
+end;
+
+constructor Vector3D(x, y, z : double);
+begin
+    _x := x;
+    _y := y;
+    _z := z;
+end;
+
+function Vector3D.GetX() : double;
+begin
+    GetX := _x;
+end;
+
+function Vector3D.GetY() : double;
+begin
+    GetY := _y;
+end;
+
+function Vector3D.GetZ() : double;
+begin
+    GetZ := _z;
+end;
+
+function Vector3D.GetLengthSq() : double;
+begin
+    GetLengthSq := Math.Sqr(_x) + Math.Sqr(_y) + Math.Sqr(_z);
+end;
+
+function Vector3D.GetLength() : double;
+begin
+    GetLength := Math.Sqrt(GetLengthSq());
+end;
+

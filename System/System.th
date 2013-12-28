@@ -7,6 +7,22 @@ type
             static function Write(text : array of character) : integer;
             static function Write(ch : character) : integer;
     end;
+    Convert = public static class
+        public
+            static function Lo(value : long) : integer;
+            static function Hi(value : long) : integer;
+            static function Lo(value : integer) : short;
+            static function Hi(value : integer) : short;
+            static function Lo(value : short) : byte;
+            static function Hi(value : short) : byte;
+            static function ToCharacter(value : integer) : character;
+            static function ToCharacter(value : short) : character;
+            static function ToInteger(value : character) : integer;
+            static function ToInteger(value : short) : integer;
+            static function ToShort(value : byte) : short;
+            static function ToShort(value : character) : short;
+            static function ToLong(value : integer) : long;
+    end;
     Math = public static class
         public
             static function Sqrt(value : double) : double;
@@ -23,6 +39,8 @@ type
             static function Floor(value : double) : integer;
             static function Ceiling(value : double) : integer;
             static function Pi() : double;
+            static function Max(x, y : integer) : integer;
+            static function Min(x, y : integer) : integer;
     end;
     Memory = public static class
         public

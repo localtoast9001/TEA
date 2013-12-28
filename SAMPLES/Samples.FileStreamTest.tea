@@ -1,0 +1,72 @@
+namespace Samples;
+uses System, System.IO;
+
+type
+    Program = public static class
+        public
+            static function Main(
+                argc : integer; 
+                argv : array of array of character) : integer;
+        private
+            static function StringLength(value : array of character) : integer;
+    end;
+
+function Program.StringLength(
+    value : array of character) : integer;
+begin
+    StringLength := 0;
+    while value[StringLength] > 0 do
+    begin
+        StringLength := StringLength + 1;
+    end;
+end;
+
+function Program.Main(
+    argc : integer;
+    argv : array of array of character) : integer;
+var 
+    failed : boolean;
+    path : array of character;
+    contents : array of character;
+    contentsLength : integer;
+    fs : FileStream;
+    lastError : integer;
+    unicode : character;
+begin
+    unicode := Convert.ToCharacter(Convert.Lo(65279));
+    Main := 0;
+    failed := false;
+    if argc = 3 then
+    begin
+        path := argv[1];
+        contents := argv[2];
+        contentsLength := StringLength(contents) * 2;
+        if fs.Open(path, false, true) then
+        begin
+            failed := not fs.Write(
+                @unicode,
+                0,
+                2);
+            if not failed then
+            begin
+                failed := not fs.Write(
+                    contents,
+                    0,
+                    contentsLength);
+            end;
+        end
+        else
+        begin
+            failed := true;
+        end;
+    end
+    else
+        failed := true;
+
+    if failed then
+    begin
+        lastError := fs.LastError();
+        Console.WriteLine('Usage: Samples.FileStream.exe <file> <text>');
+        Main := lastError;
+    end;
+end;

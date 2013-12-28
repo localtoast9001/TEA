@@ -1,0 +1,22 @@
+namespace RayTracer.Shapes;
+uses System, RayTracer, RayTracer.Shapes;
+
+constructor Sphere(center : ^Vector3D; radius : double);
+begin
+    _center := center^;
+    _radius := radius;    
+end;
+
+destructor Sphere();
+begin
+end;
+ 
+function Sphere.Intersect(
+    ray : ^Ray3D;
+    point, normal, textureCoord : ^Vector3D) : boolean; 
+begin
+    point^ := Vector3D();
+    normal^ := Vector3D();
+    textureCoord^ := Vector3D();
+    Intersect := false;
+end;

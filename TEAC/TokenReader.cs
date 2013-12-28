@@ -11,6 +11,7 @@ namespace TEAC
     {
         private static readonly Dictionary<string, Keyword> IdentifierKeywordMap = new Dictionary<string, Keyword>(StringComparer.Ordinal)
         {
+            { "abstract", Keyword.Abstract },
             { "and", Keyword.And },
             { "array", Keyword.Array },
             { "begin", Keyword.Begin },

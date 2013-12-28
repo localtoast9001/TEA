@@ -1184,6 +1184,7 @@ namespace TEAC
                     tok.Is(Keyword.Function) || 
                     tok.Is(Keyword.Static) ||
                     tok.Is(Keyword.Virtual) ||
+                    tok.Is(Keyword.Abstract) ||
                     tok.Is(Keyword.Constructor) ||
                     tok.Is(Keyword.Destructor))
                 {
@@ -1213,6 +1214,7 @@ namespace TEAC
                     tok.Is(Keyword.Function) ||
                     tok.Is(Keyword.Static) ||
                     tok.Is(Keyword.Virtual) ||
+                    tok.Is(Keyword.Abstract) ||
                     tok.Is(Keyword.Constructor) ||
                     tok.Is(Keyword.Destructor))
                 {
@@ -1301,9 +1303,16 @@ namespace TEAC
 
             bool isStatic = false;
             bool isVirtual = false;
+            bool isAbstract = false;
             if (tok.Is(Keyword.Static))
             {
                 isStatic = true;
+                reader.Read();
+                tok = reader.Peek();
+            }
+            else if (tok.Is(Keyword.Abstract))
+            {
+                isAbstract = true;
                 reader.Read();
                 tok = reader.Peek();
             }
@@ -1345,7 +1354,8 @@ namespace TEAC
                 start,
                 methodName,
                 isStatic,
-                isVirtual);
+                isVirtual,
+                isAbstract);
 
             if (!this.Expect(reader, Keyword.LeftParen))
             {
@@ -1410,6 +1420,7 @@ namespace TEAC
                 start,
                 "constructor",
                 false,
+                false,
                 false);
 
             if (!this.Expect(reader, Keyword.LeftParen))
@@ -1473,7 +1484,8 @@ namespace TEAC
                 tok, 
                 "destructor", 
                 false,
-                isVirtual);
+                isVirtual,
+                false);
             return true;
         }
 

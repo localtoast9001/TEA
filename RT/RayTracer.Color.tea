@@ -1,0 +1,46 @@
+namespace RayTracer;
+uses RayTracer;
+
+constructor Color();
+begin
+    _r := 0.0;
+    _g := 0.0;
+    _b := 0.0;
+    _a := 0.0;
+end;
+
+constructor Color(r, g, b : double);
+begin
+    _r := r;
+    _g := g;
+    _b := b;
+    _a := 1.0;
+end;
+
+constructor Color(r, g, b, a : double);
+begin
+    _r := r;
+    _g := g;
+    _b := b;
+    _a := a;
+end;
+
+function Color.GetRed() : double;
+begin
+    GetRed := _r;
+end;
+
+function Color.GetGreen() : double;
+begin
+    GetGreen := _g;
+end;
+
+function Color.GetBlue() : double;
+begin
+    GetBlue := _b;
+end;
+
+function Color.GetAlpha() : double;
+begin
+    GetAlpha := _a;
+end;

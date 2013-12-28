@@ -11,6 +11,7 @@ namespace TEAC
         private List<string> uses = new List<string>();
         private List<string> includes = new List<string>();
         private Dictionary<string, TypeDefinition> types = new Dictionary<string, TypeDefinition>();
+        private HashSet<string> alreadyUsed = new HashSet<string>();
 
         public CompilerContext()
         {
@@ -19,6 +20,20 @@ namespace TEAC
                 FullName = "integer",
                 Size = 4,
                 SpecialMangledName = "i"
+            };
+
+            TypeDefinition shortType = new TypeDefinition
+            {
+                FullName = "short",
+                Size = 2,
+                SpecialMangledName = "i2"
+            };
+
+            TypeDefinition longType = new TypeDefinition
+            {
+                FullName = "long",
+                Size = 8,
+                SpecialMangledName = "i8"
             };
             
             TypeDefinition charType = new TypeDefinition
@@ -58,6 +73,14 @@ namespace TEAC
                 IsFloatingPoint = true
             };
 
+            TypeDefinition extendedType = new TypeDefinition
+            {
+                FullName = "extended",
+                Size = 10,
+                SpecialMangledName = "e",
+                IsFloatingPoint = true
+            };
+
             TypeDefinition genericPointerType = new TypeDefinition
             {
                 FullName = "^",
@@ -67,9 +90,12 @@ namespace TEAC
             };
 
             types.Add(intType.FullName, intType);
+            types.Add(shortType.FullName, shortType);
+            types.Add(longType.FullName, longType);
             types.Add(charType.FullName, charType);
             types.Add(singleType.FullName, singleType);
             types.Add(doubleType.FullName, doubleType);
+            types.Add(extendedType.FullName, extendedType);
             types.Add(boolType.FullName, boolType);
             types.Add(byteType.FullName, byteType);
             types.Add(genericPointerType.FullName, genericPointerType);
@@ -84,6 +110,16 @@ namespace TEAC
         public void AddIncludePaths(IEnumerable<string> paths)
         {
             this.includes.AddRange(paths);
+        }
+
+        public bool AlreadyUsed(string ns)
+        {
+            return this.alreadyUsed.Contains(ns);
+        }
+
+        public void AddAlreadyUsed(string ns)
+        {
+            this.alreadyUsed.Add(ns);
         }
 
         public void AddUses(string ns)

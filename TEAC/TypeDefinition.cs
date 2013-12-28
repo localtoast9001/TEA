@@ -25,6 +25,7 @@
         public bool IsFloatingPoint { get; set; }
         public bool IsPublic { get; set; }
         public bool IsStaticClass { get; set; }
+        public bool IsAbstractClass { get; set; }
         public bool IsInterface { get; set; }
         public TypeDefinition InnerType { get; set; }
         public TypeDefinition BaseClass { get; set; }

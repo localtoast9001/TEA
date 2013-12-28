@@ -85,6 +85,7 @@ namespace TEAC
         Plus,
         Minus,
         Slash,
+        Abstract,
         And,
         Array,
         Begin,

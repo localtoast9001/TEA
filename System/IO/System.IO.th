@@ -1,0 +1,127 @@
+namespace System.IO;
+
+type
+    Stream = public {abstract} class
+        public
+            abstract procedure Close();
+            abstract function Read(
+                buffer : array of byte;
+                offset, count : integer) : integer;
+            abstract function Write(
+                buffer : array of byte;
+                offset, count : integer) : boolean;
+            virtual function Flush() : boolean; 
+            abstract function GetLength() : long;
+            abstract function Resize(
+                length : long) : boolean;
+            abstract function SeekBegin(
+                offset : integer) : boolean;  
+            abstract function SeekCurrent(
+                offset : integer) : boolean;  
+            abstract function SeekEnd(
+                offset : integer) : boolean;
+            abstract function CanWrite() : boolean;
+            abstract function CanRead() : boolean;
+            abstract function CanSeek() : boolean;
+            abstract function CanResize() : boolean;               
+        protected
+            constructor();
+            virtual destructor();
+    end;
+    
+    FileStream = public class(Stream)
+        public
+            constructor();
+            virtual destructor();
+            function Open(
+                path : array of character;
+                read, write : boolean) : boolean;
+            function LastError() : integer; 
+            virtual procedure Close();
+            virtual function Read(
+                buffer : array of byte;
+                offset, count : integer) : integer;
+            virtual function Write(
+                buffer : array of byte;
+                offset, count : integer) : boolean;
+            virtual function Flush() : boolean; 
+            virtual function GetLength() : long;
+            virtual function Resize(
+                length : long) : boolean;
+            virtual function SeekBegin(
+                offset : integer) : boolean;  
+            virtual function SeekCurrent(
+                offset : integer) : boolean;  
+            virtual function SeekEnd(
+                offset : integer) : boolean;
+            virtual function CanWrite() : boolean;
+            virtual function CanRead() : boolean;
+            virtual function CanSeek() : boolean;
+            virtual function CanResize() : boolean;
+        private
+            static function _wopen(
+                filename : array of character;
+                oflag, pmode : integer) : integer;
+            static function _read( 
+                fd : integer;
+                buffer : array of byte; 
+                count : integer) : integer;
+            static function _write( 
+                fd : integer;
+                buffer : array of byte; 
+                count : integer) : integer;
+            static function _commit(
+                fd : integer) : integer;
+            static function _tell(
+                fd : integer) : long;
+            static function _lseek(
+                fd : integer;
+                offset : long;
+                origin : integer) : long;
+            static function _close(
+                fd : integer) : integer;   
+            static function _get_errno(
+                pValue : ^integer) : integer;             
+        var
+            _fd : integer;
+            _canRead, _canWrite : boolean;
+    end;
+
+    MemoryStream = public class(Stream)
+        public
+            constructor();
+            constructor(capacity : integer);
+            constructor(
+                buffer : array of byte; 
+                index, count : integer);
+            constructor(
+                buffer : array of byte;
+                index, count : integer;
+                write : boolean);
+            virtual destructor();
+            virtual {abstract} procedure Close();
+            virtual {abstract} function Read(
+                buffer : array of byte;
+                offset, count : integer) : integer;
+            virtual {abstract} function Write(
+                buffer : array of byte;
+                offset, count : integer) : boolean;
+            virtual {abstract} function GetLength() : long;
+            virtual {abstract} function Resize(
+                length : long) : boolean;
+            virtual {abstract} function SeekBegin(
+                offset : integer) : boolean;  
+            virtual {abstract} function SeekCurrent(
+                offset : integer) : boolean;  
+            virtual {abstract} function SeekEnd(
+                offset : integer) : boolean;
+            virtual {abstract} function CanWrite() : boolean;
+            virtual {abstract} function CanRead() : boolean;
+            virtual {abstract} function CanSeek() : boolean;
+            virtual {abstract} function CanResize() : boolean;               
+        var
+            _buffer : array of byte;
+            _index, _count, _capacity, _currentIndex : integer;
+            _ownsBuffer : boolean;
+            _canWrite : boolean;
+    end;

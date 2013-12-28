@@ -1,0 +1,195 @@
+namespace System.IO;
+uses System, System.IO;
+
+constructor FileStream();
+begin
+    _fd := -1;
+    _canRead := true;
+    _canWrite := true;
+end;
+
+destructor FileStream();
+begin
+    Close();
+end;
+
+function FileStream.Open(
+    path : array of character;
+    read, write : boolean) : boolean;
+var
+    oflag, pmode, fd : integer;
+begin
+    Open := false;
+    Close();
+    oflag := 32768;
+    if write then
+    begin
+        oflag := oflag or 256;
+        if read then 
+            oflag := oflag or 2
+        else
+            oflag := oflag or 1;
+    end;
+    pmode := 256;
+    fd := _wopen(path, oflag, pmode);
+    if fd <> -1 then
+    begin
+        Open := true;
+        _fd := fd;
+        _canRead := read;
+        _canWrite := write;
+    end;
+end;
+ 
+procedure FileStream.Close();
+begin
+    if _fd <> -1 then
+    begin
+        _close(_fd);
+        _fd := -1;
+        _canRead := true;
+        _canWrite := true;
+    end;
+end;
+
+function FileStream.Read(
+    buffer : array of byte;
+    offset, count : integer) : integer;
+var
+    pStart : ^byte;
+begin
+    pStart := buffer;
+    pStart := pStart + offset;
+    Read := _read(_fd, pStart, count);
+end;
+
+function FileStream.Write(
+    buffer : array of byte;
+    offset, count : integer) : boolean;
+var
+    pStart : ^byte;
+    bytesWritten : integer;
+begin
+    pStart := buffer;
+    pStart := pStart + offset;
+    bytesWritten := _write(_fd, pStart, count);
+    Write := bytesWritten = count;
+end;
+
+function FileStream.Flush() : boolean;
+begin
+    Flush := _commit(_fd) >= 0;
+end;
+ 
+function FileStream.GetLength() : long;
+begin
+    GetLength := _tell(_fd);
+end;
+
+function FileStream.Resize(
+    length : long) : boolean;
+var
+    pos : long;
+begin
+    Resize := false;
+    pos := _tell(_fd);
+    if pos >= 0 then
+    begin
+        if _lseek(_fd, length, 0) >= 0 then
+        begin
+            Resize := _lseek(_fd, pos, 0) >= 0;
+        end; 
+    end;
+end;
+
+function FileStream.SeekBegin(
+    offset : integer) : boolean;
+begin
+    SeekBegin := _lseek(
+        _fd, 
+        Convert.ToLong(offset), 
+        0) >= 0;
+end;
+  
+function FileStream.SeekCurrent(
+    offset : integer) : boolean;
+begin
+    SeekCurrent := _lseek(
+        _fd,
+        Convert.ToLong(offset),
+        1) >= 0;
+end;
+  
+function FileStream.SeekEnd(
+    offset : integer) : boolean;
+begin
+    SeekEnd := _lseek(
+        _fd,
+        Convert.ToLong(offset),
+        2) >= 0;
+end;
+
+function FileStream.CanWrite() : boolean;
+begin
+    CanWrite := _canWrite;
+end;
+
+function FileStream.CanRead() : boolean;
+begin
+    CanRead := _canRead;
+end;
+
+function FileStream.CanSeek() : boolean;
+begin
+    CanSeek := true;
+end;
+
+function FileStream.CanResize() : boolean;               
+begin
+    CanResize := true;
+end;
+
+function FileStream.LastError() : integer;
+begin
+    _get_errno(@LastError);
+end;
+
+function FileStream._wopen(
+    filename : array of character;
+    oflag, pmode : integer) : integer;
+extern '_wopen';
+
+function FileStream._read( 
+    fd : integer;
+    buffer : array of byte; 
+    count : integer) : integer;
+extern '_read';
+
+function FileStream._write( 
+    fd : integer;
+    buffer : array of byte; 
+    count : integer) : integer;
+extern '_write';
+
+function FileStream._commit(
+    fd : integer) : integer;
+extern '_commit';
+
+function FileStream._tell(
+    fd : integer) : long;
+extern '_tell';
+
+function FileStream._lseek(
+    fd : integer;
+    offset : long;
+    origin : integer) : long;
+extern '_lseek';
+
+function FileStream._close(
+    fd : integer) : integer;                
+extern '_close';
+
+function FileStream._get_errno(
+    pValue : ^integer) : integer;
+extern '_get_errno';
+

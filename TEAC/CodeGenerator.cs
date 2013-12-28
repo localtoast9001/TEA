@@ -35,8 +35,9 @@ namespace TEAC
                     }
                 }
 
-                if (headerPath != null)
+                if (headerPath != null && !context.AlreadyUsed(uses))
                 {
+                    context.AddAlreadyUsed(uses);
                     ProgramUnit usedProgramUnit = null;
                     using (TokenReader reader = new TokenReader(headerPath, this.log))
                     {
@@ -293,13 +294,9 @@ namespace TEAC
             TypeDefinition typeDef)
         {
             bool failed = false;
-            if (string.CompareOrdinal(method.Method.MangledName, method.Method.Type.Methods[0].MangledName) == 0)
+            if (method.Method.Type.GetVTablePointer() != null)
             {
-                // define the VTBL in the module that defines the 1st method.
-                if (method.Method.Type.GetVTablePointer() != null)
-                {
-                    method.Module.DefineVTable(method.Method.Type);
-                }
+                method.Module.DefineVTable(method.Method.Type);
             }
 
             if (!string.IsNullOrEmpty(methodDef.ExternImpl))
@@ -356,6 +353,7 @@ namespace TEAC
 
                     if (baseInit != null)
                     {
+                        method.Module.AddProto(baseInit);
                         method.Statements.Add(new AsmStatement { Instruction = "mov ecx,_this$[ebp]" });
                         method.Statements.Add(new AsmStatement { Instruction = "push ecx" });
                         argSize += 4;
@@ -850,7 +848,16 @@ namespace TEAC
                 return false;
             }
 
-            if (valueType.Size <= 4)
+            if (valueType.Size == 8)
+            {
+                method.Statements.Add(new AsmStatement { Instruction = "pop eax" });
+                method.Statements.Add(new AsmStatement { Instruction = "pop edx" });
+                method.Statements.Add(new AsmStatement { Instruction = string.Format("lea ecx,{0}", location) });
+                method.Statements.Add(new AsmStatement { Instruction = "mov [ecx],eax" });
+                method.Statements.Add(new AsmStatement { Instruction = "add ecx,4" });
+                method.Statements.Add(new AsmStatement { Instruction = "mov [ecx],edx" });
+            }
+            else if (valueType.Size <= 4)
             {
                 method.Statements.Add(new AsmStatement { Instruction = "pop eax" });
                 switch (storageType.Size)
@@ -978,7 +985,7 @@ namespace TEAC
             {
                 int argSize = 0;
                 int argStatementStart = method.Statements.Count;
-                Expression[] arguments = callExpr.Arguments.Reverse().ToArray();
+                Expression[] arguments = callExpr.Arguments.ToArray();
                 List<TypeDefinition> argTypes = new List<TypeDefinition>();
                 for (int i = arguments.Length - 1; i >= 0; i--)
                 {
@@ -1038,6 +1045,11 @@ namespace TEAC
                 if (calleeMethod.IsVirtual && callExpr.Inner.UseVirtualDispatch)
                 {
                     FieldInfo vtablePtr = calleeMethod.Type.GetVTablePointer();
+                    if (string.CompareOrdinal(callLoc, "[eax]") != 0)
+                    {
+                        method.Statements.Add(new AsmStatement { Instruction = string.Format("lea eax,{0}", callLoc) });
+                    }
+
                     if (vtablePtr.Offset > 0)
                     {
                         method.Statements.Add(new AsmStatement { Instruction = string.Format("add eax,{0}", vtablePtr.Offset) });
@@ -1088,9 +1100,13 @@ namespace TEAC
                     {
                         method.Statements.Add(new AsmStatement { Instruction = "fld qword ptr " + location });
                     }
-                    else
+                    else if (storageType.Size == 4)
                     {
                         method.Statements.Add(new AsmStatement { Instruction = "fld dword ptr " + location });
+                    }
+                    else
+                    {
+                        method.Statements.Add(new AsmStatement { Instruction = "fld tword ptr " + location });
                     }
                 }
                 else if (storageType.IsArray)
@@ -1106,10 +1122,16 @@ namespace TEAC
                         method.Statements.Add(new AsmStatement { Instruction = "mov eax," + location });
                     }
                 }
-                else if (storageType.Size <= 4 && !storageType.IsClass)
+                else if (storageType.Size <= 8 && !storageType.IsClass)
                 {
                     switch (storageType.Size)
                     {
+                        case 8:
+                            method.Statements.Add(new AsmStatement { Instruction = "lea ecx, " + location });
+                            method.Statements.Add(new AsmStatement { Instruction = "mov eax,[ecx]" });
+                            method.Statements.Add(new AsmStatement { Instruction = "add ecx,4" });
+                            method.Statements.Add(new AsmStatement { Instruction = "mov edx,[ecx]" });
+                            break;
                         case 4:
                             method.Statements.Add(new AsmStatement { Instruction = "mov eax,dword ptr " + location });
                             break;
@@ -1247,7 +1269,8 @@ namespace TEAC
                 return false;
             }
 
-            if (valueType.IsPointer || valueType.IsClass || valueType.IsArray || valueType.IsInterface || valueType.IsFloatingPoint)
+            if (valueType.IsPointer || valueType.IsClass || valueType.IsArray || valueType.IsInterface || valueType.IsFloatingPoint
+                || valueType.Size > 4)
             {
                 string message = string.Format(
                     System.Globalization.CultureInfo.CurrentCulture,
@@ -1263,7 +1286,23 @@ namespace TEAC
             }
             else
             {
-                method.Statements.Add(new AsmStatement { Instruction = "not eax" });
+                switch (valueType.Size)
+                {
+                    case 4:
+                        method.Statements.Add(new AsmStatement { Instruction = "not eax" });
+                        break;
+                    case 2:
+                        method.Statements.Add(new AsmStatement { Instruction = "not ax" });
+                        break;
+                    case 1:
+                        method.Statements.Add(new AsmStatement { Instruction = "not al" });
+                        break;
+                }
+
+                if (string.CompareOrdinal(valueType.MangledName, "f") == 0)
+                {
+                    method.Statements.Add(new AsmStatement { Instruction = "and al,1" });
+                }
             }
 
             return true;
@@ -1488,19 +1527,32 @@ namespace TEAC
                     method.Statements.Add(new AsmStatement { Instruction = "sub esp,4" });
                     method.Statements.Add(new AsmStatement { Instruction = "fstp dword ptr [esp]" });
                 }
-                else
+                else if (type.Size == 8)
                 {
                     method.Statements.Add(new AsmStatement { Instruction = "sub esp,8" });
                     method.Statements.Add(new AsmStatement { Instruction = "fstp qword ptr [esp]" });
+                }
+                else
+                {
+                    method.Statements.Add(new AsmStatement { Instruction = "sub esp,10" });
+                    method.Statements.Add(new AsmStatement { Instruction = "fstp tword ptr [esp]" });
                 }
             }
             else if (type.IsArray)
             {
                 method.Statements.Add(new AsmStatement { Instruction = "push eax" });
             }
-            else if (type.Size <= 4)
+            else if (!type.IsClass)
             {
-                method.Statements.Add(new AsmStatement { Instruction = "push eax" });
+                if (type.Size <= 4)
+                {
+                    method.Statements.Add(new AsmStatement { Instruction = "push eax" });
+                }
+                else if(type.Size == 8)
+                {
+                    method.Statements.Add(new AsmStatement { Instruction = "push edx" });
+                    method.Statements.Add(new AsmStatement { Instruction = "push eax" });
+                }
             }
         }
 
@@ -1762,7 +1814,15 @@ namespace TEAC
                             method.Statements.Add(new AsmStatement { Instruction = "push ecx" });
                         }
 
-                        location = memberMethod.MangledName;
+                        if (memberMethod.IsVirtual)
+                        {
+                            location = "[ecx]";
+                        }
+                        else
+                        {
+                            location = memberMethod.MangledName;
+                        }
+
                         storageType = memberMethod.ReturnType;
                         calleeMethod = memberMethod;
                         return true;
@@ -1826,7 +1886,15 @@ namespace TEAC
                                 method.Statements.Add(new AsmStatement { Instruction = "push eax" });
                             }
 
-                            location = memberMethod.MangledName;
+                            if (memberMethod.IsVirtual && memberRef.UseVirtualDispatch)
+                            {
+                                location = "[eax]";
+                            }
+                            else
+                            {
+                                location = memberMethod.MangledName;
+                            }
+
                             storageType = memberMethod.ReturnType;
                             calleeMethod = memberMethod;
                             return true;
@@ -2052,13 +2120,9 @@ namespace TEAC
             {
                 Name = methodDecl.MethodName, 
                 IsStatic = methodDecl.IsStatic,
-                IsVirtual = methodDecl.IsVirtual
+                IsVirtual = methodDecl.IsVirtual || methodDecl.IsAbstract,
+                IsAbstract = methodDecl.IsAbstract
             };
-
-            if (methodInfo.IsVirtual)
-            {
-                methodInfo.AssignVTableIndex();
-            }
 
             TypeDefinition returnType = null;
             if (methodDecl.ReturnType != null)
@@ -2089,6 +2153,11 @@ namespace TEAC
 
                     methodInfo.Parameters.Add(paramInfo);
                 }
+            }
+
+            if (methodInfo.IsVirtual)
+            {
+                methodInfo.AssignVTableIndex();
             }
 
             return true;

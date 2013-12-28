@@ -53,7 +53,7 @@ namespace TEAC
                 Type = type
             };
 
-            parameterOffset += p.Type.Size;
+            parameterOffset += ((p.Type.Size + 3) / 4) * 4;
             symbols.Add(name, p);
         }
 

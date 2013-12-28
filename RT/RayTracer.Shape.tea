@@ -1,0 +1,37 @@
+namespace RayTracer;
+uses RayTracer;
+
+destructor Shape();
+begin
+end;
+
+{
+<summary>
+    Initializes a new instance of the Shape class.
+</summary>
+}
+constructor Shape();
+begin
+    _texture := nil;
+end;
+
+function Shape.Intersect(
+    ray : ^Ray3D;
+    point, normal, textureCoord : ^Vector3D) : boolean;
+begin
+    point^ := Vector3D();
+    normal^ := Vector3D();
+    textureCoord^ := Vector3D();
+    Intersect := false;
+end;
+
+function Shape.GetTexture() : ^Texture;
+begin
+    GetTexture := _texture;
+end;
+
+procedure Shape.SetTexture(texture : ^Texture);
+begin
+    _texture := texture;
+end;
+

@@ -92,6 +92,12 @@ namespace TEAC
 
         public void DefineVTable(TypeDefinition type)
         {
+            string label = "$Vtbl_" + type.MangledName;
+            if (this.DataSegment.Any(e => string.CompareOrdinal(e.Label, label) == 0))
+            {
+                return;
+            }
+
             string[] entries = new string[0];
             Stack<TypeDefinition> typeStack = new Stack<TypeDefinition>();
             TypeDefinition t = type;
@@ -115,12 +121,19 @@ namespace TEAC
                             entries = newEntries;
                         }
 
-                        entries[m.VTableIndex] = m.MangledName;
+                        if (!m.IsAbstract)
+                        {
+                            this.AddProto(m);
+                            entries[m.VTableIndex] = m.MangledName;
+                        }
+                        else
+                        {
+                            entries[m.VTableIndex] = "0";
+                        }
                     }
                 }
             }
 
-            string label = "$Vtbl_" + type.MangledName;
             this.DataSegment.Add(new DataEntry { Label = label, Value = entries });
         }
     }

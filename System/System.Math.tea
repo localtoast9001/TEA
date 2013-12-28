@@ -43,3 +43,18 @@ extern '_ceilingi';
 function Math.Pi() : double;
 extern '_pid';
 
+function Math.Max(x, y : integer) : integer;
+begin
+    if x > y then
+        Max := x
+    else
+        Max := y;
+end;
+
+function Math.Min(x, y : integer) : integer;
+begin
+    if x < y then
+        Min := x
+    else
+        Min := y;
+end;

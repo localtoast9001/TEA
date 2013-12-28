@@ -41,30 +41,26 @@ namespace TEAC
                     writer.Write(dataEntry.Label);
                 }
 
-                writer.Write("\t");
-                object val = dataEntry.Value[0];
-                if (val is byte)
-                {
-                    writer.Write("db");
-                }
-                else if (val is ushort)
-                {
-                    writer.Write("dw");
-                }
-                else
-                {
-                    writer.Write("dd");
-                }
-
-                writer.Write("\t");
                 for (int i = 0; i < dataEntry.Value.Length; i++)
                 {
-                    if (i > 0)
+                    writer.Write("\t");
+                    object val = dataEntry.Value[i];
+                    if (val is byte)
                     {
-                        writer.Write(",");
+                        writer.Write("db");
+                    }
+                    else if (val is ushort)
+                    {
+                        writer.Write("dw");
+                    }
+                    else
+                    {
+                        writer.Write("dd");
                     }
 
-                    writer.Write(dataEntry.Value[i]);
+                    writer.Write("\t");
+
+                    writer.WriteLine(val);
                 }
 
                 writer.WriteLine();

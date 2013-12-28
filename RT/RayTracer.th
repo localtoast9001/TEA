@@ -8,6 +8,8 @@ type
             function GetX() : double;
             function GetY() : double;
             function GetZ() : double;
+            function GetLengthSq() : double;
+            function GetLength() : double;
         var
             _x, _y, _z : double;
     end;
@@ -21,6 +23,10 @@ type
     end;
     Color = public class
         public 
+            constructor();
+            constructor(r, g, b : double);
+            constructor(r, g, b, a : double);
+
             function GetRed() : double;
             function GetGreen() : double;
             function GetBlue() : double;
@@ -28,22 +34,25 @@ type
         var
             _r, _g, _b, _a : double;
     end;
-    Texture = public abstract class
+    Texture = public {abstract} class
         public
-            abstract function GetColor(
+            {abstract} virtual function GetColor(
                 textureCoord : ^Vector3D) : Color;
     end; 
-    Shape = public abstract class
+    Shape = public {abstract} class
         public
-            abstract function Intersect(
-                ray : ^Ray3D,
+            virtual destructor();
+            {abstract} virtual function Intersect(
+                ray : ^Ray3D;
                 point, normal, textureCoord : ^Vector3D) : boolean; 
             function GetTexture() : ^Texture;
             procedure SetTexture(texture : ^Texture);
+        protected 
+            constructor();
         var
             _texture : ^Texture;
     end;
-    Light = public abstract class
+    Light = public {abstract} class
     end;
     Camera = public class
         var
