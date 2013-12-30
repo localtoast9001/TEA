@@ -1,0 +1,69 @@
+namespace System.Graphics;
+uses System;
+
+type
+    Point = public class
+        public
+            constructor();
+            constructor(x, y : integer);
+            function GetX() : integer;
+            function GetY() : integer;
+            procedure SetX(value : integer);
+            procedure SetY(value : integer);
+        var
+            _x, _y : integer;
+    end;
+
+    Size = public class
+        public
+            constructor();
+            constructor(width, height : integer);
+            function GetWidth() : integer;
+            function GetHeight() : integer;
+            procedure SetWidth(value : integer);
+            procedure SetHeight(value : integer);
+        var
+            _width, _height : integer;
+    end;
+
+    PixelFormat = public class
+        public
+            constructor();
+            constructor(
+                bpp, channels, colorDepth : integer;
+                isFloat : boolean);
+            function GetBpp() : integer;
+            function GetChannels() : integer;
+            function GetColorDepth() : integer;
+            function IsFloat() : boolean;
+ 
+        var
+            _bpp : integer;
+            _channels : integer;
+            _colorDepth : integer;
+            _isFloat : boolean;
+    end;
+
+    Image = public class
+        public
+            constructor();
+            destructor();
+
+            function GetSize() : Size;
+            function GetFormat() : PixelFormat;
+            function GetRawImageData() : array of byte;
+            function GetRowSize() : integer;
+
+            function Create(
+                size : Size;
+                format : PixelFormat) : boolean;
+            procedure Clear(); 
+        private
+            static function GetRowSizeFromFormat(
+                bpp, width : integer) : integer;
+        var
+            _imageData : array of byte;
+            _size : Size;
+            _rowSize : integer;
+            _format : PixelFormat;
+    end;

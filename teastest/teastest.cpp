@@ -25,6 +25,16 @@ int _tmain(int argc, _TCHAR* argv[])
     derp(0, 1, 2, false);
 	puts("Hello World!");
     bool fResult = argc > 0;
+
+	int fh2 = _wopen( L"\\tmp\\CRT_OPEN.BMP", _O_WRONLY | _O_CREAT | _O_BINARY, _S_IREAD | 
+                            _S_IWRITE ); // C4996
+   if( fh2 == -1 )
+      perror( "Open failed on output file" );
+   else
+   {
+      printf( "Open succeeded on output file\n" );
+      _close( fh2 );
+   }
 	return 0;
 }
 

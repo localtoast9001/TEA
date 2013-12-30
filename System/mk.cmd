@@ -9,22 +9,13 @@ if not exist %OBJ_DIR% (
   mkdir %OBJ_DIR%
 )
 
-%TEAC% /Fa%OBJ_DIR%\System.Math.asm System.Math.tea
-%TEAC% /Fa%OBJ_DIR%\System.Console.asm System.Console.tea
-%TEAC% /Fa%OBJ_DIR%\System.Convert.asm System.Convert.tea
-%TEAC% /Fa%OBJ_DIR%\System.String.asm System.String.tea
-%TEAC% /Fa%OBJ_DIR%\System.Memory.asm System.Memory.tea
-%TEAC% /Fa%OBJ_DIR%\System.IO.MemoryStream.asm /I%~dp0 IO\System.IO.MemoryStream.tea
-%TEAC% /Fa%OBJ_DIR%\System.IO.FileStream.asm /I%~dp0 IO\System.IO.FileStream.tea
-%TEAC% /Fa%OBJ_DIR%\System.IO.Stream.asm /I%~dp0 IO\System.IO.Stream.tea
-ml /c /Fo%OBJ_DIR%\System.Math.obj %OBJ_DIR%\System.Math.asm
+for /F "" %%i in (sources) do (
+  %TEAC% /Fa%OBJ_DIR%\%%~ni.asm /I. /IIO /IGraphics %%i
+  if NOT ERRORLEVEL 1 (
+    ml /c /Fo%OBJ_DIR%\%%~ni.obj %OBJ_DIR%\%%~ni.asm
+  )
+)
+
 ml /c /Fo%OBJ_DIR%\System.Math.impl.obj System.Math.impl.asm
-ml /c /Fo%OBJ_DIR%\System.Memory.obj %OBJ_DIR%\System.Memory.asm
-ml /c /Fo%OBJ_DIR%\System.Console.obj %OBJ_DIR%\System.Console.asm
-ml /c /Fo%OBJ_DIR%\System.Convert.obj %OBJ_DIR%\System.Convert.asm
 ml /c /Fo%OBJ_DIR%\System.Convert.impl.obj System.Convert.impl.asm
-ml /c /Fo%OBJ_DIR%\System.String.obj %OBJ_DIR%\System.String.asm
-ml /c /Fo%OBJ_DIR%\System.IO.MemoryStream.obj %OBJ_DIR%\System.IO.MemoryStream.asm
-ml /c /Fo%OBJ_DIR%\System.IO.FileStream.obj %OBJ_DIR%\System.IO.FileStream.asm
-ml /c /Fo%OBJ_DIR%\System.IO.Stream.obj %OBJ_DIR%\System.IO.Stream.asm
-lib /SUBSYSTEM:CONSOLE /out:%BIN_DIR%\System.lib %OBJ_DIR%\System.Math.obj %OBJ_DIR%\System.Math.impl.obj %OBJ_DIR%\System.Console.obj %OBJ_DIR%\System.Convert.obj %OBJ_DIR%\System.Convert.impl.obj %OBJ_DIR%\System.String.obj %OBJ_DIR%\System.Memory.obj %OBJ_DIR%\System.IO.MemoryStream.obj %OBJ_DIR%\System.IO.FileStream.obj %OBJ_DIR%\System.IO.Stream.obj msvcrt.lib
+lib /SUBSYSTEM:CONSOLE /out:%BIN_DIR%\System.lib %OBJ_DIR%\System.Math.obj %OBJ_DIR%\System.Math.impl.obj %OBJ_DIR%\System.Console.obj %OBJ_DIR%\System.Convert.obj %OBJ_DIR%\System.Convert.impl.obj %OBJ_DIR%\System.String.obj %OBJ_DIR%\System.Memory.obj %OBJ_DIR%\System.IO.MemoryStream.obj %OBJ_DIR%\System.IO.FileStream.obj %OBJ_DIR%\System.IO.Stream.obj %OBJ_DIR%\System.Graphics.Point.obj %OBJ_DIR%\System.Graphics.Size.obj %OBJ_DIR%\System.Graphics.Image.obj %OBJ_DIR%\System.Graphics.PixelFormat.obj %OBJ_DIR%\System.Graphics.IO.ImageWriter.obj %OBJ_DIR%\System.Graphics.IO.TargaImageWriter.obj %OBJ_DIR%\System.Graphics.IO.WindowsBitmapImageWriter.obj msvcrt.lib

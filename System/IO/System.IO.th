@@ -1,8 +1,10 @@
 namespace System.IO;
+uses System;
 
 type
     Stream = public {abstract} class
         public
+            virtual destructor();
             abstract procedure Close();
             abstract function Read(
                 buffer : array of byte;
@@ -26,7 +28,6 @@ type
             abstract function CanResize() : boolean;               
         protected
             constructor();
-            virtual destructor();
     end;
     
     FileStream = public class(Stream)
@@ -99,29 +100,46 @@ type
                 index, count : integer;
                 write : boolean);
             virtual destructor();
-            virtual {abstract} procedure Close();
-            virtual {abstract} function Read(
+            virtual procedure Close();
+            virtual function Read(
                 buffer : array of byte;
                 offset, count : integer) : integer;
-            virtual {abstract} function Write(
+            virtual function Write(
                 buffer : array of byte;
                 offset, count : integer) : boolean;
-            virtual {abstract} function GetLength() : long;
-            virtual {abstract} function Resize(
+            virtual function GetLength() : long;
+            virtual function Resize(
                 length : long) : boolean;
-            virtual {abstract} function SeekBegin(
+            virtual function SeekBegin(
                 offset : integer) : boolean;  
-            virtual {abstract} function SeekCurrent(
+            virtual function SeekCurrent(
                 offset : integer) : boolean;  
-            virtual {abstract} function SeekEnd(
+            virtual function SeekEnd(
                 offset : integer) : boolean;
-            virtual {abstract} function CanWrite() : boolean;
-            virtual {abstract} function CanRead() : boolean;
-            virtual {abstract} function CanSeek() : boolean;
-            virtual {abstract} function CanResize() : boolean;               
+            virtual function CanWrite() : boolean;
+            virtual function CanRead() : boolean;
+            virtual function CanSeek() : boolean;
+            virtual function CanResize() : boolean;               
         var
             _buffer : array of byte;
             _index, _count, _capacity, _currentIndex : integer;
             _ownsBuffer : boolean;
             _canWrite : boolean;
+    end;
+
+    TextReader = public {abstract} class
+        public
+            virtual destructor();
+            virtual procedure Close();
+            abstract function Peek() : integer;
+            abstract function Read() : integer;
+            abstract function Read(
+                buffer : array of character;
+                index, count : integer) : integer;
+            virtual function ReadLine(
+                line : ^String) : boolean;
+            virtual function ReadToEnd(
+                value : ^String) : boolean;
+        protected
+            constructor();
     end;

@@ -19,6 +19,8 @@ namespace TEAC
 
         public LocalVariable ReturnVariable { get; set; }
 
+        public ParameterVariable LargeReturnVariable { get; set; }
+
         public LocalVariable DefineTempVariable(TypeDefinition type)
         {
             string name = "$temp" + (this.tempVariableIndex++).ToString();
@@ -45,7 +47,7 @@ namespace TEAC
             return l;
         }
 
-        public void DefineParameter(string name, TypeDefinition type)
+        public ParameterVariable DefineParameter(string name, TypeDefinition type)
         {
             ParameterVariable p = new ParameterVariable(name)
             {
@@ -55,6 +57,8 @@ namespace TEAC
 
             parameterOffset += ((p.Type.Size + 3) / 4) * 4;
             symbols.Add(name, p);
+
+            return p;
         }
 
         public bool TryLookup(string symbol, out SymbolEntry value)

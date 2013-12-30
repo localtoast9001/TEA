@@ -1,0 +1,80 @@
+namespace Samples;
+uses System, System.IO, System.Graphics, System.Graphics.IO;
+
+type
+    Program = static class
+        public
+            static function Main(
+                argc : integer;
+                argv : array of array of character) : integer;
+   end;
+
+function Program.Main(
+    argc : integer;
+    argv : array of array of character) : integer;
+var
+    writer : WindowsBitmapImageWriter;
+    stream : FileStream;
+    image : Image;
+    i : integer; 
+    size : Size;
+    rowSize : integer;
+    row0 : array of byte;
+    row1 : array of byte;
+    row2 : array of byte;
+    format : PixelFormat;
+    path : array of character; 
+    pass : boolean;
+begin
+    pass := true;
+    size := Size(256, 3);
+    format := PixelFormat(32, 4, 8, false);
+    if pass and (argc <> 2) then
+        pass := false;
+
+    if pass then
+    begin
+        path := argv[1];
+        pass := stream.Open(path, false, true);
+    end;
+
+    if pass then
+        pass := image.Create(size, format);
+    if pass then
+    begin
+        rowSize := image.GetRowSize();
+        row0 := image.GetRawImageData();
+        row1 := row0 + rowSize;
+        row2 := row1 + rowSize;
+        i := 0;
+        while i < 256 do
+        begin
+            row0[i * 4] := 0;
+            row1[i * 4] := 0;
+            row2[i * 4] := i;
+            row0[i * 4 + 1] := 0;
+            row1[i * 4 + 1] := i;
+            row2[i * 4 + 1] := 0;
+            row0[i * 4 + 2] := i;
+            row1[i * 4 + 2] := 0;
+            row2[i * 4 + 2] := 0;
+            row0[i * 4 + 3] := 255;
+            row1[i * 4 + 3] := 255;
+            row2[i * 4 + 3] := 255;
+            i := i + 1;
+        end;
+    end;
+
+    if pass then
+    begin
+        pass := writer.Write(@image, @stream);
+    end;
+
+    if pass then
+        Main := 0
+    else
+    begin
+        Main := stream.LastError();
+        Console.WriteLine('Usage: Samples.ImageWriterTest.exe <path>');
+    end;
+end;

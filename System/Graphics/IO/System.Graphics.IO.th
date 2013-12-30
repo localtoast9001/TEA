@@ -1,0 +1,34 @@
+namespace System.Graphics.IO;
+uses System.IO, System.Graphics;
+
+type
+    ImageWriter = public {abstract} class
+        public
+            virtual destructor();
+            abstract function CanWrite(image : ^Image) : boolean;
+            abstract function Write(
+                image : ^Image;
+                stream : ^Stream) : boolean;
+        protected
+            constructor();
+    end;
+
+    WindowsBitmapImageWriter = public class(ImageWriter)
+        public 
+            constructor();
+            virtual destructor();
+            virtual function CanWrite(image : ^Image) : boolean;
+            virtual function Write(
+                image : ^Image;
+                stream : ^Stream) : boolean;
+    end;
+
+    TargaImageWriter = public class(ImageWriter)
+        public
+            constructor();
+            virtual destructor();
+            virtual function CanWrite(image : ^Image) : boolean;
+            virtual function Write(
+                image : ^Image;
+                stream : ^Stream) : boolean;
+    end;

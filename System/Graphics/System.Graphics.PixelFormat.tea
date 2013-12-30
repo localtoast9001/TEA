@@ -1,0 +1,40 @@
+namespace System.Graphics;
+uses System.Graphics;
+
+constructor PixelFormat();
+begin
+    _bpp := 32;
+    _colorDepth := 8;
+    _channels := 4;
+    _isFloat := false;
+end;
+
+constructor PixelFormat(
+    bpp, channels, colorDepth : integer;
+    isFloat : boolean);
+begin
+    _bpp := bpp;
+    _channels := channels;
+    _colorDepth := colorDepth;
+    _isFloat := isFloat;
+end; 
+
+function PixelFormat.GetBpp() : integer;
+begin
+    GetBpp := _bpp;
+end;
+
+function PixelFormat.GetColorDepth() : integer;
+begin
+    GetColorDepth := _colorDepth;
+end;
+
+function PixelFormat.GetChannels() : integer;
+begin
+    GetChannels := _channels;
+end;
+
+function PixelFormat.IsFloat() : boolean;
+begin
+    IsFloat := _isFloat;
+end;

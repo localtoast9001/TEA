@@ -1,0 +1,35 @@
+namespace System.Graphics;
+uses System.Graphics;
+
+constructor Size();
+begin
+    _width := 0;
+    _height := 0;
+end;
+
+constructor Size(width, height : integer);
+begin
+    _width := width;
+    _height := height;
+end;
+
+function Size.GetWidth() : integer;
+begin
+    GetWidth := _width;
+end;
+
+function Size.GetHeight() : integer;
+begin
+    GetHeight := _height;
+end;
+
+procedure Size.SetWidth(value : integer);
+begin
+    _width := value;
+end;
+
+procedure Size.SetHeight(value : integer);
+begin
+    _height := value;
+end;
+

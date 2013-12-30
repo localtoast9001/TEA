@@ -1,0 +1,90 @@
+namespace System.Graphics;
+uses System, System.Graphics;
+
+constructor Image();
+begin
+    _size := Size();
+    _format := PixelFormat();
+    _imageData := nil;
+    _rowSize := 0;
+end;
+
+destructor Image();
+begin
+    Clear();
+end;
+
+function Image.GetSize() : Size;
+begin
+    GetSize := _size;
+end;
+
+function Image.GetFormat() : PixelFormat;
+begin
+    GetFormat := _format;
+end;
+
+function Image.GetRawImageData() : array of byte;
+begin
+    GetRawImageData := _imageData;
+end;
+
+function Image.GetRowSize() : integer;
+begin
+    GetRowSize := _rowSize;
+end;
+
+function Image.Create(
+    size : Size;
+    format : PixelFormat) : boolean; 
+var
+    imageData : array of byte;
+    rowSize : integer;
+begin
+    Create := true;
+    if  (size.GetWidth() <= 0) or 
+        (size.GetHeight() <= 0) or
+        (format.GetBpp() <= 0) then
+        Create := false;
+
+    rowSize := GetRowSizeFromFormat(
+        format.GetBpp(),
+        size.GetWidth());
+    if Create then
+    begin
+        imageData := Memory.Alloc(rowSize * size.GetHeight());
+        if imageData = nil then
+            Create := false;
+    end;
+
+    if Create then
+    begin
+        Clear();
+        _imageData := imageData;
+        _size := size;
+        _format := format;
+        _rowSize := rowSize;
+    end;
+end;
+
+procedure Image.Clear();
+begin
+    if _imageData <> nil then
+    begin
+        Memory.Free(_imageData);
+        _imageData := nil;
+    end;
+    _size := Size();
+    _format := PixelFormat();
+    _rowSize := 0;
+end;
+
+function Image.GetRowSizeFromFormat(
+    bpp, width : integer) : integer;
+var
+    totalBits : integer;
+begin
+    totalBits := bpp * width;
+    GetRowSizeFromFormat := ((totalBits + 31) div 32) * 4;
+end;
+

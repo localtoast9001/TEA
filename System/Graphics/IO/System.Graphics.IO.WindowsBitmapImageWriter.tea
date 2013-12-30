@@ -1,0 +1,216 @@
+namespace System.Graphics.IO;
+uses System, System.IO, System.Graphics, System.Graphics.IO;
+
+type
+    BitmapFileHeader = class
+        public
+            constructor(size, pixelArrayOffset : integer);
+        var
+            _signature : short;
+            _size : integer;
+            _reserved0 : short;
+            _reserved1 : short;
+            _pixelArrayOffset : integer;
+    end;
+
+    BitmapInfoHeader = class
+        public 
+            constructor(image : ^Image);
+            function GetSize() : integer;
+            function GetRawPixelArraySize() : integer;
+        var
+            _size : integer;
+            _width : integer;
+            _height : integer;
+            _planes : short;
+            _bpp : short;
+            _flags : integer;
+            _rawDataSize : integer;
+            _xResolution : integer;
+            _yResolution : integer;
+            _colorsInPalette : integer;
+            _importantColors : integer;
+            _redChannelMask : integer;
+            _greenChannelMask : integer;
+            _blueChannelMask : integer;
+            _alphaChannelMask : integer;
+            _colorSpaceType : integer;
+            _colorSpaceEndpoints : array [9] of integer;
+            _redGamma : integer;
+            _greenGamma : integer;
+            _blueGamma : integer;
+    end;
+
+constructor BitmapFileHeader(
+    size, pixelArrayOffset : integer);
+var
+    signatureString : array of character;
+begin
+    signatureString := 'BM';
+    _signature := Convert.ToShort(Convert.Lo(signatureString[0])) or 
+        Convert.ToShort(Convert.Lo(signatureString[1])) * 256;
+    _reserved0 := 0;
+    _reserved1 := 0;
+    _size := size;
+    _pixelArrayOffset := pixelArrayOffset;
+end;
+
+constructor BitmapInfoHeader(
+    image : ^Image);
+var
+    size : Size;
+    format : PixelFormat;
+    rowSize : integer;
+    mask : integer;
+    maskShift, i : integer;
+begin
+    size := image^.GetSize();
+    format := image^.GetFormat();
+    rowSize := image^.GetRowSize();
+    _size := 108;
+    _width := size.GetWidth();
+    _height := -size.GetHeight();
+    _planes := 1;
+    _bpp := format.GetBpp();
+    _rawDataSize := rowSize * size.GetHeight();
+    _xResolution := 2835;
+    _yResolution := 2835;
+    _colorsInPalette := 0;
+    _importantColors := 0;
+    if format.GetChannels() >= 3 then
+    begin
+        mask := 0;
+        maskShift := 0;
+        while maskShift < format.GetColorDepth() do
+        begin
+            mask := mask * 2 or 1;
+            maskShift := maskShift + 1;
+        end;
+
+        _blueChannelMask := mask;
+        maskShift := 0;
+        while maskShift < format.GetColorDepth() do
+        begin
+            mask := mask * 2;
+            maskShift := maskShift + 1;
+        end;
+
+        _greenChannelMask := mask;
+        maskShift := 0;
+        while maskShift < format.GetColorDepth() do
+        begin
+            mask := mask * 2;
+            maskShift := maskShift + 1;
+        end;
+
+        _redChannelMask := mask;        
+    end;
+
+    _alphaChannelMask := 0;
+    if format.GetChannels() = 4 then
+    begin
+        maskShift := 0;
+        while maskShift < format.GetColorDepth() do
+        begin
+            mask := mask * 2;
+            maskShift := maskShift + 1;
+        end;
+
+        _alphaChannelMask := mask; 
+    end;
+
+    _colorSpaceType := 1466527319;
+    i := 0;
+    while i < 9 do
+    begin
+        _colorSpaceEndpoints[i] := 0;
+        i := i + 1;
+    end;
+
+    _redGamma := 0;
+    _greenGamma := 0;
+    _blueGamma := 0;
+end;
+
+function BitmapInfoHeader.GetSize() : integer;
+begin
+    GetSize := _size;
+end;
+
+function BitmapInfoHeader.GetRawPixelArraySize() : integer;
+begin
+    GetRawPixelArraySize := _rawDataSize;
+end;
+
+constructor WindowsBitmapImageWriter();
+begin
+end;
+
+destructor WindowsBitmapImageWriter();
+begin
+end;
+
+function WindowsBitmapImageWriter.CanWrite(
+    image : ^Image) : boolean;
+var
+    format : PixelFormat;
+    size : Size;
+begin
+    CanWrite := true;
+    if image = nil then
+        CanWrite := false;
+
+    if CanWrite then
+    begin
+        format := image^.GetFormat();
+        if  (format.GetBpp() > 32) or 
+            (format.IsFloat()) or
+            (format.GetColorDepth() < 8) then
+            CanWrite := false;  
+    end;
+
+    if CanWrite then
+    begin
+        size := image^.GetSize();
+        if (size.GetWidth() = 0) or (size.GetHeight() = 0) then
+            CanWrite := false;
+    end;
+end;
+
+function WindowsBitmapImageWriter.Write(
+    image : ^Image;
+    stream : ^Stream) : boolean;
+var
+    header : BitmapFileHeader; 
+    infoHeader : BitmapInfoHeader;
+    rawPixelDataSize : integer;
+    rawPixelDataOffset : integer; 
+begin
+    Write := CanWrite(image);
+
+    if Write then
+        Write := stream <> nil;
+
+    if Write then
+        Write := stream^.CanWrite();
+
+    if Write then
+    begin
+        infoHeader := BitmapInfoHeader(image);
+        rawPixelDataSize := infoHeader.GetRawPixelArraySize();
+        rawPixelDataOffset := 14 + infoHeader.GetSize();
+        header := BitmapFileHeader(
+            rawPixelDataOffset + rawPixelDataSize,
+            rawPixelDataOffset);
+        Write := stream^.Write(@header, 0, 14);
+        if Write then
+            Write := stream^.Write(@infoHeader, 0, infoHeader.GetSize());
+
+        if Write then
+            Write := stream^.Write(
+                image^.GetRawImageData(), 
+                0,
+                rawPixelDataSize); 
+    end;        
+end;
+

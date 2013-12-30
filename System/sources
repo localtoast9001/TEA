@@ -1,0 +1,15 @@
+System.Console.tea
+System.Convert.tea
+System.Math.tea
+System.Memory.tea
+System.String.tea
+Graphics\IO\System.Graphics.IO.ImageWriter.tea
+Graphics\IO\System.Graphics.IO.TargaImageWriter.tea
+Graphics\IO\System.Graphics.IO.WindowsBitmapImageWriter.tea
+Graphics\System.Graphics.Image.tea
+Graphics\System.Graphics.PixelFormat.tea
+Graphics\System.Graphics.Point.tea
+Graphics\System.Graphics.Size.tea
+IO\System.IO.FileStream.tea
+IO\System.IO.MemoryStream.tea
+IO\System.IO.Stream.tea

@@ -21,16 +21,16 @@ var
 begin
     Open := false;
     Close();
-    oflag := 32768;
+    oflag := 32768; {_O_BINARY}
     if write then
     begin
-        oflag := oflag or 256;
+        oflag := oflag or 256; {_O_CREAT}
         if read then 
-            oflag := oflag or 2
+            oflag := oflag or 2 {_O_RDWR}
         else
-            oflag := oflag or 1;
+            oflag := oflag or 1; {_O_WRONLY}
     end;
-    pmode := 256;
+    pmode := 384; {_S_IREAD, _S_IWRITE}
     fd := _wopen(path, oflag, pmode);
     if fd <> -1 then
     begin

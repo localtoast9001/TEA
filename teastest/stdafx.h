@@ -4,9 +4,13 @@
 //
 
 #pragma once
+#define _CRT_SECURE_NO_WARNINGS 1
 
 #include "targetver.h"
-
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <io.h>
 #include <stdio.h>
 #include <tchar.h>
 

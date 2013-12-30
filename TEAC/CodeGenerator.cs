@@ -486,7 +486,7 @@ namespace TEAC
 
             if (method.Method.ReturnType != null)
             {
-                LocalVariable returnVar = scope.ReturnVariable;
+                SymbolEntry returnVar = scope.ReturnVariable;
                 if (method.Method.ReturnType.IsFloatingPoint)
                 {
                     if (method.Method.ReturnType.Size == 8)
@@ -498,19 +498,66 @@ namespace TEAC
                         method.Statements.Add(new AsmStatement { Instruction = string.Format("fld dword ptr _{0}$[ebp]", returnVar.Name) });
                     }
                 }
-                else if (method.Method.ReturnType.Size <= 4 && !method.Method.ReturnType.IsClass)
+                else if (method.Method.ReturnType.Size <= 8 && !method.Method.ReturnType.IsClass)
                 {
-                    switch (method.Method.ReturnType.Size)
+                    if (method.Method.ReturnType.Size > 4)
                     {
-                        case 4:
-                            method.Statements.Add(new AsmStatement { Instruction = string.Format("mov eax, dword ptr _{0}$[ebp]", returnVar.Name) });
-                            break;
-                        case 2:
-                            method.Statements.Add(new AsmStatement { Instruction = string.Format("mov ax, word ptr _{0}$[ebp]", returnVar.Name) });
-                            break;
-                        case 1:
-                            method.Statements.Add(new AsmStatement { Instruction = string.Format("mov al, byte ptr _{0}$[ebp]", returnVar.Name) });
-                            break;
+                        method.Statements.Add(new AsmStatement { Instruction = string.Format("lea ecx,dword ptr _{0}$[ebp]", returnVar.Name) });
+                        method.Statements.Add(new AsmStatement { Instruction = "mov eax,dword ptr [ecx]" });
+                        method.Statements.Add(new AsmStatement { Instruction = "add ecx,4" });
+                        switch (method.Method.ReturnType.Size)
+                        {
+                            case 8:
+                                method.Statements.Add(new AsmStatement { Instruction = "mov edx,dword ptr [ecx]" });
+                                break;
+                            case 7:
+                                method.Statements.Add(new AsmStatement { Instruction = "mov edx,dword ptr [ecx]" });
+                                break;
+                            case 6:
+                                method.Statements.Add(new AsmStatement { Instruction = "mov dx,word ptr [ecx]" });
+                                break;
+                            case 5:
+                                method.Statements.Add(new AsmStatement { Instruction = "mov dl,byte ptr [ecx]" });
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        switch (method.Method.ReturnType.Size)
+                        {
+                            case 4:
+                                method.Statements.Add(new AsmStatement { Instruction = string.Format("mov eax, dword ptr _{0}$[ebp]", returnVar.Name) });
+                                break;
+                            case 3:
+                                method.Statements.Add(new AsmStatement { Instruction = string.Format("mov eax, dword ptr _{0}$[ebp]", returnVar.Name) });
+                                break;
+                            case 2:
+                                method.Statements.Add(new AsmStatement { Instruction = string.Format("mov ax, word ptr _{0}$[ebp]", returnVar.Name) });
+                                break;
+                            case 1:
+                                method.Statements.Add(new AsmStatement { Instruction = string.Format("mov al, byte ptr _{0}$[ebp]", returnVar.Name) });
+                                if (string.CompareOrdinal(returnVar.Type.MangledName, "f") == 0)
+                                {
+                                    method.Statements.Add(new AsmStatement { Instruction = "and eax,1" });
+                                }
+
+                                break;
+                        }
+                    }
+                }
+                else
+                {
+                    method.Statements.Add(
+                        new AsmStatement { Instruction = string.Format("mov edx, _{0}$[ebp]", scope.LargeReturnVariable.Name) });
+                    if (!TryEmitCopy(
+                        string.Format("_{0}$[ebp]", returnVar.Name),
+                        "[edx]",
+                        returnVar.Type,
+                        context,
+                        scope,
+                        method))
+                    {
+                        failed = true;
                     }
                 }
             }
@@ -538,6 +585,52 @@ namespace TEAC
             method.Statements.Add(new AsmStatement { Instruction = "ret" });
             scope.SaveSymbols(method.Symbols);
             return !failed;
+        }
+
+        private bool TryEmitCopy(
+            string sourceLocation,
+            string targetLocation,
+            TypeDefinition type,
+            CompilerContext context,
+            Scope scope,
+            MethodImpl method)
+        {
+            if (string.CompareOrdinal("[ebx]", sourceLocation) != 0)
+            {
+                method.Statements.Add(new AsmStatement { Instruction = string.Format("lea ebx,{0}", sourceLocation) }); 
+            }
+
+            if (string.CompareOrdinal("[edx]", targetLocation) != 0)
+            {
+                method.Statements.Add(new AsmStatement { Instruction = string.Format("lea edx,{0}", targetLocation) });
+            }
+
+            int size = type.Size;
+            while (size >= 4)
+            {
+                method.Statements.Add(new AsmStatement { Instruction = "mov eax, dword ptr [ebx]" });
+                method.Statements.Add(new AsmStatement { Instruction = "mov dword ptr [edx],eax" });
+                method.Statements.Add(new AsmStatement { Instruction = "add ebx,4" });
+                method.Statements.Add(new AsmStatement { Instruction = "add edx,4" });
+                size -= 4;
+            }
+
+            if (size >= 2)
+            {
+                method.Statements.Add(new AsmStatement { Instruction = "mov ax, word ptr [ebx]" });
+                method.Statements.Add(new AsmStatement { Instruction = "mov word ptr [edx],ax" });
+                method.Statements.Add(new AsmStatement { Instruction = "add ebx,2" });
+                method.Statements.Add(new AsmStatement { Instruction = "add edx,2" });
+                size -= 2;
+            }
+
+            if (size >= 1)
+            {
+                method.Statements.Add(new AsmStatement { Instruction = "mov al, byte ptr [ebx]" });
+                method.Statements.Add(new AsmStatement { Instruction = "mov byte ptr [edx],al" });
+            }
+
+            return true;
         }
 
         private bool TryEmitBlockStatement(
@@ -848,7 +941,7 @@ namespace TEAC
                 return false;
             }
 
-            if (valueType.Size == 8)
+            if (valueType.Size == 8 && !valueType.IsClass)
             {
                 method.Statements.Add(new AsmStatement { Instruction = "pop eax" });
                 method.Statements.Add(new AsmStatement { Instruction = "pop edx" });
@@ -857,7 +950,7 @@ namespace TEAC
                 method.Statements.Add(new AsmStatement { Instruction = "add ecx,4" });
                 method.Statements.Add(new AsmStatement { Instruction = "mov [ecx],edx" });
             }
-            else if (valueType.Size <= 4)
+            else if (valueType.Size <= 4 && !valueType.IsClass)
             {
                 method.Statements.Add(new AsmStatement { Instruction = "pop eax" });
                 switch (storageType.Size)
@@ -1010,36 +1103,53 @@ namespace TEAC
                     return false;
                 }
 
-                if (callLoc == null && storageType != null)
+                if (storageType != null)
                 {
-                    // must be a constructor call.
-                    MethodInfo constructor = storageType.FindConstructor(argTypes);
-                    if (constructor == null)
+                    if (callLoc == null)
                     {
-                        string message = string.Format(
-                            System.Globalization.CultureInfo.CurrentCulture,
-                            Properties.Resources.CodeGenerator_CannotFindConstructor,
-                            storageType.FullName);
-                        log.Write(new Message(
-                            callExpr.Start.Path,
-                            callExpr.Start.Line,
-                            callExpr.Start.Column,
-                            Severity.Error,
-                            message));
-                        valueType = null;
-                        return false;
+                        // must be a constructor call.
+                        MethodInfo constructor = storageType.FindConstructor(argTypes);
+                        if (constructor == null)
+                        {
+                            string message = string.Format(
+                                System.Globalization.CultureInfo.CurrentCulture,
+                                Properties.Resources.CodeGenerator_CannotFindConstructor,
+                                storageType.FullName);
+                            log.Write(new Message(
+                                callExpr.Start.Path,
+                                callExpr.Start.Line,
+                                callExpr.Start.Column,
+                                Severity.Error,
+                                message));
+                            valueType = null;
+                            return false;
+                        }
+
+                        calleeMethod = constructor;
+                        callLoc = constructor.MangledName;
+                        method.Module.AddProto(constructor);
+
+                        // create room on the stack for the result.
+                        AsmStatement resultPush = new AsmStatement { Instruction = string.Format("sub esp,{0}", storageType.Size) };
+                        method.Statements.Insert(argStatementStart, resultPush);
+
+                        // push the ref to the storage for the class on the stack.
+                        method.Statements.Add(new AsmStatement { Instruction = string.Format("lea eax,[esp+{0}]", argSize) });
+                        method.Statements.Add(new AsmStatement { Instruction = "push eax" });
                     }
+                    else if (storageType.IsClass || !storageType.IsFloatingPoint && storageType.Size > 8)
+                    {
+                        // create room on the stack for the result.
+                        AsmStatement resultPush = new AsmStatement { Instruction = string.Format("sub esp,{0}", storageType.Size) };
+                        method.Statements.Insert(argStatementStart, resultPush);
 
-                    // create room on the stack for the result.
-                    AsmStatement resultPush = new AsmStatement { Instruction = string.Format("sub esp,{0}", storageType.Size) };
-                    method.Statements.Insert(argStatementStart, resultPush);
-                    calleeMethod = constructor;
-                    callLoc = constructor.MangledName;
-                    method.Module.AddProto(constructor);
-
-                    // push the ref to the storage for the class on the stack.
-                    method.Statements.Add(new AsmStatement { Instruction = string.Format("lea eax,[esp+{0}]", argSize) });
-                    method.Statements.Add(new AsmStatement { Instruction = "push eax" });
+                        // push the ref to the storage for the class on the stack.
+                        method.Statements.Add(new AsmStatement { Instruction = string.Format(
+                            "lea ebx,[esp+{0}]", 
+                            calleeMethod.IsStatic ? argSize : argSize + 4) });
+                        method.Statements.Add(new AsmStatement { Instruction = "push ebx" });
+                        argSize += 4;
+                    }
                 }
 
                 if (calleeMethod.IsVirtual && callExpr.Inner.UseVirtualDispatch)

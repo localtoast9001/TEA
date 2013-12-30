@@ -301,6 +301,12 @@ namespace TEAC
             {
                 LocalVariable returnVar = scope.DefineLocalVariable(method.Name, method.ReturnType);
                 scope.ReturnVariable = returnVar;
+                if (method.ReturnType.Size > 8 && !method.ReturnType.IsFloatingPoint || method.ReturnType.IsClass)
+                {
+                    scope.LargeReturnVariable = scope.DefineParameter(
+                        "$result", 
+                        this.GetPointerType(method.ReturnType));
+                }
             }
 
             if (!method.IsStatic)

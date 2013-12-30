@@ -1,0 +1,35 @@
+namespace System.Graphics;
+uses System.Graphics;
+
+constructor Point();
+begin
+    _x := 0;
+    _y := 0;
+end;
+
+constructor Point(x, y : integer);
+begin
+    _x := x;
+    _y := y;
+end;
+
+function Point.GetX() : integer;
+begin
+    GetX := _x;
+end;
+
+function Point.GetY() : integer;
+begin
+    GetY := _y;
+end;
+
+procedure Point.SetX(value : integer);
+begin
+    _x := value;
+end;
+
+procedure Point.SetY(value : integer);
+begin
+    _y := value;
+end;
+
