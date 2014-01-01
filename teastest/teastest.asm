@@ -10,7 +10,14 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG4562	DB	'Hello World!', 00H
+$SG5081	DB	'Hello World!', 00H
+	ORG $+3
+$SG5084	DB	'\', 00H, 't', 00H, 'm', 00H, 'p', 00H, '\', 00H, 'C', 00H
+	DB	'R', 00H, 'T', 00H, '_', 00H, 'O', 00H, 'P', 00H, 'E', 00H, 'N'
+	DB	00H, '.', 00H, 'B', 00H, 'M', 00H, 'P', 00H, 00H, 00H
+$SG5086	DB	'Open failed on output file', 00H
+	ORG $+1
+$SG5088	DB	'Open succeeded on output file', 0aH, 00H
 CONST	ENDS
 PUBLIC	??1A@@UAE@XZ					; A::~A
 PUBLIC	?F1@A@@UAEHXZ					; A::F1
@@ -26,11 +33,26 @@ PUBLIC	??_R0?AVA@@@8					; A `RTTI Type Descriptor'
 PUBLIC	??_R3A@@8					; A::`RTTI Class Hierarchy Descriptor'
 PUBLIC	??_R2A@@8					; A::`RTTI Base Class Array'
 PUBLIC	??_R1A@?0A@EA@A@@8				; A::`RTTI Base Class Descriptor at (0,-1,0,64)'
+PUBLIC	__real@4024000000000000
+PUBLIC	__real@4059000000000000
 EXTRN	??2@YAPAXI@Z:PROC				; operator new
 EXTRN	??3@YAXPAX@Z:PROC				; operator delete
+EXTRN	__close:PROC
+EXTRN	?_wopen@@YAHPB_WHH@Z:PROC			; _wopen
+EXTRN	_perror:PROC
+EXTRN	_printf:PROC
 EXTRN	_puts:PROC
 EXTRN	??_EA@@UAEPAXI@Z:PROC				; A::`vector deleting destructor'
 EXTRN	??_7type_info@@6B@:QWORD			; type_info::`vftable'
+EXTRN	__fltused:DWORD
+;	COMDAT __real@4059000000000000
+CONST	SEGMENT
+__real@4059000000000000 DQ 04059000000000000r	; 100
+CONST	ENDS
+;	COMDAT __real@4024000000000000
+CONST	SEGMENT
+__real@4024000000000000 DQ 04024000000000000r	; 10
+CONST	ENDS
 ;	COMDAT ??_R1A@?0A@EA@A@@8
 rdata$r	SEGMENT
 ??_R1A@?0A@EA@A@@8 DD FLAT:??_R0?AVA@@@8		; A::`RTTI Base Class Descriptor at (0,-1,0,64)'
@@ -76,11 +98,16 @@ CONST	SEGMENT
 CONST	ENDS
 ; Function compile flags: /Odtp
 _TEXT	SEGMENT
-tv79 = -20						; size = 4
-_pA$ = -16						; size = 4
-tv69 = -12						; size = 4
-$T1 = -8						; size = 4
-_fResult$ = -1						; size = 1
+_dblB$ = -44						; size = 8
+_dblA$ = -36						; size = 8
+_fh2$ = -28						; size = 4
+tv82 = -24						; size = 4
+_pA$ = -20						; size = 4
+tv72 = -16						; size = 4
+$T1 = -12						; size = 4
+tv65 = -8						; size = 4
+_fResult$ = -2						; size = 1
+_fDblResult$ = -1					; size = 1
 _argc$ = 8						; size = 4
 _argv$ = 12						; size = 4
 _main	PROC
@@ -88,53 +115,100 @@ _main	PROC
 ; Line 22
 	push	ebp
 	mov	ebp, esp
-	sub	esp, 20					; 00000014H
+	sub	esp, 44					; 0000002cH
 ; Line 23
+	fld	QWORD PTR __real@4024000000000000
+	fstp	QWORD PTR _dblA$[ebp]
+; Line 24
+	fld	QWORD PTR __real@4059000000000000
+	fstp	QWORD PTR _dblB$[ebp]
+; Line 25
+	fld	QWORD PTR _dblA$[ebp]
+	fld	QWORD PTR _dblB$[ebp]
+	fucompp
+	fnstsw	ax
+	test	ah, 68					; 00000044H
+	jp	SHORT $LN5@main
+	mov	DWORD PTR tv65[ebp], 1
+	jmp	SHORT $LN6@main
+$LN5@main:
+	mov	DWORD PTR tv65[ebp], 0
+$LN6@main:
+	mov	al, BYTE PTR tv65[ebp]
+	mov	BYTE PTR _fDblResult$[ebp], al
+; Line 26
 	push	4
 	call	??2@YAPAXI@Z				; operator new
 	add	esp, 4
 	mov	DWORD PTR $T1[ebp], eax
 	cmp	DWORD PTR $T1[ebp], 0
-	je	SHORT $LN3@main
+	je	SHORT $LN7@main
 	mov	ecx, DWORD PTR $T1[ebp]
 	call	??0A@@QAE@XZ
-	mov	DWORD PTR tv69[ebp], eax
-	jmp	SHORT $LN4@main
-$LN3@main:
-	mov	DWORD PTR tv69[ebp], 0
-$LN4@main:
-	mov	eax, DWORD PTR tv69[ebp]
-	mov	DWORD PTR _pA$[ebp], eax
-; Line 24
+	mov	DWORD PTR tv72[ebp], eax
+	jmp	SHORT $LN8@main
+$LN7@main:
+	mov	DWORD PTR tv72[ebp], 0
+$LN8@main:
+	mov	ecx, DWORD PTR tv72[ebp]
+	mov	DWORD PTR _pA$[ebp], ecx
+; Line 27
+	mov	edx, DWORD PTR _pA$[ebp]
+	mov	eax, DWORD PTR [edx]
 	mov	ecx, DWORD PTR _pA$[ebp]
-	mov	edx, DWORD PTR [ecx]
-	mov	ecx, DWORD PTR _pA$[ebp]
-	mov	eax, DWORD PTR [edx+4]
-	call	eax
-; Line 25
+	mov	edx, DWORD PTR [eax+4]
+	call	edx
+; Line 28
 	push	0
 	push	2
 	push	1
 	push	0
 	call	?derp@@YAHFHF_N@Z			; derp
 	add	esp, 16					; 00000010H
-; Line 26
-	push	OFFSET $SG4562
+; Line 29
+	push	OFFSET $SG5081
 	call	_puts
 	add	esp, 4
-; Line 27
+; Line 30
 	cmp	DWORD PTR _argc$[ebp], 0
-	jle	SHORT $LN5@main
-	mov	DWORD PTR tv79[ebp], 1
-	jmp	SHORT $LN6@main
-$LN5@main:
-	mov	DWORD PTR tv79[ebp], 0
-$LN6@main:
-	mov	cl, BYTE PTR tv79[ebp]
-	mov	BYTE PTR _fResult$[ebp], cl
-; Line 28
+	jle	SHORT $LN9@main
+	mov	DWORD PTR tv82[ebp], 1
+	jmp	SHORT $LN10@main
+$LN9@main:
+	mov	DWORD PTR tv82[ebp], 0
+$LN10@main:
+	mov	al, BYTE PTR tv82[ebp]
+	mov	BYTE PTR _fResult$[ebp], al
+; Line 33
+	push	384					; 00000180H
+	push	33025					; 00008101H
+	push	OFFSET $SG5084
+	call	?_wopen@@YAHPB_WHH@Z			; _wopen
+	add	esp, 12					; 0000000cH
+	mov	DWORD PTR _fh2$[ebp], eax
+; Line 34
+	cmp	DWORD PTR _fh2$[ebp], -1
+	jne	SHORT $LN2@main
+; Line 35
+	push	OFFSET $SG5086
+	call	_perror
+	add	esp, 4
+; Line 36
+	jmp	SHORT $LN1@main
+$LN2@main:
+; Line 38
+	push	OFFSET $SG5088
+	call	_printf
+	add	esp, 4
+; Line 39
+	mov	ecx, DWORD PTR _fh2$[ebp]
+	push	ecx
+	call	__close
+	add	esp, 4
+$LN1@main:
+; Line 41
 	xor	eax, eax
-; Line 29
+; Line 42
 	mov	esp, ebp
 	pop	ebp
 	ret	0

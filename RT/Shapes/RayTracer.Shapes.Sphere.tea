@@ -10,13 +10,58 @@ end;
 destructor Sphere();
 begin
 end;
- 
+
 function Sphere.Intersect(
     ray : ^Ray3D;
-    point, normal, textureCoord : ^Vector3D) : boolean; 
+    point, normal : ^Vector3D) : boolean; 
+var
+    o : Vector3D;
+    ro, rd : Vector3D;
+    a, b, c, disc, discSqrt, q, t0, t1, temp, t : double;
 begin
     point^ := Vector3D();
     normal^ := Vector3D();
-    textureCoord^ := Vector3D();
     Intersect := false;
+
+    ro := ray^.GetOrigin();
+    rd := ray^.GetDirection();
+    o := Vector3D.sub(@ro, @_center);
+    a := rd.GetLengthSq();
+    b := 2.0 * Vector3D.DotP(@ro, @rd);
+    c := ro.GetLengthSq() - Math.Sqr(_radius);
+    disc := Math.Sqr(b) - 4.0 * a * c;
+    if disc >= 0.0 then
+    begin
+        discSqrt := Math.Sqrt(disc);
+        if b < 0.0 then
+            q := (-b - discSqrt) / 2.0
+        else
+            q := (-b + discSqrt) / 2.0;
+        t0 := q / a;
+        t1 := c / q;
+        if t0 > t1 then
+        begin
+            temp := t0;
+            t0 := t1;
+            t1 := temp;
+        end;
+
+        if t1 >= 0 then
+        begin
+            if t0 < 0 then
+                t := t1
+            else
+                t := t0;
+
+            Intersect := true;
+            point^ := Vector3D(
+                ro.GetX() + rd.GetX() * t,
+                ro.GetY() + rd.GetY() * t,
+                ro.GetZ() + rd.GetZ() * t);
+            normal^ := Vector3D(
+                (point^.GetX() - _center.GetX()) * 2.0,
+                (point^.GetY() - _center.GetY()) * 2.0,
+                (point^.GetZ() - _center.GetZ()) * 2.0);
+        end;
+    end;
 end;

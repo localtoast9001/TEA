@@ -15,16 +15,6 @@ begin
     _texture := nil;
 end;
 
-function Shape.Intersect(
-    ray : ^Ray3D;
-    point, normal, textureCoord : ^Vector3D) : boolean;
-begin
-    point^ := Vector3D();
-    normal^ := Vector3D();
-    textureCoord^ := Vector3D();
-    Intersect := false;
-end;
-
 function Shape.GetTexture() : ^Texture;
 begin
     GetTexture := _texture;

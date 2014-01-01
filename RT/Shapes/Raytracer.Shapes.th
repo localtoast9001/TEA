@@ -8,7 +8,7 @@ type
             virtual destructor(); 
             virtual function Intersect(
                 ray : ^Ray3D;
-                point, normal, textureCoord : ^Vector3D) : boolean; 
+                point, normal : ^Vector3D) : boolean; 
         var
             _center : Vector3D;
             _radius : double;
@@ -17,7 +17,7 @@ type
         public
             virtual function Intersect(
                 ray : ^Ray3D;
-                point, normal, textureCoord : ^Vector3D) : boolean; 
+                point, normal : ^Vector3D) : boolean; 
         var
             _start, _end : Vector3D;
             _radius : double;
@@ -26,7 +26,7 @@ type
         public
             virtual function Intersect(
                 ray : ^Ray3D;
-                point, normal, textureCoord : ^Vector3D) : boolean; 
+                point, normal : ^Vector3D) : boolean; 
         var
             _points : array [3] of Vector3D;
     end;

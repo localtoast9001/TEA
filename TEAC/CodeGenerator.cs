@@ -1583,6 +1583,56 @@ namespace TEAC
 
             if (rightSideType.IsFloatingPoint)
             {
+                if (leftSideType.IsFloatingPoint)
+                {
+                    switch (rightSideType.Size)
+                    {
+                        case 4:
+                            method.Statements.Add(new AsmStatement { Instruction = "fld dword ptr [esp]" });
+                            break;
+                        case 8:
+                            method.Statements.Add(new AsmStatement { Instruction = "fld qword ptr [esp]" });
+                            break;
+                        default:
+                            method.Statements.Add(new AsmStatement { Instruction = "fld tword ptr [esp]" });
+                            break;
+                    }
+
+                    method.Statements.Add(new AsmStatement { Instruction = string.Format("add esp,{0}", rightSideType.Size) });
+                    method.Statements.Add(new AsmStatement { Instruction = "fcompp" });
+                    method.Statements.Add(new AsmStatement { Instruction = "fnstsw	ax" });
+                    method.Statements.Add(new AsmStatement { Instruction = "sahf" });
+                    switch (relExpr.Operator)
+                    {
+                        case Keyword.Equals:
+                            {
+                                method.Statements.Add(new AsmStatement { Instruction = "sete al" });
+                            } break;
+                        case Keyword.LessThan:
+                            {
+                                method.Statements.Add(new AsmStatement { Instruction = "seta al" });
+                            } break;
+                        case Keyword.LessThanOrEquals:
+                            {
+                                method.Statements.Add(new AsmStatement { Instruction = "setae al" });
+                            } break;
+                        case Keyword.GreaterThan:
+                            {
+                                method.Statements.Add(new AsmStatement { Instruction = "setb al" });
+                            } break;
+                        case Keyword.GreaterThanOrEquals:
+                            {
+                                method.Statements.Add(new AsmStatement { Instruction = "setbe al" });
+                            } break;
+                        case Keyword.NotEqual:
+                            {
+                                method.Statements.Add(new AsmStatement { Instruction = "setne al" });
+                            } break;
+                    }
+                }
+                else
+                {
+                }
             } 
             else if(leftSideType.IsFloatingPoint)
             {

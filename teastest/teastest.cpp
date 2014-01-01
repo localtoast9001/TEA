@@ -20,6 +20,9 @@ int derp(short a, int b, short c, bool d)
 
 int _tmain(int argc, _TCHAR* argv[])
 {
+    double dblA = 10.0f;
+    double dblB = 100.0f;
+    bool fDblResult = dblA == dblB;
     A* pA = new A();
     pA->F1();
     derp(0, 1, 2, false);

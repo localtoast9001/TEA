@@ -40,3 +40,34 @@ begin
     GetLength := Math.Sqrt(GetLengthSq());
 end;
 
+function Vector3D.DotP(a, b : ^Vector3D) : double;
+begin
+    DotP := 
+        a^._x * b^._x + 
+        a^._y * b^._y + 
+        a^._z * b^._z;
+end;
+
+function Vector3D.negative(value : ^Vector3D) : Vector3D;
+begin
+    negative := Vector3D(
+        value^._x, 
+        value^._y, 
+        value^._z);
+end;
+
+function Vector3D.add(a, b : ^Vector3D) : Vector3D;
+begin
+    add := Vector3D(
+        a^._x + b^._x,
+        a^._y + b^._y,
+        a^._z + b^._z); 
+end;    
+
+function Vector3D.sub(a, b : ^Vector3D) : Vector3D;
+begin
+    sub := Vector3D(
+        a^._x - b^._x,
+        a^._y - b^._y,
+        a^._z - b^._z);
+end;
