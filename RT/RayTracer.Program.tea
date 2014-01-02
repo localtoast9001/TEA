@@ -1,0 +1,155 @@
+namespace RayTracer;
+uses 
+    System, 
+    System.IO, 
+    System.Graphics, 
+    System.Graphics.IO, 
+    RayTracer, 
+    RayTracer.Shapes;
+
+type
+    Program = public static class
+        public
+            static function Main(
+                argc : integer;
+                argv : array of array of character) : integer;
+        private 
+            static procedure Test();
+    end;
+
+    Arguments = class
+        public
+            constructor();
+            destructor();
+
+            function Parse(
+                argc : integer;
+                argv : array of array of character) : boolean;
+
+            function GetOutputPath() : array of character;
+        var
+            _outputPath : array of character;
+    end;
+
+constructor Arguments();
+begin
+    _outputPath := nil;
+end;
+
+destructor Arguments();
+begin
+end;
+
+function Arguments.Parse(
+    argc : integer;
+    argv : array of array of character) : boolean;
+begin
+    Parse := false;
+    if argc = 2 then
+    begin
+        _outputPath := argv[1];
+        Parse := true;
+    end;
+end;
+
+function Arguments.GetOutputPath() : array of character;
+begin
+    GetOutputPath := _outputPath;
+end;
+
+procedure Program.Test();
+var
+    shape : Sphere;
+    ray : Ray3D;
+    d : double;
+    point, normal : Vector3D;
+    v0, v1 : Vector3D;
+begin
+    shape := Sphere(
+        Vector3D(0.0, 0.0, 2.0),
+        1.0);
+    v0 := Vector3D(0.0, 0.0, 0.0);
+    v1 := Vector3D(-1.0, -1.0, -1.0);
+    ray := Ray3D(
+        @v0,
+        @v1);
+    if shape.Intersect(@ray, @d, @point, @normal) then
+    begin
+        if point.GetZ() - 1.0 < 0.001 then
+            Console.WriteLine('Intersect at right point.')
+        else
+            Console.WriteLine('Intersect at wrong point.');
+    end
+    else
+        Console.WriteLine('Intersect Failed.');
+end;
+
+function Program.Main(
+    argc : integer;
+    argv : array of array of character) : integer;
+var
+    arguments : Arguments;
+    imageStream : FileStream;
+    imageWriter : WindowsBitmapImageWriter;
+    image : Image;
+    pass : boolean;
+    scene : Scene;
+begin
+    Test();
+    Main := 0;
+    pass := arguments.Parse(argc, argv);
+    if pass then
+    begin
+        scene.SetCamera(
+            new Camera(
+                Vector3D(0.0, 0.0, 1.0),
+                Vector3D(0.0, 0.0, 0.0),
+                1.0,
+                400,
+                400));
+        pass := scene.AddShape(
+            new Sphere(
+                Vector3D(0.0, 0.0, 2.0),
+                1.0));
+
+        if pass then
+            pass := scene.AddLight(
+                new Light(
+                    Vector3D(-1.0, 1.0, -2.0),
+                    Color(1.0, 1.0, 1.0, 1.0)));
+
+        if pass then
+            pass := scene.AddLight(
+                new Light(
+                    Vector3D(0.0, -20.0, 0.0),
+                    Color(1.0, 0.0, 0.0, 1.0)));
+
+        if pass then
+            pass := scene.AddLight(
+                new Light(
+                    Vector3D(20.0, 0.5, 0.0),
+                    Color(0.0, 1.0, 0.0, 1.0)));
+
+        if pass then
+            pass := scene.AddLight(
+                new Light(
+                    Vector3D(-2.5, 5.5, -2.0),
+                    Color(0.0, 0.0, 1.0, 1.0)));
+
+        if pass then
+            pass := scene.RayTrace(@image);
+
+        if pass then
+            pass := imageStream.Open(
+                arguments.GetOutputPath(), 
+                false, 
+                true);
+        if pass then
+            pass := imageWriter.Write(@image, @imageStream);
+    end
+    else
+    begin
+        Console.WriteLine('Usage: RayTracer <output path>');
+        Main := 1;
+    end;
+end;

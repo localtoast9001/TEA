@@ -1,0 +1,46 @@
+namespace RayTracer;
+uses RayTracer, System, System.Graphics;
+
+constructor Camera();
+begin
+    _location := Vector3D();
+    _focalPoint := Vector3D(0.0, 0.0, -1.0);
+    _nearPlane := 1.0;
+    _xResolution := 100;
+    _yResolution := 100;
+end;
+
+constructor Camera(
+    location, focalPoint : Vector3D;
+    nearPlane : double;
+    xResolution, yResolution : integer);
+begin
+    _location := location;
+    _focalPoint := focalPoint;
+    _nearPlane := nearPlane;
+    _xResolution := xResolution;
+    _yResolution := yResolution;
+end;
+
+function Camera.StartTrace(x, y : integer) : Ray3D;
+var
+    xd, yd, xo, yo : double;
+    dir : Vector3D;
+begin
+    xo := Convert.ToDouble(_xResolution) / 2.0;
+    yo := Convert.ToDouble(_yResolution) / 2.0;
+    xd := Convert.ToDouble(x) - xo;
+    yd := yo - Convert.ToDouble(y);
+    dir := Vector3D(
+        xd / xo,
+        yd / yo,
+        _nearPlane);
+    StartTrace := Ray3D(
+        @_focalPoint,
+        @dir);
+end;
+
+function Camera.ImageSize() : Size;
+begin
+    ImageSize := Size(_xResolution, _yResolution);
+end;

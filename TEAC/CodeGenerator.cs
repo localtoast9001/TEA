@@ -1632,10 +1632,34 @@ namespace TEAC
                 }
                 else
                 {
+                    string message = string.Format(
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        Properties.Resources.CodeGenerator_NoAutomaticConversion,
+                        leftSideType.FullName,
+                        rightSideType.FullName);
+                    this.log.Write(new Message(
+                        relExpr.Start.Path,
+                        relExpr.Start.Line, 
+                        relExpr.Start.Column,
+                        Severity.Error,
+                        message));
+                    return false;
                 }
             } 
             else if(leftSideType.IsFloatingPoint)
             {
+                string message = string.Format(
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    Properties.Resources.CodeGenerator_NoAutomaticConversion,
+                    leftSideType.FullName,
+                    rightSideType.FullName);
+                this.log.Write(new Message(
+                    relExpr.Start.Path,
+                    relExpr.Start.Line,
+                    relExpr.Start.Column,
+                    Severity.Error,
+                    message));
+                return false;
             }
             else
             {
@@ -1767,7 +1791,7 @@ namespace TEAC
                         } break;
                     case Keyword.Minus:
                         {
-                            method.Statements.Add(new AsmStatement { Instruction = "fsubrp" });
+                            method.Statements.Add(new AsmStatement { Instruction = "fsubp" });
                         } break;
                 }
             }
@@ -1849,7 +1873,7 @@ namespace TEAC
                         } break;
                     case Keyword.Slash:
                         {
-                            method.Statements.Add(new AsmStatement { Instruction = "fdivrp" });
+                            method.Statements.Add(new AsmStatement { Instruction = "fdivp" });
                         } break;
                 }
             }

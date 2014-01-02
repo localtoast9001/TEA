@@ -44,3 +44,22 @@ function Color.GetAlpha() : double;
 begin
     GetAlpha := _a;
 end;
+
+function Color.add(
+    a, b : Color) : Color;
+begin
+    add._r := a._r + b._r;
+    add._g := a._g + b._g;
+    add._b := a._b + b._b;
+    add._a := a._a + b._a;
+end;
+
+function Color.Scale(
+    a : Color;
+    scaleValue : double) : Color;
+begin
+    Scale._r := a._r * scaleValue;
+    Scale._g := a._g * scaleValue;
+    Scale._b := a._b * scaleValue;
+    Scale._a := a._a * scaleValue;
+end;

@@ -1,0 +1,40 @@
+namespace Samples;
+uses System;
+
+type
+    Program = public static class
+        public
+            static function Main(
+                argc : integer;
+                argv : array of array of character) : integer;
+    end;
+
+function Program.Main(
+    argc : integer;
+    argv : array of array of character) : integer;
+begin
+    Console.Write('1.0 - 2.0 = -1.0: ');
+    if 1.0 - 2.0 = -1.0 then
+        Console.WriteLine('PASS')
+    else
+        Console.WriteLine('FAIL');
+
+    Console.Write('2.0 - 1.0 = 1.0: ');
+    if 2.0 - 1.0 = 1.0 then
+        Console.WriteLine('PASS')
+    else
+        Console.WriteLine('FAIL');
+
+    Console.Write('2.0 / 1.0 = 2.0: ');
+    if 2.0 / 1.0 = 2.0 then
+        Console.WriteLine('PASS')
+    else
+        Console.WriteLine('FAIL');
+
+    Console.Write('1.0 / 2.0 = 0.5: ');
+    if 1.0 / 2.0 = 0.5 then
+        Console.WriteLine('PASS')
+    else
+        Console.WriteLine('FAIL');
+end;
+

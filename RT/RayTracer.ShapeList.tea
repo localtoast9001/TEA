@@ -1,0 +1,104 @@
+namespace RayTracer;
+uses RayTracer, System;
+
+constructor ShapeListNode(value : ^Shape);
+begin
+    _value := value;
+    _next := nil;
+end;
+
+function ShapeListNode.GetValue() : ^Shape;
+begin
+    GetValue := _value;
+end;
+
+function ShapeListNode.GetNext() : ^ShapeListNode;
+begin
+    GetNext := _next;
+end;
+
+procedure ShapeListNode.SetNext(
+    node : ^ShapeListNode);
+begin
+    _next := node;
+end;
+
+constructor ShapeListIterator(start : ^ShapeListNode);
+begin
+    _current := start;
+end;
+
+function ShapeListIterator.Current() : ^Shape;
+begin
+    if _current <> nil then
+    begin
+        Current := _current^.GetValue();
+    end
+    else
+        Current := nil;
+end;
+
+procedure ShapeListIterator.MoveNext();
+begin
+    if _current <> nil then
+    begin
+        _current := _current^.GetNext();
+    end;
+end;
+
+constructor ShapeList();
+begin
+    _count := 0;
+    _tail := nil;
+    _head := nil;
+end;
+
+destructor ShapeList();
+var
+    current : ^ShapeListNode;
+    shape : ^Shape;
+begin
+    current := _head;
+    while current <> nil do
+    begin
+        _head := _head^.GetNext();
+        shape := current^.GetValue();
+        if shape <> nil then
+            delete shape;
+        delete current;
+        current := _head;
+    end;
+end;
+
+function ShapeList.Count() : integer;
+begin
+    Count := _count;
+end;
+
+function ShapeList.GetIterator() : ShapeListIterator;
+begin
+    GetIterator := ShapeListIterator(_head);
+end;
+
+function ShapeList.Add(item : ^Shape) : boolean;            
+var
+    newNode : ^ShapeListNode;
+begin
+    Add := false;
+    newNode := new ShapeListNode(item);
+    if newNode <> nil then
+    begin
+        Add := true;
+        _count := _count + 1;
+        if _tail <> nil then
+        begin
+            _tail^.SetNext(newNode);
+            _tail := newNode;
+        end
+        else
+        begin
+            _head := newNode;
+            _tail := newNode;
+        end;
+    end;
+end;

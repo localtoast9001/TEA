@@ -40,6 +40,25 @@ begin
     GetLength := Math.Sqrt(GetLengthSq());
 end;
 
+function Vector3D.UnitV() : Vector3D;
+var
+    length : double;
+begin
+    length := GetLength();
+    if length > 0.0 then
+    begin
+        UnitV._x := _x / length;
+        UnitV._y := _y / length;
+        UnitV._z := _z / length;
+    end
+    else
+    begin
+        UnitV._x := 0.0;
+        UnitV._y := 0.0;
+        UnitV._z := 0.0;
+    end;
+end;
+
 function Vector3D.DotP(a, b : ^Vector3D) : double;
 begin
     DotP := 

@@ -1,0 +1,180 @@
+namespace RayTracer;
+uses RayTracer, System, System.Graphics;
+
+constructor Scene();
+begin
+    _camera := nil;
+    _shapes := ShapeList();
+    _lights := LightList();
+end;
+
+destructor Scene();
+begin
+    if _camera <> nil then
+        delete _camera;
+end;
+
+procedure Scene.SetCamera(camera : ^Camera);
+begin
+    if _camera <> nil then
+        delete _camera;
+    _camera := camera;
+end;
+
+function Scene.AddShape(shape : ^Shape) : boolean;
+begin
+    AddShape := _shapes.Add(shape);
+end;
+
+function Scene.AddLight(light : ^Light) : boolean;
+begin
+    AddLight := _lights.Add(light);
+end;
+
+function Scene.RayTrace(image : ^Image) : boolean;
+begin
+    RayTrace := InitImage(image);
+    if RayTrace then
+        InnerRayTrace(image);
+end;
+
+function Scene.InitImage(image : ^Image) : boolean;
+var
+    format : PixelFormat;
+    size : Size;
+begin
+    format := PixelFormat(32, 4, 8, false);
+    InitImage := false;
+    if _camera <> nil then
+    begin
+        size := _camera^.ImageSize();
+        InitImage := image^.Create(size, format);
+    end;
+end;
+
+procedure Scene.InnerRayTrace(image : ^Image);
+var
+    imageSize : Size;
+    x, y : integer;
+    ray : Ray3D;
+    color : Color;
+    pixel : array of byte;
+    row : array of byte;
+begin
+    imageSize := _camera^.ImageSize();
+    y := 0;
+    row := image^.GetRawImageData();
+    while y < imageSize.GetHeight() do
+    begin
+        x := 0;
+        pixel := row;
+        while x < imageSize.GetWidth() do
+        begin
+            ray := _camera^.StartTrace(x, y);
+            color := TraceRay(@ray);
+            WriteColor(@color, pixel);
+            x := x + 1;
+            pixel := pixel + 4;
+        end;
+
+        y := y + 1;
+        row := row + image^.GetRowSize();
+    end;
+end;
+
+function Scene.TraceRay(ray : ^Ray3D) : Color;
+var
+    shape, shadow : ^Shape;
+    point, normal, lightPoint, lightNormal : Vector3D;
+    iter : LightListIterator;
+    lightRay : Ray3D;
+    light : ^Light;
+    diffusion : double;
+    lightRayDir : Vector3D;
+begin
+    shape := Intersect(ray, @point, @normal);
+    if shape <> nil then
+    begin
+        iter := _lights.GetIterator();
+        TraceRay := Color(
+            0.0, 
+            0.0,
+            0.0, 
+            1.0);
+        while iter.Current() <> nil do
+        begin
+            light := iter.Current();
+            lightRay := Ray3D.From2Points(point, light^.GetLocation());
+            shadow := Intersect(@lightRay, @lightPoint, @lightNormal);
+            if shadow = nil then
+            begin
+                lightRayDir := lightRay.GetDirection();
+                diffusion := Vector3D.DotP(
+                    @lightRayDir, 
+                    @normal);
+                if diffusion > 0.0 then
+                begin
+                    TraceRay := Color.add( 
+                        TraceRay,   
+                        Color.Scale(light^.GetColor(), diffusion));
+                end;
+            end;
+            
+            iter.MoveNext();
+        end;
+    end
+    else
+        TraceRay := Color(0.0, 0.0, 0.0, 0.0);
+end;
+
+function Scene.Intersect(
+    ray : ^Ray3D;
+    point, normal : ^Vector3D) : ^Shape;
+var
+    iter : ShapeListIterator;
+    current : ^Shape;
+    nearest, d : double; 
+    testPoint, testNormal : Vector3D;
+    epsilon : double;
+begin
+    epsilon := 0.0000001;
+    Intersect := nil;
+    iter := _shapes.GetIterator();
+    while iter.Current() <> nil do
+    begin
+        current := iter.Current();
+        if current^.Intersect(ray, @d, @testPoint, @testNormal) then
+        begin
+            if (Intersect = nil) or ((d < nearest) and (d > epsilon)) then
+            begin
+                Intersect := current;
+                nearest := d;
+                point^ := testPoint;
+                normal^ := testNormal;
+            end;
+        end;
+
+        iter.MoveNext();  
+    end;
+end;
+
+function Scene.ToByte(
+    value : double) : byte;
+var
+    iv : integer;
+begin
+    iv := Math.Round(value * 255.0);
+    if iv > 255 then
+        iv := 255;
+    ToByte := Convert.Lo(Convert.Lo(iv));
+end;
+
+procedure Scene.WriteColor(
+    source : ^Color; 
+    target : array of byte);
+begin
+    target[0] := ToByte(source^.GetBlue());
+    target[1] := ToByte(source^.GetGreen());
+    target[2] := ToByte(source^.GetRed());
+    target[3] := ToByte(source^.GetAlpha());
+end;

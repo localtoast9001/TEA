@@ -1,4 +1,11 @@
+RayTracer.Camera.tea
 RayTracer.Color.tea
-RayTracer.Vector3D.tea
+RayTracer.Light.tea
+RayTracer.LightList.tea
+RayTracer.Ray3D.tea
+RayTracer.Scene.tea
 RayTracer.Shape.tea
+RayTracer.ShapeList.tea
+RayTracer.Program.tea
+RayTracer.Vector3D.tea
 Shapes\RayTracer.Shapes.Sphere.tea

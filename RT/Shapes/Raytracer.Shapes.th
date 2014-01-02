@@ -4,10 +4,11 @@ uses RayTracer;
 type
     Sphere = public class(Shape)
         public
-            constructor(center : ^Vector3D; radius : double);
+            constructor(center : Vector3D; radius : double);
             virtual destructor(); 
             virtual function Intersect(
                 ray : ^Ray3D;
+                distance : ^double;
                 point, normal : ^Vector3D) : boolean; 
         var
             _center : Vector3D;
@@ -17,6 +18,7 @@ type
         public
             virtual function Intersect(
                 ray : ^Ray3D;
+                distance : ^double;
                 point, normal : ^Vector3D) : boolean; 
         var
             _start, _end : Vector3D;
@@ -26,6 +28,7 @@ type
         public
             virtual function Intersect(
                 ray : ^Ray3D;
+                distance : ^double;
                 point, normal : ^Vector3D) : boolean; 
         var
             _points : array [3] of Vector3D;

@@ -160,6 +160,15 @@ namespace TEAC.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to No automatic conversion exists between {0} and {1} types..
+        /// </summary>
+        internal static string CodeGenerator_NoAutomaticConversion {
+            get {
+                return ResourceManager.GetString("CodeGenerator_NoAutomaticConversion", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot reference inherited members of type {0} because it has no base class..
         /// </summary>
         internal static string CodeGenerator_NoBaseTypeForInherited {

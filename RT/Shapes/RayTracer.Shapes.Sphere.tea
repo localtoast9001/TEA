@@ -1,9 +1,9 @@
 namespace RayTracer.Shapes;
 uses System, RayTracer, RayTracer.Shapes;
 
-constructor Sphere(center : ^Vector3D; radius : double);
+constructor Sphere(center : Vector3D; radius : double);
 begin
-    _center := center^;
+    _center := center;
     _radius := radius;    
 end;
 
@@ -13,6 +13,7 @@ end;
 
 function Sphere.Intersect(
     ray : ^Ray3D;
+    distance : ^double;
     point, normal : ^Vector3D) : boolean; 
 var
     o : Vector3D;
@@ -21,14 +22,15 @@ var
 begin
     point^ := Vector3D();
     normal^ := Vector3D();
+    distance^ := 0.0;
     Intersect := false;
 
     ro := ray^.GetOrigin();
     rd := ray^.GetDirection();
     o := Vector3D.sub(@ro, @_center);
     a := rd.GetLengthSq();
-    b := 2.0 * Vector3D.DotP(@ro, @rd);
-    c := ro.GetLengthSq() - Math.Sqr(_radius);
+    b := 2.0 * Vector3D.DotP(@o, @rd);
+    c := o.GetLengthSq() - Math.Sqr(_radius);
     disc := Math.Sqr(b) - 4.0 * a * c;
     if disc >= 0.0 then
     begin
@@ -46,22 +48,24 @@ begin
             t1 := temp;
         end;
 
-        if t1 >= 0 then
+        if t1 >= 0.0 then
         begin
-            if t0 < 0 then
+            if t0 < 0.0 then
                 t := t1
             else
                 t := t0;
 
             Intersect := true;
+            distance^ := t;
             point^ := Vector3D(
-                ro.GetX() + rd.GetX() * t,
-                ro.GetY() + rd.GetY() * t,
-                ro.GetZ() + rd.GetZ() * t);
+                o.GetX() + rd.GetX() * t,
+                o.GetY() + rd.GetY() * t,
+                o.GetZ() + rd.GetZ() * t);
             normal^ := Vector3D(
-                (point^.GetX() - _center.GetX()) * 2.0,
-                (point^.GetY() - _center.GetY()) * 2.0,
-                (point^.GetZ() - _center.GetZ()) * 2.0);
+                (point^.GetX() - _center.GetX()),
+                (point^.GetY() - _center.GetY()),
+                (point^.GetZ() - _center.GetZ()));
+            normal^ := normal^.UnitV();
         end;
     end;
 end;

@@ -1,4 +1,5 @@
 namespace RayTracer;
+uses System.Graphics;
 
 type
     Vector3D = public class
@@ -10,6 +11,7 @@ type
             function GetZ() : double;
             function GetLengthSq() : double;
             function GetLength() : double;
+            function UnitV() : Vector3D;
 
             static function DotP(a, b : ^Vector3D) : double;
             static function negative(value : ^Vector3D) : Vector3D;
@@ -23,6 +25,7 @@ type
             constructor();
             constructor(origin, direction : ^Vector3D);
 
+            static function From2Points(origin, target : Vector3D) : Ray3D;
             function GetOrigin() : Vector3D;
             function GetDirection() : Vector3D;
         var
@@ -42,6 +45,9 @@ type
             function GetGreen() : double;
             function GetBlue() : double;
             function GetAlpha() : double;
+
+            static function add(a, b : Color) : Color;
+            static function Scale(a : Color; scaleValue : double) : Color;
         var
             _b, _g, _r, _a : double;
     end;
@@ -55,6 +61,7 @@ type
             virtual destructor();
             abstract function Intersect(
                 ray : ^Ray3D;
+                distance : ^double;
                 point, normal : ^Vector3D) : boolean; 
             function GetTexture() : ^Texture;
             procedure SetTexture(texture : ^Texture);
@@ -63,16 +70,127 @@ type
         var
             _texture : ^Texture;
     end;
-    Light = public {abstract} class
+    Light = public class
+        public
+            constructor();
+            constructor(location : Vector3D; color : Color);
+
+            function GetLocation() : Vector3D;
+            function GetColor() : Color;
+        var
+            _location : Vector3D;
+            _color : Color;
     end;
     Camera = public class
+        public
+            constructor();
+            constructor(
+                location, focalPoint : Vector3D;
+                nearPlane : double;
+                xResolution, yResolution : integer);
+            function StartTrace(x, y : integer) : Ray3D;
+            function ImageSize() : Size;
         var
             _location : Vector3D;
             _focalPoint : Vector3D;
             _nearPlane : double;
             _xResolution, _yResolution : integer;
     end;
+
+    ShapeListNode = class
+        public
+            constructor(value : ^Shape);
+
+            function GetValue() : ^Shape;
+            function GetNext() : ^ShapeListNode;
+            procedure SetNext(node : ^ShapeListNode);
+        var
+            _value : ^Shape;
+            _next : ^ShapeListNode;
+    end;
+
+    ShapeListIterator = public class
+        public
+            constructor(start : ^ShapeListNode);
+            function Current() : ^Shape;
+            procedure MoveNext();
+        var
+            _current : ^ShapeListNode;
+    end;
+
+    ShapeList = public class
+        public
+            constructor();
+            destructor();
+    
+            function Count() : integer;
+            function GetIterator() : ShapeListIterator;
+            function Add(item : ^Shape) : boolean;            
+        var
+            _count : integer;
+            _head : ^ShapeListNode;
+            _tail : ^ShapeListNode;
+    end;
+
+    LightListNode = class
+        public
+            constructor(value : ^Light);
+
+            function GetValue() : ^Light;
+            function GetNext() : ^LightListNode;
+            procedure SetNext(node : ^LightListNode);
+        var
+            _value : ^Light;
+            _next : ^LightListNode;
+    end;
+
+    LightListIterator = public class
+        public
+            constructor(start : ^LightListNode);
+            function Current() : ^Light;
+            procedure MoveNext();
+        var
+            _current : ^LightListNode;
+    end;
+
+    LightList = public class
+        public
+            constructor();
+            destructor();
+    
+            function Count() : integer;
+            function GetIterator() : LightListIterator;
+            function Add(item : ^Light) : boolean;            
+        var
+            _count : integer;
+            _head : ^LightListNode;
+            _tail : ^LightListNode;
+    end;
+
     Scene = public class
+        public
+            constructor();
+            destructor();
+            
+            procedure SetCamera(camera : ^Camera);
+            function AddShape(shape : ^Shape) : boolean;
+            function AddLight(light : ^Light) : boolean;
+
+            function RayTrace(image : ^Image) : boolean;
+        private
+            static procedure WriteColor(
+                source : ^Color; 
+                target : array of byte);
+            static function ToByte(
+                value : double) : byte;
+            function InitImage(image : ^Image) : boolean;
+            procedure InnerRayTrace(image : ^Image);
+            function TraceRay(ray : ^Ray3D) : Color;
+            function Intersect(
+                ray : ^Ray3D;
+                point, normal : ^Vector3D) : ^Shape; 
         var
             _camera : ^Camera;
+            _shapes : ShapeList;
+            _lights : LightList;
     end;

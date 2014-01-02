@@ -148,4 +148,14 @@ _tolongi PROC C EXPORT
     ret
 _tolongi ENDP
 
+_value$=8
+_toreali PROC C EXPORT
+    push ebp
+    mov ebp,esp
+    fild dword ptr _value$[ebp]
+    mov esp,ebp
+    pop ebp
+    ret
+_toreali ENDP
+
 END

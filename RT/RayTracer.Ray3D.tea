@@ -1,0 +1,34 @@
+namespace RayTracer;
+uses RayTracer, System;
+
+constructor Ray3D();
+begin
+    _origin := Vector3D();
+    _direction := Vector3D(0.0, 0.0, 1.0);
+end;
+
+constructor Ray3D(origin, direction : ^Vector3D);
+begin
+    _origin := origin^;
+    _direction := direction^;
+end;
+
+function Ray3D.GetOrigin() : Vector3D;
+begin
+    GetOrigin := _origin;
+end;
+
+function Ray3D.GetDirection() : Vector3D;
+begin
+    GetDirection := _direction;
+end;
+
+function Ray3D.From2Points(
+    origin, target : Vector3D) : Ray3D;
+var
+    dir : Vector3D;
+begin
+    dir := Vector3D.sub(@target, @origin);
+    dir := dir.UnitV();
+    From2Points := Ray3D(@origin, @dir);
+end;

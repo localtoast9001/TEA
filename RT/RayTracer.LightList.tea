@@ -1,0 +1,105 @@
+namespace RayTracer;
+uses RayTracer, System;
+
+constructor LightListNode(value : ^Light);
+begin
+    _value := value;
+    _next := nil;
+end;
+
+function LightListNode.GetValue() : ^Light;
+begin
+    GetValue := _value;
+end;
+
+function LightListNode.GetNext() : ^LightListNode;
+begin
+    GetNext := _next;
+end;
+
+procedure LightListNode.SetNext(
+    node : ^LightListNode);
+begin
+    _next := node;
+end;
+
+constructor LightListIterator(start : ^LightListNode);
+begin
+    _current := start;
+end;
+
+function LightListIterator.Current() : ^Light;
+begin
+    if _current <> nil then
+    begin
+        Current := _current^.GetValue();
+    end
+    else
+        Current := nil;
+end;
+
+procedure LightListIterator.MoveNext();
+begin
+    if _current <> nil then
+    begin
+        _current := _current^.GetNext();
+    end;
+end;
+
+constructor LightList();
+begin
+    _count := 0;
+    _tail := nil;
+    _head := nil;
+end;
+
+destructor LightList();
+var
+    current : ^LightListNode;
+    shape : ^Light;
+begin
+    current := _head;
+    while current <> nil do
+    begin
+        _head := _head^.GetNext();
+        shape := current^.GetValue();
+        if shape <> nil then
+            delete shape;
+        delete current;
+        current := _head;
+    end;
+end;
+
+function LightList.Count() : integer;
+begin
+    Count := _count;
+end;
+
+function LightList.GetIterator() : LightListIterator;
+begin
+    GetIterator := LightListIterator(_head);
+end;
+
+function LightList.Add(item : ^Light) : boolean;            
+var
+    newNode : ^LightListNode;
+begin
+    Add := false;
+    newNode := new LightListNode(item);
+    if newNode <> nil then
+    begin
+        Add := true;
+        _count := _count + 1;
+        if _tail <> nil then
+        begin
+            _tail^.SetNext(newNode);
+            _tail := newNode;
+        end
+        else
+        begin
+            _head := newNode;
+            _tail := newNode;
+        end;
+    end;
+end;
+

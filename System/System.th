@@ -22,6 +22,9 @@ type
             static function ToShort(value : byte) : short;
             static function ToShort(value : character) : short;
             static function ToLong(value : integer) : long;
+            static function ToFloat(value : integer) : single;
+            static function ToDouble(value : integer) : double;
+            static function ToExtended(value : integer) : extended;
     end;
     Math = public static class
         public
