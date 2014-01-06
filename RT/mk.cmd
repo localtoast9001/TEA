@@ -9,13 +9,19 @@ if not exist %OBJ_DIR% (
   mkdir %OBJ_DIR%
 )
 
+del /q %OBJ_DIR%\*.obj
+
 for /F "" %%i in (sources) do (
-  %TEAC% /Fa%OBJ_DIR%\%%~ni.asm /I..\System /I..\System\IO /I..\System\Graphics /I..\System\Graphics\IO /I. /IShapes %%i
+  %TEAC% /Fa%OBJ_DIR%\%%~ni.asm /I..\System /I..\System\IO /I..\System\Graphics /I..\System\Graphics\IO /I. /IShapes /ILights %%i
   if NOT ERRORLEVEL 1 (
     ml /c /Fo%OBJ_DIR%\%%~ni.obj %OBJ_DIR%\%%~ni.asm
   )
 )
 
 if NOT ERRORLEVEL 1 (
-    link /SUBSYSTEM:CONSOLE /entry:wmainCRTStartup /DEBUG /PDB:%BIN_DIR%\RT.pdb /out:%BIN_DIR%\RT.EXE %OBJ_DIR%\RayTracer.Program.obj %OBJ_DIR%\RayTracer.Color.obj %OBJ_DIR%\RayTracer.Vector3D.obj %OBJ_DIR%\RayTracer.Shape.obj %OBJ_DIR%\RayTracer.Scene.obj %OBJ_DIR%\RayTracer.Camera.obj %OBJ_DIR%\RayTracer.Ray3D.obj %OBJ_DIR%\RayTracer.ShapeList.obj %OBJ_DIR%\RayTracer.Light.obj %OBJ_DIR%\RayTracer.LightList.obj %OBJ_DIR%\RayTracer.Shapes.Sphere.obj %BIN_DIR%\System.lib
+    ml /c /Fo%OBJ_DIR%\System.Diagnostics.Debug.impl.obj %~dp0System.Diagnostics.Debug.impl.asm
+)
+
+if NOT ERRORLEVEL 1 (
+    link /SUBSYSTEM:CONSOLE /entry:wmainCRTStartup /DEBUG /PDB:%BIN_DIR%\RT.pdb /out:%BIN_DIR%\RT.EXE %OBJ_DIR%\RayTracer.Program.obj %OBJ_DIR%\RayTracer.Color.obj %OBJ_DIR%\RayTracer.Vector3D.obj %OBJ_DIR%\RayTracer.Shape.obj %OBJ_DIR%\RayTracer.Scene.obj %OBJ_DIR%\RayTracer.Camera.obj %OBJ_DIR%\RayTracer.Ray3D.obj %OBJ_DIR%\RayTracer.ShapeList.obj %OBJ_DIR%\RayTracer.Light.obj %OBJ_DIR%\RayTracer.LightList.obj %OBJ_DIR%\RayTracer.Shapes.Sphere.obj %OBJ_DIR%\RayTracer.Shapes.Plane.obj %OBJ_DIR%\RayTracer.Lights.PointLight.obj %OBJ_DIR%\RayTracer.Lights.DirectionalLight.obj %OBJ_DIR%\System.Diagnostics.Debug.obj %OBJ_DIR%\System.Diagnostics.Debug.impl.obj %BIN_DIR%\System.lib
 )

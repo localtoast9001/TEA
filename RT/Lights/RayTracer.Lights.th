@@ -1,0 +1,40 @@
+namespace RayTracer.Lights;
+uses RayTracer;
+
+type
+    DirectionalLight = public class(Light)
+        public
+            constructor();
+            constructor(direction : Vector3D; color : Color);
+
+            virtual destructor();
+            virtual function GetLightRay(
+                point : ^Vector3D;
+                ray : ^Ray3D;
+                intensity : ^Color) : boolean;            
+            virtual function IsInShadow(
+                point : ^Vector3D;
+                distance : double) : boolean;
+        var
+            _direction, _negDirection : Vector3D;
+            _color : Color;
+    end;
+
+    PointLight = public class(Light)
+        public
+            constructor();
+            constructor(location : Vector3D; color : Color);
+
+            virtual destructor();
+            virtual function GetLightRay(
+                point : ^Vector3D;
+                ray : ^Ray3D;
+                intensity : ^Color) : boolean;
+            virtual function IsInShadow(
+                point : ^Vector3D;
+                distance : double) : boolean;
+        var
+            _location : Vector3D;
+            _color : Color;
+    end;
+

@@ -1,0 +1,9 @@
+namespace System.Diagnostics;
+
+type
+    Debug = public static class
+        public
+            static procedure Assert(condition : boolean);
+        private
+            static procedure DebugBreak();
+    end;

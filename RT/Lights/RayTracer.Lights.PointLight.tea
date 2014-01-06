@@ -1,0 +1,38 @@
+namespace RayTracer.Lights;
+uses RayTracer.Lights, RayTracer, System;
+
+constructor PointLight();
+begin
+    _location := Vector3D();
+    _color := Color(1.0, 1.0, 1.0, 1.0);
+end;
+
+constructor PointLight(location : Vector3D; color : Color);
+begin
+    _location := location;
+    _color := color;
+end;
+
+destructor PointLight();
+begin
+end;
+
+function PointLight.GetLightRay(
+    point : ^Vector3D;
+    ray : ^Ray3D;
+    intensity : ^Color) : boolean;            
+begin
+    ray^ := Ray3D.From2Points(point^, _location);
+    intensity^ := _color; 
+    GetLightRay := true;
+end;
+
+function PointLight.IsInShadow(
+    point : ^Vector3D;
+    distance : double) : boolean;
+var
+    rd : Vector3D;
+begin
+    rd := Vector3D.sub(point, @_location);
+    IsInShadow := rd.GetLengthSq() > Math.Sqr(distance);
+end;

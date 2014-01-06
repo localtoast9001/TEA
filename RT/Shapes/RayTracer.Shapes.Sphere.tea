@@ -32,40 +32,43 @@ begin
     b := 2.0 * Vector3D.DotP(@o, @rd);
     c := o.GetLengthSq() - Math.Sqr(_radius);
     disc := Math.Sqr(b) - 4.0 * a * c;
-    if disc >= 0.0 then
+    if disc > 0.0 then
     begin
         discSqrt := Math.Sqrt(disc);
         if b < 0.0 then
             q := (-b - discSqrt) / 2.0
         else
             q := (-b + discSqrt) / 2.0;
-        t0 := q / a;
-        t1 := c / q;
-        if t0 > t1 then
-        begin
-            temp := t0;
-            t0 := t1;
-            t1 := temp;
-        end;
+        if (a <> 0.0) and (q <> 0.0) then
+        begin 
+            t0 := q / a;
+            t1 := c / q;
+            if t0 > t1 then
+            begin
+                temp := t0;
+                t0 := t1;
+                t1 := temp;
+            end;
 
-        if t1 >= 0.0 then
-        begin
-            if t0 < 0.0 then
-                t := t1
-            else
-                t := t0;
+            if t1 >= 0.0 then
+            begin
+                if t0 < 0.0 then
+                    t := t1
+                else
+                    t := t0;
 
-            Intersect := true;
-            distance^ := t;
-            point^ := Vector3D(
-                o.GetX() + rd.GetX() * t,
-                o.GetY() + rd.GetY() * t,
-                o.GetZ() + rd.GetZ() * t);
-            normal^ := Vector3D(
-                (point^.GetX() - _center.GetX()),
-                (point^.GetY() - _center.GetY()),
-                (point^.GetZ() - _center.GetZ()));
-            normal^ := normal^.UnitV();
+                Intersect := true;
+                distance^ := t;
+                point^ := Vector3D(
+                    ro.GetX() + rd.GetX() * t,
+                    ro.GetY() + rd.GetY() * t,
+                    ro.GetZ() + rd.GetZ() * t);
+                normal^ := Vector3D(
+                    (point^.GetX() - _center.GetX()),
+                    (point^.GetY() - _center.GetY()),
+                    (point^.GetZ() - _center.GetZ()));
+                normal^ := normal^.UnitV();
+            end;
         end;
     end;
 end;

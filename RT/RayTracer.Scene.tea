@@ -4,8 +4,6 @@ uses RayTracer, System, System.Graphics;
 constructor Scene();
 begin
     _camera := nil;
-    _shapes := ShapeList();
-    _lights := LightList();
 end;
 
 destructor Scene();
@@ -84,6 +82,7 @@ end;
 
 function Scene.TraceRay(ray : ^Ray3D) : Color;
 var
+    lit : boolean;
     shape, shadow : ^Shape;
     point, normal, lightPoint, lightNormal : Vector3D;
     iter : LightListIterator;
@@ -91,8 +90,10 @@ var
     light : ^Light;
     diffusion : double;
     lightRayDir : Vector3D;
+    lightIntensity : Color;
+    shapeDistance, lightDistance : double;
 begin
-    shape := Intersect(ray, @point, @normal);
+    shape := Intersect(ray, @shapeDistance, @point, @normal);
     if shape <> nil then
     begin
         iter := _lights.GetIterator();
@@ -104,19 +105,27 @@ begin
         while iter.Current() <> nil do
         begin
             light := iter.Current();
-            lightRay := Ray3D.From2Points(point, light^.GetLocation());
-            shadow := Intersect(@lightRay, @lightPoint, @lightNormal);
-            if shadow = nil then
-            begin
-                lightRayDir := lightRay.GetDirection();
-                diffusion := Vector3D.DotP(
-                    @lightRayDir, 
-                    @normal);
-                if diffusion > 0.0 then
+            if light^.GetLightRay(@point, @lightRay, @lightIntensity) then
+            begin 
+                shadow := Intersect(@lightRay, @lightDistance, @lightPoint, @lightNormal);
+                lit := shadow = nil;
+                if not lit then
                 begin
-                    TraceRay := Color.add( 
-                        TraceRay,   
-                        Color.Scale(light^.GetColor(), diffusion));
+                    lit := not light^.IsInShadow(@point, lightDistance);
+                end;
+
+                if lit then
+                begin
+                    lightRayDir := lightRay.GetDirection();
+                    diffusion := Vector3D.DotP(
+                        @lightRayDir, 
+                        @normal);
+                    if diffusion > 0.0 then
+                    begin
+                        TraceRay := Color.add( 
+                            TraceRay,   
+                            Color.Scale(lightIntensity, diffusion));
+                    end;
                 end;
             end;
             
@@ -129,15 +138,17 @@ end;
 
 function Scene.Intersect(
     ray : ^Ray3D;
+    distance : ^double;
     point, normal : ^Vector3D) : ^Shape;
 var
     iter : ShapeListIterator;
     current : ^Shape;
-    nearest, d : double; 
+    d : double; 
     testPoint, testNormal : Vector3D;
     epsilon : double;
 begin
-    epsilon := 0.0000001;
+    epsilon := 0.00000001;
+    distance^ := 100000000000.0;
     Intersect := nil;
     iter := _shapes.GetIterator();
     while iter.Current() <> nil do
@@ -145,12 +156,15 @@ begin
         current := iter.Current();
         if current^.Intersect(ray, @d, @testPoint, @testNormal) then
         begin
-            if (Intersect = nil) or ((d < nearest) and (d > epsilon)) then
+            if d > epsilon then 
             begin
-                Intersect := current;
-                nearest := d;
-                point^ := testPoint;
-                normal^ := testNormal;
+                if (Intersect = nil) or (d < distance^) then
+                begin
+                    Intersect := current;
+                    distance^ := d;
+                    point^ := testPoint;
+                    normal^ := testNormal;
+                end;
             end;
         end;
 

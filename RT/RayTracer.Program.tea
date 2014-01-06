@@ -5,7 +5,8 @@ uses
     System.Graphics, 
     System.Graphics.IO, 
     RayTracer, 
-    RayTracer.Shapes;
+    RayTracer.Shapes,
+    RayTracer.Lights;
 
 type
     Program = public static class
@@ -13,8 +14,6 @@ type
             static function Main(
                 argc : integer;
                 argv : array of array of character) : integer;
-        private 
-            static procedure Test();
     end;
 
     Arguments = class
@@ -57,33 +56,6 @@ begin
     GetOutputPath := _outputPath;
 end;
 
-procedure Program.Test();
-var
-    shape : Sphere;
-    ray : Ray3D;
-    d : double;
-    point, normal : Vector3D;
-    v0, v1 : Vector3D;
-begin
-    shape := Sphere(
-        Vector3D(0.0, 0.0, 2.0),
-        1.0);
-    v0 := Vector3D(0.0, 0.0, 0.0);
-    v1 := Vector3D(-1.0, -1.0, -1.0);
-    ray := Ray3D(
-        @v0,
-        @v1);
-    if shape.Intersect(@ray, @d, @point, @normal) then
-    begin
-        if point.GetZ() - 1.0 < 0.001 then
-            Console.WriteLine('Intersect at right point.')
-        else
-            Console.WriteLine('Intersect at wrong point.');
-    end
-    else
-        Console.WriteLine('Intersect Failed.');
-end;
-
 function Program.Main(
     argc : integer;
     argv : array of array of character) : integer;
@@ -95,7 +67,6 @@ var
     pass : boolean;
     scene : Scene;
 begin
-    Test();
     Main := 0;
     pass := arguments.Parse(argc, argv);
     if pass then
@@ -105,36 +76,66 @@ begin
                 Vector3D(0.0, 0.0, 1.0),
                 Vector3D(0.0, 0.0, 0.0),
                 1.0,
-                400,
-                400));
+                800,
+                800));
         pass := scene.AddShape(
             new Sphere(
-                Vector3D(0.0, 0.0, 2.0),
+                Vector3D(0.0, 0.0, 4.0),
                 1.0));
 
         if pass then
+            pass := scene.AddShape(
+                new Sphere(
+                    Vector3D(2.0, 0.0, 4.0),
+                    1.0));
+ 
+        if pass then
+            pass := scene.AddShape(
+                new Sphere(
+                    Vector3D(0.0, -2.0, 4.0),
+                    1.0));
+ 
+        if pass then
+            pass := scene.AddShape(
+                new Plane(
+                        Vector3D(0.0, -4.0, 0.0),
+                        Vector3D(0.0, 1.0, 0.0)));
+
+        if pass then
+            pass := scene.AddShape(
+                new Plane(
+                        Vector3D(4.0, 0.0, 0.0),
+                        Vector3D(-1.0, 0.0, 0.0)));
+
+        if pass then
+            pass := scene.AddShape(
+                new Plane(
+                        Vector3D(2.0, -2.0, 0.0),
+                        Vector3D(-1.0, 1.0, 0.0)));
+
+        if pass then
             pass := scene.AddLight(
-                new Light(
-                    Vector3D(-1.0, 1.0, -2.0),
+                new DirectionalLight(
+                    Vector3D(1.0, -1.0, 1.0),
                     Color(1.0, 1.0, 1.0, 1.0)));
 
         if pass then
             pass := scene.AddLight(
-                new Light(
-                    Vector3D(0.0, -20.0, 0.0),
-                    Color(1.0, 0.0, 0.0, 1.0)));
+                new DirectionalLight(
+                    Vector3D(0.0, -1.0, 0.0),
+                    Color(0.5, 0.0, 0.0, 1.0)));
 
         if pass then
             pass := scene.AddLight(
-                new Light(
-                    Vector3D(20.0, 0.5, 0.0),
-                    Color(0.0, 1.0, 0.0, 1.0)));
+                new DirectionalLight(
+                    Vector3D(10.0, -150.0, 100.0),
+                    Color(0.0, 0.5, 0.0, 1.0)));
 
         if pass then
             pass := scene.AddLight(
-                new Light(
+                new PointLight(
                     Vector3D(-2.5, 5.5, -2.0),
-                    Color(0.0, 0.0, 1.0, 1.0)));
+                    Color(0.0, 0.0, 0.5, 1.0)));
 
         if pass then
             pass := scene.RayTrace(@image);

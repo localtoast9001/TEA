@@ -14,6 +14,17 @@ type
             _center : Vector3D;
             _radius : double;
     end;
+    Plane = public class(Shape)
+        public
+            constructor(point, normal : Vector3D);
+            virtual destructor();
+            virtual function Intersect(
+                ray : ^Ray3D;
+                distance : ^double;
+                point, normal : ^Vector3D) : boolean; 
+        var
+            _point, _normal : Vector3D;
+    end;
     Cylinder = public class(Shape)
         public
             virtual function Intersect(

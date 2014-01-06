@@ -375,6 +375,30 @@ namespace TEAC
 
                     method.Statements.Add(new AsmStatement { Instruction = "mov [ecx],eax" });
                 }
+
+                // init member vars
+                foreach (FieldInfo field in method.Method.Type.Fields)
+                {
+                    if (field.IsStatic || !field.Type.IsClass)
+                    {
+                        continue;
+                    }
+
+                    MethodInfo memberConstructor = field.Type.GetDefaultConstructor();
+                    if (memberConstructor != null)
+                    {
+                        method.Statements.Add(new AsmStatement { Instruction = "mov ecx,_this$[ebp]" });
+                        if (field.Offset > 0)
+                        {
+                            method.Statements.Add(new AsmStatement { Instruction = string.Format("add ecx,{0}", field.Offset) });
+                        }
+
+                        method.Statements.Add(new AsmStatement { Instruction = "push ecx" });
+                        method.Module.AddProto(memberConstructor);
+                        method.Statements.Add(new AsmStatement { Instruction = "call " + memberConstructor.MangledName });
+                        method.Statements.Add(new AsmStatement { Instruction = "add esp,4" });
+                    }
+                }
             }
 
             if (methodDef.LocalVariables != null)
@@ -564,6 +588,51 @@ namespace TEAC
 
             if (string.CompareOrdinal("destructor", method.Method.Name) == 0)
             {
+                // call destructors on all fields.
+                foreach (FieldInfo field in method.Method.Type.Fields)
+                {
+                    if (!field.IsStatic)
+                    {
+                        if (field.Type.IsClass)
+                        {
+                            MethodInfo memberDestructor = field.Type.GetDestructor();
+                            if (memberDestructor != null)
+                            {
+                                method.Statements.Add(new AsmStatement { Instruction = "mov ecx,_this$[ebp]" });
+                                if (field.Offset > 0)
+                                {
+                                    method.Statements.Add(new AsmStatement { Instruction = string.Format("add ecx,{0}", field.Offset) });
+                                }
+
+                                method.Statements.Add(new AsmStatement { Instruction = "push ecx" });
+                                if (memberDestructor.IsVirtual)
+                                {
+                                    FieldInfo memberVTable = field.Type.GetVTablePointer();
+                                    if (memberVTable.Offset > 0)
+                                    {
+                                        method.Statements.Add(new AsmStatement { Instruction = string.Format("add ecx,{0}", memberVTable.Offset) });
+                                    }
+
+                                    method.Statements.Add(new AsmStatement { Instruction = "mov eax,[ecx]" });
+                                    if (memberDestructor.VTableIndex > 0)
+                                    {
+                                        method.Statements.Add(new AsmStatement { Instruction = string.Format("add eax,{0}", memberDestructor.VTableIndex * 4) });
+                                    }
+
+                                    method.Statements.Add(new AsmStatement { Instruction = "call dword ptr [eax]" });
+                                }
+                                else
+                                {
+                                    method.Module.AddProto(memberDestructor);
+                                    method.Statements.Add(new AsmStatement { Instruction = "call " + memberDestructor.MangledName });
+                                }
+
+                                method.Statements.Add(new AsmStatement { Instruction = "add esp,4" });
+                            }
+                        }
+                    }
+                }
+
                 // call base class destructor at the end.
                 TypeDefinition baseClass = method.Method.Type.BaseClass;
                 if (baseClass != null)
@@ -941,6 +1010,11 @@ namespace TEAC
                 return false;
             }
 
+            if (!this.ValidateCanCast(assignmentStatement, storageType, valueType))
+            {
+                return false;
+            }
+
             if (valueType.Size == 8 && !valueType.IsClass)
             {
                 method.Statements.Add(new AsmStatement { Instruction = "pop eax" });
@@ -980,6 +1054,92 @@ namespace TEAC
             }
 
             return true;
+        }
+
+        private bool ValidateCanCast(
+            ParseNode node,
+            TypeDefinition storageType,
+            TypeDefinition valueType)
+        {
+            if (string.CompareOrdinal(storageType.MangledName, valueType.MangledName) == 0)
+            {
+                return true;
+            }
+
+            bool canCast = false;
+            if (valueType.IsArray && storageType.IsPointer)
+            {
+                if (valueType.ArrayElementCount == 0)
+                {
+                    canCast = storageType.InnerType == null ||
+                        string.CompareOrdinal(storageType.InnerType.MangledName, "b") == 0 ||
+                        string.CompareOrdinal(valueType.InnerType.MangledName, "b") == 0 ||
+                        this.ValidateCanCast(node, storageType.InnerType, valueType.InnerType);
+                }
+            }
+            else if (valueType.IsPointer && storageType.IsArray)
+            {
+                if (storageType.ArrayElementCount == 0)
+                {
+                    canCast = valueType.InnerType == null ||
+                        string.CompareOrdinal(storageType.InnerType.MangledName, "b") == 0 ||
+                        string.CompareOrdinal(valueType.InnerType.MangledName, "b") == 0 || 
+                        this.ValidateCanCast(node, storageType.InnerType, valueType.InnerType);
+                }
+            }
+            else if (valueType.IsPointer && storageType.IsPointer)
+            {
+                canCast = storageType.InnerType == null ||
+                    valueType.InnerType == null;
+                if (!canCast)
+                {
+                    if (valueType.InnerType.IsClass && storageType.InnerType.IsClass)
+                    {
+                        TypeDefinition testClass = valueType.InnerType;
+                        while (!canCast && testClass != null)
+                        {
+                            if (string.CompareOrdinal(testClass.MangledName, storageType.InnerType.MangledName) == 0)
+                            {
+                                canCast = true;
+                            }
+                            else
+                            {
+                                testClass = testClass.BaseClass;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        canCast = string.CompareOrdinal(storageType.InnerType.MangledName, "b") == 0 ||
+                            string.CompareOrdinal(valueType.InnerType.MangledName, "b") == 0 || 
+                            this.ValidateCanCast(node, storageType.InnerType, valueType.InnerType);
+                    }
+                }
+            }
+            else if (valueType.IsArray && storageType.IsArray)
+            {
+                if (storageType.ArrayElementCount == 0)
+                {
+                    canCast = this.ValidateCanCast(node, storageType.InnerType, valueType.InnerType);
+                }
+            }
+
+            if (!canCast)
+            {
+                string message = string.Format(
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    Properties.Resources.CodeGenerator_NoAutomaticConversion,
+                    storageType.FullName,
+                    valueType.FullName);
+                this.log.Write(new Message(
+                    node.Start.Path,
+                    node.Start.Line,
+                    node.Start.Column,
+                    Severity.Error,
+                    message));
+            }
+
+            return canCast;
         }
 
         private bool TryEmitLiteralExpression(
@@ -1103,6 +1263,23 @@ namespace TEAC
                     return false;
                 }
 
+                // fix up calling overloads here vs. inside TryEmitReference.
+                if (calleeMethod != null)
+                {
+                    MethodInfo overload = calleeMethod.Type.FindMethod(calleeMethod.Name, argTypes);
+                    if (overload != null)
+                    {
+                        if (string.CompareOrdinal(calleeMethod.MangledName, callLoc) == 0)
+                        {
+                            callLoc = overload.MangledName;
+                        }
+
+                        method.Module.AddProto(overload);
+                        calleeMethod = overload;
+                        storageType = overload.ReturnType;
+                    }
+                }
+
                 if (storageType != null)
                 {
                     if (callLoc == null)
@@ -1188,8 +1365,35 @@ namespace TEAC
                     method.Statements.Add(new AsmStatement { Instruction = "add esp," + argSize.ToString() });
                 }
 
+                if (calleeMethod.Parameters.Count != argTypes.Count)
+                {
+                    string message = string.Format(
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        Properties.Resources.CodeGenerator_UnexpectedArgumentCount,
+                        calleeMethod.Name,
+                        calleeMethod.Parameters.Count,
+                        argTypes.Count);
+                    this.log.Write(new Message(
+                        expression.Start.Path,
+                        expression.Start.Line,
+                        expression.Start.Column,
+                        Severity.Error,
+                        message));
+                    valueType = null;
+                    return false;
+                }
+
+                bool argsValid = true; 
+                for (int i = 0; i < calleeMethod.Parameters.Count; i++)
+                {
+                    if (!this.ValidateCanCast(expression, calleeMethod.Parameters[i].Type, argTypes[i]))
+                    {
+                        argsValid = false;
+                    }
+                }
+
                 valueType = storageType;
-                return true;
+                return argsValid;
             }
 
             ReferenceExpression refExpr = expression as ReferenceExpression;

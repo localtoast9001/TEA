@@ -12,6 +12,7 @@ type
             function GetLengthSq() : double;
             function GetLength() : double;
             function UnitV() : Vector3D;
+            function Scale(factor : double) : Vector3D;
 
             static function DotP(a, b : ^Vector3D) : double;
             static function negative(value : ^Vector3D) : Vector3D;
@@ -70,17 +71,19 @@ type
         var
             _texture : ^Texture;
     end;
-    Light = public class
-        public
-            constructor();
-            constructor(location : Vector3D; color : Color);
 
-            function GetLocation() : Vector3D;
-            function GetColor() : Color;
-        var
-            _location : Vector3D;
-            _color : Color;
+    Light = public {abstract} class
+        public
+            virtual destructor();
+            abstract function GetLightRay(
+                point : ^Vector3D;
+                ray : ^Ray3D;
+                intensity : ^Color) : boolean;
+            abstract function IsInShadow(
+                point : ^Vector3D;
+                distance : double) : boolean;
     end;
+
     Camera = public class
         public
             constructor();
@@ -188,6 +191,7 @@ type
             function TraceRay(ray : ^Ray3D) : Color;
             function Intersect(
                 ray : ^Ray3D;
+                distance : ^double;
                 point, normal : ^Vector3D) : ^Shape; 
         var
             _camera : ^Camera;

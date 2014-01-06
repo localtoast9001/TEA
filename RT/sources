@@ -9,3 +9,7 @@ RayTracer.ShapeList.tea
 RayTracer.Program.tea
 RayTracer.Vector3D.tea
 Shapes\RayTracer.Shapes.Sphere.tea
+Shapes\RayTracer.Shapes.Plane.tea
+Lights\RayTracer.Lights.DirectionalLight.tea
+Lights\RayTracer.Lights.PointLight.tea
+System.Diagnostics.Debug.tea

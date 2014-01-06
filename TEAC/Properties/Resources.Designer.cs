@@ -259,6 +259,15 @@ namespace TEAC.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The number of arguments passed to method {0} should be {1}, not {2}..
+        /// </summary>
+        internal static string CodeGenerator_UnexpectedArgumentCount {
+            get {
+                return ResourceManager.GetString("CodeGenerator_UnexpectedArgumentCount", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to end of file..
         /// </summary>
         internal static string Parser_EndOfFile {

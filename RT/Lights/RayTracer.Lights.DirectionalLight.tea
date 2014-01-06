@@ -1,0 +1,35 @@
+namespace RayTracer.Lights;
+uses RayTracer.Lights, RayTracer, System;
+
+constructor DirectionalLight();
+begin
+end;
+
+constructor DirectionalLight(direction : Vector3D; color : Color);
+begin
+    _direction := direction.UnitV();
+    _negDirection := Vector3D.negative(@_direction);
+    _color := color;
+end;
+
+destructor DirectionalLight();
+begin
+end;
+
+function DirectionalLight.GetLightRay(
+    point : ^Vector3D;
+    ray : ^Ray3D;
+    intensity : ^Color) : boolean;            
+begin
+    ray^ := Ray3D(point, @_negDirection);
+    intensity^ := _color; 
+    GetLightRay := true;
+end;
+
+function DirectionalLight.IsInShadow(
+    point : ^Vector3D;
+    distance : double) : boolean;
+begin
+    IsInShadow := true;
+end;
+

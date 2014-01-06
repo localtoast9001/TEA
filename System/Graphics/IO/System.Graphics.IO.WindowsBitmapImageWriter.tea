@@ -47,10 +47,10 @@ var
     signatureString : array of character;
 begin
     signatureString := 'BM';
-    _signature := Convert.ToShort(Convert.Lo(signatureString[0])) or 
-        Convert.ToShort(Convert.Lo(signatureString[1])) * 256;
-    _reserved0 := 0;
-    _reserved1 := 0;
+    _signature := Convert.ToShort(Convert.Lo(Convert.ToShort(signatureString[0]))) or 
+        Convert.ToShort(Convert.Lo(Convert.ToShort(signatureString[1]))) * 256;
+    _reserved0 := Convert.Lo(0);
+    _reserved1 := Convert.Lo(0);
     _size := size;
     _pixelArrayOffset := pixelArrayOffset;
 end;
@@ -70,8 +70,8 @@ begin
     _size := 108;
     _width := size.GetWidth();
     _height := -size.GetHeight();
-    _planes := 1;
-    _bpp := format.GetBpp();
+    _planes := Convert.Lo(1);
+    _bpp := Convert.Lo(format.GetBpp());
     _flags := 3;
     _rawDataSize := rowSize * size.GetHeight();
     _xResolution := 2835;

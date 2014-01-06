@@ -1,0 +1,12 @@
+namespace System.Diagnostics;
+uses System.Diagnostics;
+
+procedure Debug.Assert(
+    condition : boolean);
+begin
+    if not condition then
+        DebugBreak();
+end;
+
+procedure Debug.DebugBreak();
+extern '_int3';

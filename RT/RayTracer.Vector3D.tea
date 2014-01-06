@@ -59,6 +59,13 @@ begin
     end;
 end;
 
+function Vector3D.Scale(factor : double) : Vector3D;
+begin
+    Scale._x := _x * factor;
+    Scale._y := _y * factor;
+    Scale._z := _z * factor;
+end;
+
 function Vector3D.DotP(a, b : ^Vector3D) : double;
 begin
     DotP := 
@@ -70,9 +77,9 @@ end;
 function Vector3D.negative(value : ^Vector3D) : Vector3D;
 begin
     negative := Vector3D(
-        value^._x, 
-        value^._y, 
-        value^._z);
+        -value^._x, 
+        -value^._y, 
+        -value^._z);
 end;
 
 function Vector3D.add(a, b : ^Vector3D) : Vector3D;

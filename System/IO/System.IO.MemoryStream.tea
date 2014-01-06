@@ -108,7 +108,7 @@ begin
         begin
             if _ownsBuffer then
             begin
-                safeToCopy := Resize(expectedSize);
+                safeToCopy := Resize(Convert.ToLong(expectedSize));
             end;
         end
         else

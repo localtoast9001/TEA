@@ -1,26 +1,7 @@
 namespace RayTracer;
 uses RayTracer, System;
 
-constructor Light();
+destructor Light();
 begin
-    _location := Vector3D();
-    _color := Color(1.0, 1.0, 1.0, 1.0);
 end;
-
-constructor Light(location : Vector3D; color : Color);
-begin
-    _location := location;
-    _color := color;
-end;
-
-function Light.GetLocation() : Vector3D;
-begin
-    GetLocation := _location;
-end;
-
-function Light.GetColor() : Color;
-begin
-    GetColor := _color;
-end;
-
 

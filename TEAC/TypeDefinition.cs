@@ -91,28 +91,35 @@
             return null;
         }
 
+        public MethodInfo FindMethod(string name, IList<TypeDefinition> argTypes)
+        {
+            TypeDefinition type = this;
+            while (type != null)
+            {
+                foreach (MethodInfo method in type.Methods)
+                {
+                    if (string.CompareOrdinal(name, method.Name) == 0)
+                    {
+                        if (MatchArgs(method, argTypes))
+                        {
+                            return method;
+                        }
+                    }
+                }
+
+                type = type.BaseClass;
+            }
+
+            return null;
+        }
+
         public MethodInfo FindConstructor(IList<TypeDefinition> argTypes)
         {
             foreach (MethodInfo method in this.Methods)
             {
                 if (string.CompareOrdinal("constructor", method.Name) == 0)
                 {
-                    if (method.Parameters.Count != argTypes.Count)
-                    {
-                        continue;
-                    }
-
-                    bool match = true;
-                    for (int i = 0; i < method.Parameters.Count; i++)
-                    {
-                        if (string.CompareOrdinal(method.Parameters[i].Type.FullName, argTypes[i].FullName) != 0)
-                        {
-                            match = false;
-                            break;
-                        }
-                    }
-
-                    if (match)
+                    if (MatchArgs(method, argTypes))
                     {
                         return method;
                     }
@@ -120,6 +127,26 @@
             }
 
             return null;
+        }
+
+        private static bool MatchArgs(MethodInfo method, IList<TypeDefinition> argTypes)
+        {
+            if (method.Parameters.Count != argTypes.Count)
+            {
+                return false;
+            }
+
+            bool match = true;
+            for (int i = 0; i < method.Parameters.Count; i++)
+            {
+                if (string.CompareOrdinal(method.Parameters[i].Type.FullName, argTypes[i].FullName) != 0)
+                {
+                    match = false;
+                    break;
+                }
+            }
+
+            return match;
         }
 
         public MethodInfo GetCopyConstructor(CompilerContext context)

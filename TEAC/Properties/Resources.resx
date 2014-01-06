@@ -183,6 +183,9 @@
   <data name="CodeGenerator_UndefinedType" xml:space="preserve">
     <value>Type {0} was not defined.</value>
   </data>
+  <data name="CodeGenerator_UnexpectedArgumentCount" xml:space="preserve">
+    <value>The number of arguments passed to method {0} should be {1}, not {2}.</value>
+  </data>
   <data name="Parser_EndOfFile" xml:space="preserve">
     <value>end of file.</value>
   </data>

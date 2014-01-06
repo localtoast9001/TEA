@@ -1,0 +1,57 @@
+namespace RayTracer.Shapes;
+uses RayTracer, RayTracer.Shapes, System;
+
+constructor Plane(point, normal : Vector3D);
+begin
+    _point := point;
+    _normal := normal.UnitV();
+end;
+
+destructor Plane();
+begin
+end;
+
+{
+(o + rd * t) * n = 0
+o * n + rd * t * n = 0
+rd * t * n = -o * n
+t = (-o*n) / (rd * n) 
+}
+function Plane.Intersect(
+    ray : ^Ray3D;
+    distance : ^double;
+    point, normal : ^Vector3D) : boolean; 
+var
+    pass : boolean;
+    o, ro, rd : Vector3D;
+    rdn, on, t : double;
+begin
+    pass := false;
+    ro := ray^.GetOrigin();
+    o := Vector3D.sub(@ro, @_point);
+    rd := ray^.GetDirection();
+    on := Vector3D.DotP(@o, @_normal);
+    rdn := Vector3D.DotP(@rd, @_normal);
+    if rdn <> 0.0 then
+    begin
+        t := -on / rdn;
+        if t > 0.0 then
+            pass := true;        
+    end;
+
+    if pass then
+    begin
+        distance^ := t;
+        normal^ := _normal;
+        point^ := rd.Scale(t);
+        point^ := Vector3D.add(@ro, point); 
+    end
+    else
+    begin
+        distance^ := 0.0;
+        normal^ := Vector3D();
+        point^ := Vector3D();
+    end;
+
+    Intersect := pass;
+end;

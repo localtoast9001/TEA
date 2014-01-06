@@ -1,5 +1,5 @@
 namespace RayTracer;
-uses RayTracer, System, System.Graphics;
+uses RayTracer, System, System.Graphics, System.Diagnostics;
 
 constructor Camera();
 begin
@@ -27,6 +27,7 @@ var
     xd, yd, xo, yo : double;
     dir : Vector3D;
 begin
+    {Debug.Assert((x <> 300) or (y <> 0));}
     xo := Convert.ToDouble(_xResolution) / 2.0;
     yo := Convert.ToDouble(_yResolution) / 2.0;
     xd := Convert.ToDouble(x) - xo;
@@ -35,6 +36,7 @@ begin
         xd / xo,
         yd / yo,
         _nearPlane);
+    dir := dir.UnitV();
     StartTrace := Ray3D(
         @_focalPoint,
         @dir);
