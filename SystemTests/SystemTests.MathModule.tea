@@ -1,0 +1,329 @@
+namespace SystemTests;
+uses SystemTests, System, Test;
+
+type
+    FloatCompare1 = class(Test)
+        public
+            constructor();
+            virtual destructor();
+            virtual function Execute(context : ^TestContext) : boolean;
+            virtual function Name() : array of character;
+            virtual function Description() : array of character;
+    end;
+    FloatCompare2 = class(Test)
+        public
+            constructor();
+            virtual destructor();
+            virtual function Execute(context : ^TestContext) : boolean;
+            virtual function Name() : array of character;
+            virtual function Description() : array of character;
+    end;
+    FloatCompare3 = class(Test)
+        public
+            constructor();
+            virtual destructor();
+            virtual function Execute(context : ^TestContext) : boolean;
+            virtual function Name() : array of character;
+            virtual function Description() : array of character;
+    end;
+    FloatCompare4 = class(Test)
+        public
+            constructor();
+            virtual destructor();
+            virtual function Execute(context : ^TestContext) : boolean;
+            virtual function Name() : array of character;
+            virtual function Description() : array of character;
+    end;
+    FloatCompare5 = class(Test)
+        public
+            constructor();
+            virtual destructor();
+            virtual function Execute(context : ^TestContext) : boolean;
+            virtual function Name() : array of character;
+            virtual function Description() : array of character;
+    end;
+    FloatCompare6 = class(Test)
+        public
+            constructor();
+            virtual destructor();
+            virtual function Execute(context : ^TestContext) : boolean;
+            virtual function Name() : array of character;
+            virtual function Description() : array of character;
+    end;
+    FloatCompare7 = class(Test)
+        public
+            constructor();
+            virtual destructor();
+            virtual function Execute(context : ^TestContext) : boolean;
+            virtual function Name() : array of character;
+            virtual function Description() : array of character;
+    end;
+    FloatCompare8 = class(Test)
+        public
+            constructor();
+            virtual destructor();
+            virtual function Execute(context : ^TestContext) : boolean;
+            virtual function Name() : array of character;
+            virtual function Description() : array of character;
+    end;
+    FloatCompare9 = class(Test)
+        public
+            constructor();
+            virtual destructor();
+            virtual function Execute(context : ^TestContext) : boolean;
+            virtual function Name() : array of character;
+            virtual function Description() : array of character;
+    end;
+ 
+constructor FloatCompare1();
+begin
+end;
+
+destructor FloatCompare1();
+begin
+end;
+
+function FloatCompare1.Execute(context : ^TestContext) : boolean;
+begin
+    Execute := 1.0 < 2.0;
+end;
+
+function FloatCompare1.Name() : array of character;
+begin
+    Name := 'FloatCompare1';
+end;
+
+function FloatCompare1.Description() : array of character;
+begin
+    Description := '1.0 < 2.0';
+end;
+
+constructor FloatCompare2();
+begin
+end;
+
+destructor FloatCompare2();
+begin
+end;
+
+function FloatCompare2.Execute(context : ^TestContext) : boolean;
+begin
+    Execute := -2.0 < -1.0;
+end;
+
+function FloatCompare2.Name() : array of character;
+begin
+    Name := 'FloatCompare2';
+end;
+
+function FloatCompare2.Description() : array of character;
+begin
+    Description := '-2.0 < -1.0';
+end;
+
+constructor FloatCompare3();
+begin
+end;
+
+destructor FloatCompare3();
+begin
+end;
+
+function FloatCompare3.Execute(context : ^TestContext) : boolean;
+begin
+    Execute := 2.0 > 1.0;
+end;
+
+function FloatCompare3.Name() : array of character;
+begin
+    Name := 'FloatCompare3';
+end;
+
+function FloatCompare3.Description() : array of character;
+begin
+    Description := '2.0 > 1.0';
+end;
+
+constructor FloatCompare4();
+begin
+end;
+
+destructor FloatCompare4();
+begin
+end;
+
+function FloatCompare4.Execute(context : ^TestContext) : boolean;
+begin
+    Execute := 4.5 = 4.5;
+end;
+
+function FloatCompare4.Name() : array of character;
+begin
+    Name := 'FloatCompare4';
+end;
+
+function FloatCompare4.Description() : array of character;
+begin
+    Description := '4.5 = 4.5';
+end;
+
+constructor FloatCompare5();
+begin
+end;
+
+destructor FloatCompare5();
+begin
+end;
+
+function FloatCompare5.Execute(context : ^TestContext) : boolean;
+begin
+    Execute := 4.35 <> 4.5;
+end;
+
+function FloatCompare5.Name() : array of character;
+begin
+    Name := 'FloatCompare5';
+end;
+
+function FloatCompare5.Description() : array of character;
+begin
+    Description := '4.35 <> 4.5';
+end;
+
+constructor FloatCompare6();
+begin
+end;
+
+destructor FloatCompare6();
+begin
+end;
+
+function FloatCompare6.Execute(context : ^TestContext) : boolean;
+begin
+    Execute := 4.35 <= 4.5;
+end;
+
+function FloatCompare6.Name() : array of character;
+begin
+    Name := 'FloatCompare6';
+end;
+
+function FloatCompare6.Description() : array of character;
+begin
+    Description := '4.35 <= 4.5';
+end;
+
+constructor FloatCompare7();
+begin
+end;
+
+destructor FloatCompare7();
+begin
+end;
+
+function FloatCompare7.Execute(context : ^TestContext) : boolean;
+begin
+    Execute := 4.5 <= 4.5;
+end;
+
+function FloatCompare7.Name() : array of character;
+begin
+    Name := 'FloatCompare7';
+end;
+
+function FloatCompare7.Description() : array of character;
+begin
+    Description := '4.5 <= 4.5';
+end;
+
+constructor FloatCompare8();
+begin
+end;
+
+destructor FloatCompare8();
+begin
+end;
+
+function FloatCompare8.Execute(context : ^TestContext) : boolean;
+begin
+    Execute := -1.0 >= -2.0;
+end;
+
+function FloatCompare8.Name() : array of character;
+begin
+    Name := 'FloatCompare8';
+end;
+
+function FloatCompare8.Description() : array of character;
+begin
+    Description := '-1.0 >= -2.0';
+end;
+
+constructor FloatCompare9();
+begin
+end;
+
+destructor FloatCompare9();
+begin
+end;
+
+function FloatCompare9.Execute(context : ^TestContext) : boolean;
+begin
+    Execute := -1.0 >= -1.0;
+end;
+
+function FloatCompare9.Name() : array of character;
+begin
+    Name := 'FloatCompare9';
+end;
+
+function FloatCompare9.Description() : array of character;
+begin
+    Description := '-1.0 >= -1.0';
+end;
+
+constructor MathModule();
+begin
+    _tests[0] := new FloatCompare1();
+    _tests[1] := new FloatCompare2();
+    _tests[2] := new FloatCompare3();
+    _tests[3] := new FloatCompare4();
+    _tests[4] := new FloatCompare5();
+    _tests[5] := new FloatCompare6();
+    _tests[6] := new FloatCompare7();
+    _tests[7] := new FloatCompare8();
+    _tests[8] := new FloatCompare9();
+end;
+
+destructor MathModule();
+begin
+    delete _tests[0];
+    delete _tests[1];
+    delete _tests[2];
+    delete _tests[3];
+    delete _tests[4];
+    delete _tests[5];
+    delete _tests[6];
+    delete _tests[7];
+    delete _tests[8];
+end;
+
+function MathModule.Name() : array of character;
+begin
+    Name := 'MathModule';
+end;
+
+function MathModule.Description() : array of character;
+begin
+    Description := 'System.Math and numeric tests.';
+end;
+
+function MathModule.Tests() : ^TestIterator;
+begin
+    Tests := new ArrayTestIterator(_tests, 9);
+end;
+
+function MathModule.Init(context : ^TestContext) : boolean;
+begin
+    Init := true;
+end;

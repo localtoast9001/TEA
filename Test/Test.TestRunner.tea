@@ -1,0 +1,59 @@
+namespace Test;
+uses System, Test;
+
+function TestRunner.Run(
+    module : ^TestModule;
+    argc : integer; 
+    argv : array of array of character) : integer;
+var
+    testIterator : ^TestIterator;
+    test : ^Test;
+    moduleName, moduleDescription : array of character;
+    context : TestContext;
+    pass, allPass : boolean;
+begin
+    pass := true;
+    allPass := true;
+    moduleName := module^.Name();
+    moduleDescription := module^.Description();
+    if module^.Init(@context) then
+    begin
+        testIterator := module^.Tests();
+        if testIterator <> nil then
+        begin
+            Console.Write('Running Tests in Module ');
+            Console.Write(moduleName);
+            Console.WriteLine('....');
+            Console.Write('Description: ');
+            Console.WriteLine(moduleDescription);
+            test := testIterator^.Current();
+            while test <> nil do
+            begin
+                pass := test^.Execute(@context);
+                if pass then
+                begin
+                    Console.Write('PASS: ');
+                end
+                else
+                begin
+                    allPass := false;
+                    Console.Write('FAIL: ');
+                end;
+
+                Console.Write(test^.Name());
+                Console.Write('(');
+                Console.Write(test^.Description());
+                Console.WriteLine(').');
+                testIterator^.MoveNext();
+                test := testIterator^.Current();
+            end;
+
+            delete testIterator;
+        end;
+    end;
+    
+    if allPass then
+        Run := 0
+    else
+        Run := 1;
+end;

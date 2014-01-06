@@ -1,0 +1,19 @@
+namespace SystemTests;
+uses SystemTests, System, Test;
+
+type
+    Program = public static class
+        public
+            static function Main(
+                argc : integer;
+                argv : array of array of character) : integer;
+    end;
+
+function Program.Main(
+    argc : integer;
+    argv : array of array of character) : integer;
+var
+    mathModule : MathModule;
+begin
+    Main := TestRunner.Run(@mathModule, argc, argv);
+end;

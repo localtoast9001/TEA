@@ -1,0 +1,59 @@
+namespace Test;
+uses System;
+
+type
+    TestContext = public class
+        public
+            constructor();
+            destructor();
+        var
+            _testDirectory : String;
+    end;
+
+    Test = public {abstract} class
+        public
+            virtual destructor();
+            abstract function Execute(context : ^TestContext) : boolean;
+            abstract function Name() : array of character;
+            abstract function Description() : array of character;
+    end;
+
+    TestIterator = public {abstract} class
+        public
+            virtual destructor();
+            abstract function Count() : integer;
+            abstract function Current() : ^Test;
+            abstract procedure MoveNext();
+            abstract procedure Reset();
+    end;
+
+    ArrayTestIterator = public class(TestIterator)
+        public
+            constructor(tests : array of ^Test; count : integer);
+
+            virtual destructor();
+            virtual function Count() : integer;
+            virtual function Current() : ^Test;
+            virtual procedure MoveNext();
+            virtual procedure Reset();            
+        var
+            _tests : array of ^Test;
+            _count : integer;
+            _currentIndex : integer;
+    end;
+
+    TestModule = public {abstract} class
+        public
+            abstract function Name() : array of character;
+            abstract function Description() : array of character;
+            abstract function Tests() : ^TestIterator;
+            abstract function Init(context : ^TestContext) : boolean;
+    end;
+
+    TestRunner = public static class
+        public
+            static function Run(
+                module : ^TestModule;
+                argc : integer; 
+                argv : array of array of character) : integer;
+    end;

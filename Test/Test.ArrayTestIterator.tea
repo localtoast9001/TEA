@@ -1,0 +1,39 @@
+namespace Test;
+uses Test, System;
+
+constructor ArrayTestIterator(
+    tests : array of ^Test;
+    count : integer);
+begin
+    _tests := tests;
+    _count := count;
+    _currentIndex := 0;
+end;
+
+destructor ArrayTestIterator();
+begin
+end;
+
+function ArrayTestIterator.Count() : integer;
+begin
+    Count := _count;
+end;
+
+function ArrayTestIterator.Current() : ^Test;
+begin
+    if _currentIndex < _count then
+        Current := _tests[_currentIndex]
+    else
+        Current := nil;
+end;
+
+procedure ArrayTestIterator.MoveNext();
+begin
+    if _currentIndex < _count then
+        _currentIndex := _currentIndex + 1;
+end;
+
+procedure ArrayTestIterator.Reset();            
+begin
+    _currentIndex := 0;
+end;

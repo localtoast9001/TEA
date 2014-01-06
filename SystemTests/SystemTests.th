@@ -1,0 +1,16 @@
+namespace SystemTests;
+uses System, Test;
+
+type
+    MathModule = class(TestModule)
+        public
+            constructor();
+            destructor();
+
+            virtual function Name() : array of character;
+            virtual function Description() : array of character;
+            virtual function Tests() : ^TestIterator;
+            virtual function Init(context : ^TestContext) : boolean;
+        var
+            _tests : array [16] of ^Test;
+    end;
