@@ -15,6 +15,14 @@ namespace TEAC
         {
         }
 
+        public IEnumerable<string> Values 
+        { 
+            get 
+            { 
+                return this.values; 
+            } 
+        }
+
         public void AddValue(string name)
         {
             this.values.Add(name);

@@ -81,6 +81,19 @@ namespace TEAC
                     failed = true;
                 }
 
+                EnumDeclaration enumDecl = typeDecl as EnumDeclaration;
+                if (enumDecl != null)
+                {
+                    typeDef.IsEnum = true;
+                    typeDef.IsPublic = true;
+                    typeDef.Size = 4;
+                    int constVal = 0;
+                    foreach (string val in enumDecl.Values)
+                    {
+                        typeDef.EnumValues.Add(val, constVal++);
+                    }
+                }
+
                 ClassDeclaration classDecl = typeDecl as ClassDeclaration;
                 if (classDecl != null)
                 {
@@ -1438,23 +1451,26 @@ namespace TEAC
                 }
                 else if (storageType.Size <= 8 && !storageType.IsClass)
                 {
-                    switch (storageType.Size)
+                    if (location != null)
                     {
-                        case 8:
-                            method.Statements.Add(new AsmStatement { Instruction = "lea ecx, " + location });
-                            method.Statements.Add(new AsmStatement { Instruction = "mov eax,[ecx]" });
-                            method.Statements.Add(new AsmStatement { Instruction = "add ecx,4" });
-                            method.Statements.Add(new AsmStatement { Instruction = "mov edx,[ecx]" });
-                            break;
-                        case 4:
-                            method.Statements.Add(new AsmStatement { Instruction = "mov eax,dword ptr " + location });
-                            break;
-                        case 2:
-                            method.Statements.Add(new AsmStatement { Instruction = "mov ax,word ptr " + location });
-                            break;
-                        case 1:
-                            method.Statements.Add(new AsmStatement { Instruction = "mov al,byte ptr " + location });
-                            break;
+                        switch (storageType.Size)
+                        {
+                            case 8:
+                                method.Statements.Add(new AsmStatement { Instruction = "lea ecx, " + location });
+                                method.Statements.Add(new AsmStatement { Instruction = "mov eax,[ecx]" });
+                                method.Statements.Add(new AsmStatement { Instruction = "add ecx,4" });
+                                method.Statements.Add(new AsmStatement { Instruction = "mov edx,[ecx]" });
+                                break;
+                            case 4:
+                                method.Statements.Add(new AsmStatement { Instruction = "mov eax,dword ptr " + location });
+                                break;
+                            case 2:
+                                method.Statements.Add(new AsmStatement { Instruction = "mov ax,word ptr " + location });
+                                break;
+                            case 1:
+                                method.Statements.Add(new AsmStatement { Instruction = "mov al,byte ptr " + location });
+                                break;
+                        }
                     }
                 }
                 else if (storageType.IsClass)
@@ -2124,6 +2140,7 @@ namespace TEAC
             out TypeDefinition storageType,
             out MethodInfo calleeMethod)
         {
+            string message = null;
             calleeMethod = null;
             NamedReferenceExpression namedRef = referenceExpression as NamedReferenceExpression;
             if (namedRef != null)
@@ -2223,7 +2240,7 @@ namespace TEAC
                     return true;
                 }
 
-                string message = string.Format(
+                message = string.Format(
                     Properties.Resources.CodeGenerator_UndeclaredIdentifier,
                     namedRef.Identifier);
                 log.Write(new Message(
@@ -2242,6 +2259,33 @@ namespace TEAC
                 MethodInfo innerCalleeMethod = null;
                 if (this.TryEmitReference(memberRef.Inner, context, scope, method, out innerLoc, out innerType, out innerCalleeMethod))
                 {
+                    if (innerType.IsEnum && innerLoc == null)
+                    {
+                        calleeMethod = null;
+                        location = null;
+                        storageType = innerType;
+                        int enumValue = 0;
+                        if (!innerType.EnumValues.TryGetValue(memberRef.MemberName, out enumValue))
+                        {
+                            message = string.Format(
+                                System.Globalization.CultureInfo.CurrentCulture,
+                                Properties.Resources.CodeGenerator_UndeclaredMember,
+                                memberRef.MemberName,
+                                innerType.FullName);
+                            this.log.Write(
+                                new Message(
+                                    memberRef.Start.Path,
+                                    memberRef.Start.Line,
+                                    memberRef.Start.Column,
+                                    Severity.Error,
+                                    message));
+                            return false;
+                        }
+
+                        method.Statements.Add(new AsmStatement { Instruction = string.Format("mov eax,{0}", enumValue) });
+                        return true;
+                    }
+
                     foreach (var field in innerType.Fields)
                     {
                         if (string.CompareOrdinal(field.Name, memberRef.MemberName) == 0)
@@ -2289,7 +2333,7 @@ namespace TEAC
                         }
                     }
 
-                    string message = string.Format(
+                    message = string.Format(
                         Properties.Resources.CodeGenerator_UndeclaredMember,
                         memberRef.MemberName,
                         innerType.FullName);
@@ -2465,7 +2509,7 @@ namespace TEAC
                 storageType = method.Method.Type.BaseClass;
                 if (storageType == null)
                 {
-                    string message = string.Format(
+                    message = string.Format(
                         System.Globalization.CultureInfo.CurrentCulture,
                         Properties.Resources.CodeGenerator_NoBaseTypeForInherited,
                         method.Method.Type.FullName);

@@ -1,0 +1,33 @@
+namespace Samples;
+uses System;
+
+type
+    DayOfWeek = (Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday);
+    Month = (January, February, March, April, May, June, July, August, September, October, November, December);
+    Program = public static class
+        public
+            static function Main(
+                argc : integer;
+                argv : array of array of character) : integer;
+    end;
+
+function Program.Main(
+    argc : integer;
+    argv : array of array of character) : integer;
+var
+    day : DayOfWeek;
+    month : Month;
+begin
+    day := DayOfWeek.Tuesday;
+    month := Month.March;
+
+    if day = DayOfWeek.Monday then
+        Console.WriteLine('Fail.')
+    else
+        Console.WriteLine('Pass.');
+
+    if month = Month.July then
+        Console.WriteLine('Fail.')
+    else
+        Console.WriteLine('Pass.');
+end;
