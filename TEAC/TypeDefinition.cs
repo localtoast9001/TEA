@@ -13,10 +13,12 @@
         private List<MethodInfo> methods = new List<MethodInfo>();
         private List<FieldInfo> fields = new List<FieldInfo>();
         private Dictionary<string, int> enumValues = new Dictionary<string, int>();
+        private List<TypeDefinition> methodParamTypes = new List<TypeDefinition>();
 
         public List<FieldInfo> Fields { get { return this.fields; } }
         public List<MethodInfo> Methods { get { return this.methods; } }
         public IDictionary<string, int> EnumValues { get { return this.enumValues; } }
+        public List<TypeDefinition> MethodParamTypes { get { return this.methodParamTypes; } }
 
         public string FullName { get; set; }
         public int Size { get; set; }
@@ -30,8 +32,11 @@
         public bool IsAbstractClass { get; set; }
         public bool IsInterface { get; set; }
         public bool IsEnum { get; set; }
+        public bool IsMethod { get; set; }
         public TypeDefinition InnerType { get; set; }
         public TypeDefinition BaseClass { get; set; }
+        public TypeDefinition MethodReturnType { get; set; }
+        public TypeDefinition MethodImplicitArgType { get; set; }
         public string SpecialMangledName { get; set; }
         public string MangledName
         {
@@ -130,6 +135,23 @@
             }
 
             return null;
+        }
+
+        public MethodInfo CreateMethodInfoForMethodType()
+        {
+            MethodInfo meth = new MethodInfo(this.MethodImplicitArgType);
+            meth.IsStatic = (this.MethodImplicitArgType == null);
+
+            meth.ReturnType = this.MethodReturnType;
+            meth.Name = "???";
+            string argName = "_";
+            foreach (var argType in this.methodParamTypes)
+            {
+                meth.Parameters.Add(new ParameterInfo { Name = argName, Type = argType });
+                argName = argName + "_";
+            }
+
+            return meth;
         }
 
         private static bool MatchArgs(MethodInfo method, IList<TypeDefinition> argTypes)

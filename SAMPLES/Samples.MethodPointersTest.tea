@@ -1,0 +1,46 @@
+namespace Samples;
+uses System;
+
+type
+    Callback = procedure();
+    Program = public static class 
+        public
+            static function Main(argc : integer; argv : array of array of character) : integer;
+        private 
+            static procedure A();
+            static procedure B();
+            static procedure C();
+    end;
+
+procedure Program.A();
+begin
+    Console.WriteLine('A');
+end;
+
+procedure Program.B();
+begin
+    Console.WriteLine('B');
+end;
+
+procedure Program.C();
+begin
+    Console.WriteLine('C');
+end;
+
+function Program.Main(
+    argc : integer;
+    argv : array of array of character) : integer;
+var
+    callbacks : array [3] of Callback;
+    index : integer;
+begin
+    callbacks[0] := A;
+    callbacks[1] := B;
+    callbacks[2] := C;
+    index := 0;
+    while index < 3 do
+    begin
+        callbacks[index]();
+        index := index + 1;
+    end;
+end;

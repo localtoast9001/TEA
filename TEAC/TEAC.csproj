@@ -62,6 +62,7 @@
     <Compile Include="MethodDeclaration.cs" />
     <Compile Include="MethodDefinition.cs" />
     <Compile Include="MethodInfo.cs" />
+    <Compile Include="MethodTypeDeclaration.cs" />
     <Compile Include="Module.cs" />
     <Compile Include="ModuleWriter.cs" />
     <Compile Include="NegativeExpression.cs" />

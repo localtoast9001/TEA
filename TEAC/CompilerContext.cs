@@ -326,5 +326,63 @@ namespace TEAC
         {
             this.uses.Clear();
         }
+
+        public TypeDefinition GetMethodType(MethodInfo calleeMethod)
+        {
+            StringBuilder sb = new StringBuilder();
+            if (calleeMethod.ReturnType != null)
+            {
+                sb.Append(calleeMethod.ReturnType.FullName);
+            }
+
+            sb.Append("(");
+            bool firstArg = true;
+            if (!calleeMethod.IsStatic)
+            {
+                sb.Append(calleeMethod.Type.FullName);
+                firstArg = false;
+            }
+
+            if (calleeMethod.Parameters.Count > 0)
+            {
+                foreach (var parameter in calleeMethod.Parameters)
+                {
+                    if (!firstArg)
+                    {
+                        sb.Append(",");
+                    }
+
+                    sb.Append(parameter.Type.FullName);
+
+                    firstArg = false;
+                }
+            }
+
+            sb.Append(")");
+
+            string fullName = sb.ToString();
+            TypeDefinition methodType = null;
+            if (!types.TryGetValue(fullName, out methodType))
+            {
+                methodType = new TypeDefinition();
+                methodType.IsMethod = true;
+                methodType.Size = 4;
+                methodType.MethodReturnType = calleeMethod.ReturnType;
+                methodType.FullName = fullName;
+                if (!calleeMethod.IsStatic)
+                {
+                    methodType.MethodImplicitArgType = calleeMethod.Type;
+                }
+
+                foreach (var p in calleeMethod.Parameters)
+                {
+                    methodType.MethodParamTypes.Add(p.Type);
+                }
+
+                types.Add(methodType.FullName, methodType);
+            }
+
+            return methodType;
+        }
     }
 }

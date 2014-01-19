@@ -1070,6 +1070,13 @@ namespace TEAC
                 }
                 else
                 {
+                    if (tok.Is(Keyword.Function) || tok.Is(Keyword.Procedure))
+                    {
+                        if(!this.ParseMethodTypeDeclaration(typeName, reader, out type))
+                        {
+                            return false;
+                        }
+                    }
                 }
 
                 program.AddType(type);
@@ -1081,6 +1088,82 @@ namespace TEAC
                 typeName = reader.Peek() as IdentifierToken;
             }
 
+            return true;
+        }
+
+        private bool ParseMethodTypeDeclaration(IdentifierToken typeName, TokenReader reader, out TypeDeclaration type)
+        {
+            MethodTypeDeclaration methodDecl = new MethodTypeDeclaration(typeName, typeName.Value);
+            type = null;
+            bool isFunction = false;
+
+            Token tok = reader.Peek();
+            if (tok.Is(Keyword.Function))
+            {
+                isFunction = true;
+            }
+
+            reader.Read();
+
+            tok = reader.Peek();
+            if (tok.Is(Keyword.Of))
+            {
+                reader.Read();
+                TypeReference implicitArgType = null;
+                if (!this.ParseTypeReference(reader, out implicitArgType))
+                {
+                    return false;
+                }
+
+                methodDecl.ImplicitArgType = implicitArgType;
+            }
+
+            if (!this.Expect(reader, Keyword.LeftParen))
+            {
+                return false;
+            }
+
+            tok = reader.Peek();
+            while (!tok.Is(Keyword.RightParen))
+            {
+                ParameterDeclaration parameter = null;
+                if (!this.ParseParameterDeclaration(reader, out parameter))
+                {
+                    return false;
+                }
+
+                methodDecl.AddParameter(parameter);
+
+                tok = reader.Peek();
+                if (tok.Is(Keyword.SemiColon))
+                {
+                    reader.Read();
+                    tok = reader.Peek();
+                }
+            }
+
+            if (!this.Expect(reader, Keyword.RightParen))
+            {
+                return false;
+            }
+
+            if (isFunction)
+            {
+                if (!this.Expect(reader, Keyword.Colon))
+                {
+                    return false;
+                }
+
+                TypeReference returnType = null;
+                if (!this.ParseTypeReference(reader, out returnType))
+                {
+                    return false;
+                }
+
+                methodDecl.ReturnType = returnType;
+            }
+
+            type = methodDecl;
             return true;
         }
 

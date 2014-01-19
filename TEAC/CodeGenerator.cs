@@ -94,6 +94,52 @@ namespace TEAC
                     }
                 }
 
+                MethodTypeDeclaration methodDecl = typeDecl as MethodTypeDeclaration;
+                if (methodDecl != null)
+                {
+                    typeDef.IsMethod = true;
+                    typeDef.IsPublic = true;
+                    typeDef.Size = 4;
+                    if (methodDecl.ImplicitArgType != null)
+                    {
+                        TypeDefinition implicitArgType = null;
+                        if (!this.TryResolveTypeReference(context, methodDecl.ImplicitArgType, out implicitArgType))
+                        {
+                            failed = true;
+                        }
+                        else
+                        {
+                            typeDef.MethodImplicitArgType = implicitArgType;
+                        }
+
+                        TypeDefinition returnType = null;
+                        if (!this.TryResolveTypeReference(context, methodDecl.ReturnType, out returnType))
+                        {
+                            failed = true;
+                        }
+                        else
+                        {
+                            typeDef.MethodReturnType = returnType;
+                        }
+
+                        foreach (ParameterDeclaration paramDecl in methodDecl.Parameters)
+                        {
+                            TypeDefinition paramType = null;
+                            if (!this.TryResolveTypeReference(context, paramDecl.Type, out paramType))
+                            {
+                                failed = true;
+                            }
+                            else
+                            {
+                                foreach (string name in paramDecl.ParameterNames)
+                                {
+                                    typeDef.MethodParamTypes.Add(paramType);
+                                }
+                            }
+                        }
+                    }
+                }
+
                 ClassDeclaration classDecl = typeDecl as ClassDeclaration;
                 if (classDecl != null)
                 {
@@ -1136,6 +1182,47 @@ namespace TEAC
                     canCast = this.ValidateCanCast(node, storageType.InnerType, valueType.InnerType);
                 }
             }
+            else if (valueType.IsMethod && storageType.IsMethod)
+            {
+                if ((valueType.MethodReturnType == null) == (storageType.MethodReturnType == null))
+                {
+                    canCast = true;
+                    if (valueType.MethodReturnType != null)
+                    {
+                        canCast = string.CompareOrdinal(storageType.MethodReturnType.MangledName,
+                            valueType.MethodReturnType.MangledName) == 0;
+                    }
+                }
+
+                if (canCast)
+                {
+                    if ((storageType.MethodImplicitArgType == null) == (valueType.MethodImplicitArgType != null))
+                    {
+                        if (valueType.MethodImplicitArgType != null)
+                        {
+                            canCast = this.ValidateCanCast(node, valueType.MethodImplicitArgType, storageType.MethodImplicitArgType);
+                        }
+                    }
+                }
+
+                if (canCast)
+                {
+                    canCast = storageType.MethodParamTypes.Count == valueType.MethodParamTypes.Count;
+                    if (canCast)
+                    {
+                        for (int i = 0; i < storageType.MethodParamTypes.Count; i++)
+                        {
+                            if (string.CompareOrdinal(
+                                storageType.MethodParamTypes[i].MangledName, 
+                                valueType.MethodParamTypes[i].MangledName) != 0)
+                            {
+                                canCast = false;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
 
             if (!canCast)
             {
@@ -1342,6 +1429,12 @@ namespace TEAC
                     }
                 }
 
+                if (calleeMethod == null && storageType != null && storageType.IsMethod)
+                {
+                    calleeMethod = storageType.CreateMethodInfoForMethodType();
+                    storageType = calleeMethod.ReturnType;
+                }
+
                 if (calleeMethod.IsVirtual && callExpr.Inner.UseVirtualDispatch)
                 {
                     FieldInfo vtablePtr = calleeMethod.Type.GetVTablePointer();
@@ -1365,7 +1458,14 @@ namespace TEAC
                 }
                 else
                 {
-                    method.Statements.Add(new AsmStatement { Instruction = "call " + callLoc });
+                    if (callLoc.Contains("["))
+                    {
+                        method.Statements.Add(new AsmStatement { Instruction = "call dword ptr " + callLoc });
+                    }
+                    else
+                    {
+                        method.Statements.Add(new AsmStatement { Instruction = "call " + callLoc });
+                    }
                 }
 
                 if (!calleeMethod.IsStatic)
@@ -1419,6 +1519,18 @@ namespace TEAC
                 {
                     valueType = null;
                     return false;
+                }
+
+                // method pointer.
+                if (storageType == null)
+                {
+                    if (!calleeMethod.IsVirtual)
+                    {
+                        method.Statements.Add(new AsmStatement { Instruction = "mov eax, " + calleeMethod.MangledName });
+                    }
+
+                    valueType = context.GetMethodType(calleeMethod);
+                    return true;
                 }
 
                 if (storageType.IsFloatingPoint)
