@@ -7,7 +7,14 @@ type
             static function Main(
                 argc : integer; 
                 argv : array of array of character) : integer;
+        private
+            static function CopyLength(a : String) : integer;
     end;
+
+function Program.CopyLength(a : String) : integer;
+begin
+    CopyLength := a.Length();
+end;
 
 function Program.Main(
     argc : integer;
@@ -18,5 +25,5 @@ begin
     a.TryAssign('Hello World!');
     b.assign(@a);
     Console.WriteLine(b.Characters());
-    Main := 0;
+    Main := CopyLength(a);
 end;

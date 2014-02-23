@@ -55,6 +55,7 @@
     <Compile Include="Expression.cs" />
     <Compile Include="FieldInfo.cs" />
     <Compile Include="IfStatement.cs" />
+    <Compile Include="InterfaceDeclaration.cs" />
     <Compile Include="LiteralExpression.cs" />
     <Compile Include="LocalVariable.cs" />
     <Compile Include="Message.cs" />

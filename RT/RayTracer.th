@@ -33,6 +33,19 @@ type
             _origin, _direction : Vector3D;
     end;
     Matrix4x4 = public class
+        public
+            constructor();
+            static function Identity() : Matrix4x4;
+            static function Scale(value : double) : Matrix4x4;
+            static function Translation(value : Vector3D) : Matrix4x4;
+            static function RotationX(radians : double) : Matrix4x4;
+            static function RotationY(radians : double) : Matrix4x4;
+            static function RotationZ(radians : double) : Matrix4x4;
+            static function mul(a, b : ^Matrix4x4) : Matrix4x4;
+            static function add(a, b : ^Matrix4x4) : Matrix4x4;
+            static function sub(a, b : ^Matrix4x4) : Matrix4x4;
+            function negative() : Matrix4x4;
+            function inverse() : Matrix4x4; 
         var
             _mat : array[16] of double;
     end;

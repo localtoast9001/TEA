@@ -2,6 +2,7 @@ RayTracer.Camera.tea
 RayTracer.Color.tea
 RayTracer.Light.tea
 RayTracer.LightList.tea
+RayTracer.Matrix4x4.tea
 RayTracer.Ray3D.tea
 RayTracer.Scene.tea
 RayTracer.Shape.tea

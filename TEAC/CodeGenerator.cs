@@ -140,6 +140,69 @@ namespace TEAC
                     }
                 }
 
+                InterfaceDeclaration interfaceDecl = typeDecl as InterfaceDeclaration;
+                if (interfaceDecl != null)
+                {
+                    typeDef.IsInterface = true;
+                    typeDef.IsPublic = interfaceDecl.IsPublic;
+                    if (interfaceDecl.BaseInterfaceType != null)
+                    {
+                        TypeDefinition baseType = null;
+                        if (!context.TryFindTypeByName(interfaceDecl.BaseInterfaceType, out baseType))
+                        {
+                            string message = string.Format(
+                                System.Globalization.CultureInfo.CurrentCulture,
+                                Properties.Resources.CodeGenerator_UndefinedType,
+                                interfaceDecl.BaseInterfaceType);
+                            this.log.Write(new Message(
+                                interfaceDecl.Start.Path,
+                                interfaceDecl.Start.Line,
+                                interfaceDecl.Start.Column,
+                                Severity.Error,
+                                message));
+                            failed = true;
+                        }
+
+                        if (!baseType.IsInterface)
+                        {
+                            string message = string.Format(
+                                System.Globalization.CultureInfo.CurrentCulture,
+                                Properties.Resources.CodeGenerator_BaseInterfaceIsNotInterface,
+                                interfaceDecl.BaseInterfaceType);
+                            this.log.Write(new Message(
+                                interfaceDecl.Start.Path,
+                                interfaceDecl.Start.Line,
+                                interfaceDecl.Start.Column,
+                                Severity.Error,
+                                message));
+                            failed = true;
+                        }
+
+                        typeDef.BaseClass = baseType;
+                    }
+
+                    foreach (MethodDeclaration meth in interfaceDecl.Methods)
+                    {
+                        MethodInfo methodInfo = null;
+                        if (!this.TryCreateMethod(context, typeDef, meth, out methodInfo))
+                        {
+                            failed = true;
+                            continue;
+                        }
+
+                        methodInfo.IsPublic = true;
+                        typeDef.Methods.Add(methodInfo);
+                    }
+
+                    FieldInfo vtblPtr = typeDef.GetVTablePointer();
+                    if (vtblPtr == null)
+                    {
+                        vtblPtr = typeDef.AddVTablePointer(context, 0);
+                    }
+
+                    typeDef.Size = vtblPtr.Type.Size;
+                }
+
                 ClassDeclaration classDecl = typeDecl as ClassDeclaration;
                 if (classDecl != null)
                 {
@@ -230,7 +293,6 @@ namespace TEAC
                             continue;
                         }
 
-                        methodInfo.IsProtected = true;
                         typeDef.Methods.Add(methodInfo);
                         if (methodInfo.IsVirtual)
                         {
@@ -244,13 +306,69 @@ namespace TEAC
                         size = typeDef.BaseClass.Size;
                     }
 
-                    if (hasVirtualMethods)
+                    if (hasVirtualMethods || classDecl.Interfaces.Count() > 0)
                     {
                         FieldInfo vtblPtr = typeDef.GetVTablePointer();
                         if (vtblPtr == null)
                         {
                             vtblPtr = typeDef.AddVTablePointer(context, size);
                             size += vtblPtr.Type.Size;
+                        }
+                    }
+
+                    foreach (var intfDecl in classDecl.Interfaces)
+                    {
+                        TypeDefinition intfDef = null;
+                        if (!context.TryFindTypeByName(intfDecl, out intfDef))
+                        {
+                            string message = string.Format(
+                                System.Globalization.CultureInfo.CurrentCulture,
+                                Properties.Resources.CodeGenerator_UndefinedType,
+                                intfDecl);
+                            this.log.Write(new Message(
+                                classDecl.Start.Path,
+                                classDecl.Start.Line,
+                                classDecl.Start.Column,
+                                Severity.Error,
+                                message));
+                            failed = true;
+                            continue;
+                        }
+
+                        FieldInfo intfTable = typeDef.GetInterfaceTablePointer(intfDef);
+                        if (intfTable == null)
+                        {
+                            intfTable = typeDef.AddInterfaceTablePointer(context, size, intfDef);
+                            size += intfTable.Type.Size;
+                        }
+
+                        typeDef.AddInterface(intfDef, intfTable.Offset);
+
+                        TypeDefinition intf = intfDef;
+                        while (intf != null)
+                        {
+                            foreach (var meth in intf.Methods)
+                            {
+                                MethodInfo matchingMeth = typeDef.FindMethod(meth.Name, meth.Parameters.Select(e => e.Type).ToList());
+                                if (matchingMeth == null || !matchingMeth.IsVirtual)
+                                {
+                                    failed = true;
+                                    string message = string.Format(
+                                        System.Globalization.CultureInfo.CurrentCulture,
+                                        Properties.Resources.CodeGenerator_ClassDoesNotDeclareInterfaceMethod,
+                                        typeDef.FullName,
+                                        intf.FullName,
+                                        meth.Name);
+                                    log.Write(new Message(
+                                        classDecl.Start.Path,
+                                        classDecl.Start.Line,
+                                        classDecl.Start.Column,
+                                        Severity.Error,
+                                        message));
+                                }
+                            }
+
+                            intf = intf.BaseClass;
                         }
                     }
 
@@ -358,6 +476,11 @@ namespace TEAC
                 method.Module.DefineVTable(method.Method.Type);
             }
 
+            if (method.Method.Type.IsClass)
+            {
+                method.Module.DefineInterfaceTables(method.Method.Type);
+            }
+
             if (!string.IsNullOrEmpty(methodDef.ExternImpl))
             {
                 method.Module.AddExtern(methodDef.ExternImpl);
@@ -424,7 +547,6 @@ namespace TEAC
                 FieldInfo vtable = method.Method.Type.GetVTablePointer();
                 if (vtable != null)
                 {
-                    // method.Module.ExternList.Add("$Vtbl_" + method.Method.Type.MangledName);
                     method.Statements.Add(new AsmStatement { Instruction = string.Format("lea eax,[$Vtbl_{0}]", method.Method.Type.MangledName) });
                     method.Statements.Add(new AsmStatement { Instruction = "mov ecx,_this$[ebp]" });
                     if (vtable.Offset > 0)
@@ -432,6 +554,16 @@ namespace TEAC
                         method.Statements.Add(new AsmStatement { Instruction = string.Format("add ecx,{0}", vtable.Offset) });
                     }
 
+                    method.Statements.Add(new AsmStatement { Instruction = "mov [ecx],eax" });
+                }
+
+                foreach(TypeDefinition intf in method.Method.Type.GetAllInterfaces().Select(e => e.Key))
+                {
+                    FieldInfo intfTable = method.Method.Type.GetInterfaceTablePointer(intf);
+                    string tableSymbol = "$Vtbl_" + intf.MangledName + "_" + method.Method.Type.MangledName;
+                    method.Statements.Add(new AsmStatement { Instruction = string.Format("lea eax,[{0}]", tableSymbol) });
+                    method.Statements.Add(new AsmStatement { Instruction = "mov ecx,_this$[ebp]" });
+                    method.Statements.Add(new AsmStatement { Instruction = string.Format("add ecx,{0}", intfTable.Offset) });
                     method.Statements.Add(new AsmStatement { Instruction = "mov [ecx],eax" });
                 }
 
@@ -1069,7 +1201,8 @@ namespace TEAC
                 return false;
             }
 
-            if (!this.ValidateCanCast(assignmentStatement, storageType, valueType))
+            int castOffset = 0;
+            if (!this.ValidateCanCast(assignmentStatement, storageType, valueType, out castOffset))
             {
                 return false;
             }
@@ -1086,6 +1219,11 @@ namespace TEAC
             else if (valueType.Size <= 4 && !valueType.IsClass)
             {
                 method.Statements.Add(new AsmStatement { Instruction = "pop eax" });
+                if (castOffset > 0)
+                {
+                    method.Statements.Add(new AsmStatement { Instruction = "add eax," + castOffset });
+                }
+
                 switch (storageType.Size)
                 {
                     case 1:
@@ -1118,8 +1256,10 @@ namespace TEAC
         private bool ValidateCanCast(
             ParseNode node,
             TypeDefinition storageType,
-            TypeDefinition valueType)
+            TypeDefinition valueType,
+            out int offset)
         {
+            offset = 0;
             if (string.CompareOrdinal(storageType.MangledName, valueType.MangledName) == 0)
             {
                 return true;
@@ -1133,7 +1273,7 @@ namespace TEAC
                     canCast = storageType.InnerType == null ||
                         string.CompareOrdinal(storageType.InnerType.MangledName, "b") == 0 ||
                         string.CompareOrdinal(valueType.InnerType.MangledName, "b") == 0 ||
-                        this.ValidateCanCast(node, storageType.InnerType, valueType.InnerType);
+                        this.ValidateCanCast(node, storageType.InnerType, valueType.InnerType, out offset);
                 }
             }
             else if (valueType.IsPointer && storageType.IsArray)
@@ -1143,7 +1283,7 @@ namespace TEAC
                     canCast = valueType.InnerType == null ||
                         string.CompareOrdinal(storageType.InnerType.MangledName, "b") == 0 ||
                         string.CompareOrdinal(valueType.InnerType.MangledName, "b") == 0 || 
-                        this.ValidateCanCast(node, storageType.InnerType, valueType.InnerType);
+                        this.ValidateCanCast(node, storageType.InnerType, valueType.InnerType, out offset);
                 }
             }
             else if (valueType.IsPointer && storageType.IsPointer)
@@ -1152,7 +1292,17 @@ namespace TEAC
                     valueType.InnerType == null;
                 if (!canCast)
                 {
-                    if (valueType.InnerType.IsClass && storageType.InnerType.IsClass)
+                    if (valueType.InnerType.IsClass && storageType.InnerType.IsInterface)
+                    {
+                        FieldInfo intfTable = valueType.InnerType.GetInterfaceTablePointer(storageType.InnerType);
+                        canCast = intfTable != null;
+                        if (canCast)
+                        {
+                            offset = intfTable.Offset;
+                        }
+                    }
+                    else if (valueType.InnerType.IsClass && storageType.InnerType.IsClass ||
+                        valueType.InnerType.IsInterface && storageType.InnerType.IsInterface)
                     {
                         TypeDefinition testClass = valueType.InnerType;
                         while (!canCast && testClass != null)
@@ -1171,7 +1321,7 @@ namespace TEAC
                     {
                         canCast = string.CompareOrdinal(storageType.InnerType.MangledName, "b") == 0 ||
                             string.CompareOrdinal(valueType.InnerType.MangledName, "b") == 0 || 
-                            this.ValidateCanCast(node, storageType.InnerType, valueType.InnerType);
+                            this.ValidateCanCast(node, storageType.InnerType, valueType.InnerType, out offset);
                     }
                 }
             }
@@ -1179,7 +1329,7 @@ namespace TEAC
             {
                 if (storageType.ArrayElementCount == 0)
                 {
-                    canCast = this.ValidateCanCast(node, storageType.InnerType, valueType.InnerType);
+                    canCast = this.ValidateCanCast(node, storageType.InnerType, valueType.InnerType, out offset);
                 }
             }
             else if (valueType.IsMethod && storageType.IsMethod)
@@ -1200,7 +1350,11 @@ namespace TEAC
                     {
                         if (valueType.MethodImplicitArgType != null)
                         {
-                            canCast = this.ValidateCanCast(node, valueType.MethodImplicitArgType, storageType.MethodImplicitArgType);
+                            canCast = this.ValidateCanCast(
+                                node, 
+                                valueType.MethodImplicitArgType, 
+                                storageType.MethodImplicitArgType,
+                                out offset);
                         }
                     }
                 }
@@ -1340,6 +1494,7 @@ namespace TEAC
                 int argStatementStart = method.Statements.Count;
                 Expression[] arguments = callExpr.Arguments.ToArray();
                 List<TypeDefinition> argTypes = new List<TypeDefinition>();
+                List<int> argValueOffsets = new List<int>();
                 for (int i = arguments.Length - 1; i >= 0; i--)
                 {
                     TypeDefinition argType = null;
@@ -1351,8 +1506,12 @@ namespace TEAC
 
                     argTypes.Insert(0, argType);
                     argSize += ((argType.Size + 3) / 4) * 4;
+                    argValueOffsets.Insert(0, method.Statements.Count);
                     this.PushResult(method, argType);
                 }
+
+                bool hasDestructables = argTypes.Any(e => e.GetDestructor() != null);
+                bool savedRegResult = false;
 
                 string callLoc = null;
                 TypeDefinition storageType = null;
@@ -1427,6 +1586,13 @@ namespace TEAC
                         method.Statements.Add(new AsmStatement { Instruction = "push ebx" });
                         argSize += 4;
                     }
+                    else if (hasDestructables)
+                    {
+                        // create room on the stack for the result.
+                        AsmStatement resultPush = new AsmStatement { Instruction = string.Format("sub esp,{0}", storageType.Size) };
+                        method.Statements.Insert(argStatementStart, resultPush);
+                        savedRegResult = true;
+                    }
                 }
 
                 if (calleeMethod == null && storageType != null && storageType.IsMethod)
@@ -1475,7 +1641,121 @@ namespace TEAC
 
                 if (argSize > 0)
                 {
-                    method.Statements.Add(new AsmStatement { Instruction = "add esp," + argSize.ToString() });
+                    if (hasDestructables)
+                    {
+                        if (savedRegResult)
+                        {
+                            if (storageType.IsFloatingPoint)
+                            {
+                                switch (storageType.Size)
+                                {
+                                    case 10:
+                                        method.Statements.Add(new AsmStatement { Instruction = "fstp tword ptr [esp+" + argSize + "]" });
+                                        break;
+                                    case 8:
+                                        method.Statements.Add(new AsmStatement { Instruction = "fstp qword ptr [esp+" + argSize + "]" });
+                                        break;
+                                    case 4:
+                                        method.Statements.Add(new AsmStatement { Instruction = "fstp dword ptr [esp+" + argSize + "]" });
+                                        break;
+                                }
+                            }
+                            else
+                            {
+                                if (storageType.Size > 4)
+                                {
+                                    method.Statements.Add(new AsmStatement { Instruction = "mov dword ptr [esp+" + (argSize + 4 ) + "],edx" });
+                                }
+
+                                switch (storageType.Size % 4)
+                                {
+                                    case 0:
+                                        method.Statements.Add(new AsmStatement { Instruction = "mov dword ptr [esp+" + argSize + "],eax" });
+                                        break;
+                                    case 3:
+                                        method.Statements.Add(new AsmStatement { Instruction = "mov dword ptr [esp+" + argSize + "],eax" });
+                                        break;
+                                    case 2:
+                                        method.Statements.Add(new AsmStatement { Instruction = "mov word ptr [esp+" + argSize + "],ax" });
+                                        break;
+                                    case 1:
+                                        method.Statements.Add(new AsmStatement { Instruction = "mov byte ptr [esp+" + argSize + "],al" });
+                                        break;
+                                }
+                            }
+
+                        }
+
+                        if (!calleeMethod.IsStatic)
+                        {
+                            method.Statements.Add(new AsmStatement { Instruction = "add esp,4" });
+                        }
+
+                        foreach (var arg in argTypes)
+                        {
+                            MethodInfo argDes = arg.GetDestructor();
+                            if (argDes != null)
+                            {
+                                method.Module.AddProto(argDes);
+                                method.Statements.Add(new AsmStatement { Instruction = "lea ecx,[esp]" });
+                                method.Statements.Add(new AsmStatement { Instruction = "push ecx" });
+                                method.Statements.Add(new AsmStatement { Instruction = "call " + argDes.MangledName });
+                                method.Statements.Add(new AsmStatement { Instruction = "add esp,4" });
+                            }
+
+                            method.Statements.Add(new AsmStatement { Instruction = "add esp," + arg.Size });
+                        }
+
+                        if (savedRegResult)
+                        {
+                            if (storageType.IsFloatingPoint)
+                            {
+                                switch (storageType.Size)
+                                {
+                                    case 10:
+                                        method.Statements.Add(new AsmStatement { Instruction = "fld tword ptr [esp]" });
+                                        break;
+                                    case 8:
+                                        method.Statements.Add(new AsmStatement { Instruction = "fld qword ptr [esp]" });
+                                        break;
+                                    case 4:
+                                        method.Statements.Add(new AsmStatement { Instruction = "fld dword ptr [esp]" });
+                                        break;
+                                }
+
+                                method.Statements.Add(new AsmStatement { Instruction = "add esp," + storageType.Size });
+                            }
+                            else
+                            {
+                                if (storageType.Size > 4)
+                                {
+                                    method.Statements.Add(new AsmStatement { Instruction = "pop eax" });
+                                    method.Statements.Add(new AsmStatement { Instruction = "pop edx" });
+                                }
+                                else{
+                                    switch (storageType.Size)
+                                    {
+                                        case 4:
+                                            method.Statements.Add(new AsmStatement { Instruction = "pop eax" });
+                                            break;
+                                        case 3:
+                                            method.Statements.Add(new AsmStatement { Instruction = "pop eax" });
+                                            break;
+                                        case 2:
+                                            method.Statements.Add(new AsmStatement { Instruction = "pop ax" });
+                                            break;
+                                        case 1:
+                                            method.Statements.Add(new AsmStatement { Instruction = "pop al" });
+                                            break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        method.Statements.Add(new AsmStatement { Instruction = "add esp," + argSize.ToString() });
+                    }
                 }
 
                 if (calleeMethod.Parameters.Count != argTypes.Count)
@@ -1499,9 +1779,17 @@ namespace TEAC
                 bool argsValid = true; 
                 for (int i = 0; i < calleeMethod.Parameters.Count; i++)
                 {
-                    if (!this.ValidateCanCast(expression, calleeMethod.Parameters[i].Type, argTypes[i]))
+                    int pointerCastOffset = 0;
+                    if (!this.ValidateCanCast(expression, calleeMethod.Parameters[i].Type, argTypes[i], out pointerCastOffset))
                     {
                         argsValid = false;
+                    }
+
+                    if (pointerCastOffset > 0)
+                    {
+                        method.Statements.Insert(
+                            argValueOffsets[i],
+                            new AsmStatement { Instruction = "add eax," + pointerCastOffset });
                     }
                 }
 
@@ -2307,43 +2595,41 @@ namespace TEAC
                     }
                 }
 
-                foreach (var memberMethod in method.Method.Type.Methods)
+                var memberMethod = method.Method.Type.FindMethod(namedRef.Identifier);
+                if (memberMethod != null)
                 {
-                    if (string.CompareOrdinal(memberMethod.Name, namedRef.Identifier) == 0)
+                    method.Module.AddProto(memberMethod);
+                    if (!memberMethod.IsStatic)
                     {
-                        method.Module.AddProto(memberMethod);
-                        if (!memberMethod.IsStatic)
+                        SymbolEntry symThis = null;
+                        if (!scope.TryLookup("this", out symThis))
                         {
-                            SymbolEntry symThis = null;
-                            if (!scope.TryLookup("this", out symThis))
+                            storageType = null;
+                            location = null;
+                            return false;
+                        }
+
+                        method.Statements.Add(
+                            new AsmStatement
                             {
-                                storageType = null;
-                                location = null;
-                                return false;
-                            }
+                                Instruction = "mov ecx,_this$[ebp]"
+                            });
 
-                            method.Statements.Add(
-                                new AsmStatement
-                                {
-                                    Instruction = "mov ecx,_this$[ebp]"
-                                });
-
-                            method.Statements.Add(new AsmStatement { Instruction = "push ecx" });
-                        }
-
-                        if (memberMethod.IsVirtual)
-                        {
-                            location = "[ecx]";
-                        }
-                        else
-                        {
-                            location = memberMethod.MangledName;
-                        }
-
-                        storageType = memberMethod.ReturnType;
-                        calleeMethod = memberMethod;
-                        return true;
+                        method.Statements.Add(new AsmStatement { Instruction = "push ecx" });
                     }
+
+                    if (memberMethod.IsVirtual)
+                    {
+                        location = "[ecx]";
+                    }
+                    else
+                    {
+                        location = memberMethod.MangledName;
+                    }
+
+                    storageType = memberMethod.ReturnType;
+                    calleeMethod = memberMethod;
+                    return true;
                 }
 
                 if (context.TryFindTypeByName(namedRef.Identifier, out storageType))
@@ -2419,30 +2705,28 @@ namespace TEAC
                         }
                     }
 
-                    foreach (var memberMethod in innerType.Methods)
+                    var memberMethod = innerType.FindMethod(memberRef.MemberName);
+                    if (memberMethod != null)
                     {
-                        if (string.CompareOrdinal(memberMethod.Name, memberRef.MemberName) == 0)
+                        method.Module.AddProto(memberMethod);
+                        if (!memberMethod.IsStatic)
                         {
-                            method.Module.AddProto(memberMethod);
-                            if (!memberMethod.IsStatic)
-                            {
-                                method.Statements.Add(new AsmStatement { Instruction = string.Format("lea eax,{0}", innerLoc) });
-                                method.Statements.Add(new AsmStatement { Instruction = "push eax" });
-                            }
-
-                            if (memberMethod.IsVirtual && memberRef.UseVirtualDispatch)
-                            {
-                                location = "[eax]";
-                            }
-                            else
-                            {
-                                location = memberMethod.MangledName;
-                            }
-
-                            storageType = memberMethod.ReturnType;
-                            calleeMethod = memberMethod;
-                            return true;
+                            method.Statements.Add(new AsmStatement { Instruction = string.Format("lea eax,{0}", innerLoc) });
+                            method.Statements.Add(new AsmStatement { Instruction = "push eax" });
                         }
+
+                        if (memberMethod.IsVirtual && memberRef.UseVirtualDispatch)
+                        {
+                            location = "[eax]";
+                        }
+                        else
+                        {
+                            location = memberMethod.MangledName;
+                        }
+
+                        storageType = memberMethod.ReturnType;
+                        calleeMethod = memberMethod;
+                        return true;
                     }
 
                     message = string.Format(
@@ -2664,8 +2948,8 @@ namespace TEAC
             {
                 Name = methodDecl.MethodName, 
                 IsStatic = methodDecl.IsStatic,
-                IsVirtual = methodDecl.IsVirtual || methodDecl.IsAbstract,
-                IsAbstract = methodDecl.IsAbstract
+                IsVirtual = methodDecl.IsVirtual || methodDecl.IsAbstract || type.IsInterface,
+                IsAbstract = methodDecl.IsAbstract || type.IsInterface
             };
 
             TypeDefinition returnType = null;

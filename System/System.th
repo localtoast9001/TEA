@@ -94,3 +94,27 @@ type
             _head : ^LinkedListNode;
             _tail : ^LinkedListNode;
     end;
+    TimeSpan = public class
+        public
+            constructor();
+            constructor(hours, minutes, seconds : integer);
+            constructor(days, hours, minutes, seconds : integer);
+            constructor(days, hours, minutes, seconds, milliseconds : integer);
+            constructor(ticks : long);
+            function GetDays() : integer;
+            function GetHours() : integer;
+            function GetMinutes() : integer;
+            function GetSeconds() : integer;
+            function GetMilliseconds() : integer;
+            function GetTotalDays() : double;
+            function GetTotalHours() : double;
+            function GetTotalMinutes() : double;
+            function GetTotalSeconds() : double;    
+            function GetTotalMilliseconds() : double;
+        var
+            _ticks : long;
+    end;
+    DateTime = public class
+        var
+            _ticks : long;
+    end;

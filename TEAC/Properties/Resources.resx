@@ -126,6 +126,9 @@
   <data name="CodeGenerator_ArrayTypeIntElementExpected" xml:space="preserve">
     <value>The element range for an array type must be a constant integer expression.</value>
   </data>
+  <data name="CodeGenerator_BaseInterfaceIsNotInterface" xml:space="preserve">
+    <value>Interface types can only be derived from other interface types. [{0}] is not an interface type.</value>
+  </data>
   <data name="CodeGenerator_BaseTypeNotClass" xml:space="preserve">
     <value>The type {0} cannot be used as a base type because it is not a class.</value>
   </data>
@@ -137,6 +140,9 @@
   </data>
   <data name="CodeGenerator_CannotFindConstructor" xml:space="preserve">
     <value>Cannot locate an appropriate constructor for {0} with the arguments given.</value>
+  </data>
+  <data name="CodeGenerator_ClassDoesNotDeclareInterfaceMethod" xml:space="preserve">
+    <value>The class {0} does not fully implement interface {1}. It is missing a virtual or abstract declaration of method {2}.</value>
   </data>
   <data name="CodeGenerator_ConstructorArgumentsAreOnlySupportedOnClassTypes" xml:space="preserve">
     <value>Constructor arguments are only supported on class types.</value>

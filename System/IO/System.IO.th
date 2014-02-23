@@ -143,3 +143,16 @@ type
         protected
             constructor();
     end;
+
+    TextWriter = public {abstract} class
+        public
+            virtual destructor();
+            virtual procedure Close();
+            virtual function Flush() : boolean;
+            virtual function Write(value : character) : boolean;
+            virtual function Write(value : String) : boolean;
+            virtual function Write(value : array of character) : boolean;
+            abstract function Write(
+                buffer : array of character;
+                index, count : integer) : boolean;
+    end; 

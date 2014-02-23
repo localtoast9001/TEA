@@ -27,6 +27,8 @@ type
     end;
     Cylinder = public class(Shape)
         public
+            constructor(startPoint, endPoint : Vector3D; radius : double);
+            virtual destructor();
             virtual function Intersect(
                 ray : ^Ray3D;
                 distance : ^double;

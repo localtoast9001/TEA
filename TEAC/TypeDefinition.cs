@@ -14,11 +14,13 @@
         private List<FieldInfo> fields = new List<FieldInfo>();
         private Dictionary<string, int> enumValues = new Dictionary<string, int>();
         private List<TypeDefinition> methodParamTypes = new List<TypeDefinition>();
+        private List<KeyValuePair<TypeDefinition, int>> interfaces = new List<KeyValuePair<TypeDefinition, int>>();
 
         public List<FieldInfo> Fields { get { return this.fields; } }
         public List<MethodInfo> Methods { get { return this.methods; } }
         public IDictionary<string, int> EnumValues { get { return this.enumValues; } }
         public List<TypeDefinition> MethodParamTypes { get { return this.methodParamTypes; } }
+        public List<KeyValuePair<TypeDefinition, int>> Interfaces { get { return this.interfaces; } }
 
         public string FullName { get; set; }
         public int Size { get; set; }
@@ -68,6 +70,27 @@
             }
         }
 
+        public IEnumerable<KeyValuePair<TypeDefinition, int>> GetAllInterfaces()
+        {
+            Dictionary<string, KeyValuePair<TypeDefinition, int>> allInterfaces = 
+                new Dictionary<string, KeyValuePair<TypeDefinition, int>>();
+            TypeDefinition classType = this;
+            while (classType != null)
+            {
+                foreach (var pair in classType.Interfaces)
+                {
+                    if (!allInterfaces.ContainsKey(pair.Key.MangledName))
+                    {
+                        allInterfaces.Add(pair.Key.MangledName, pair);
+                    }
+                }
+
+                classType = classType.BaseClass;
+            }
+
+            return allInterfaces.Values;
+        }
+
         public MethodInfo GetDestructor()
         {
             foreach (MethodInfo method in this.Methods)
@@ -99,7 +122,17 @@
             return null;
         }
 
+        public MethodInfo FindMethod(string name)
+        {
+            return FindMethod(name, null, false);
+        }
+
         public MethodInfo FindMethod(string name, IList<TypeDefinition> argTypes)
+        {
+            return FindMethod(name, argTypes, true);
+        }
+
+        private MethodInfo FindMethod(string name, IList<TypeDefinition> argTypes, bool matchArgs)
         {
             TypeDefinition type = this;
             while (type != null)
@@ -108,7 +141,7 @@
                 {
                     if (string.CompareOrdinal(name, method.Name) == 0)
                     {
-                        if (MatchArgs(method, argTypes))
+                        if (!matchArgs || MatchArgs(method, argTypes))
                         {
                             return method;
                         }
@@ -181,7 +214,22 @@
             return FindConstructor(argTypes);
         }
 
+        public void AddInterface(TypeDefinition interfaceType, int offset)
+        {
+            this.interfaces.Add(new KeyValuePair<TypeDefinition,int>(interfaceType, offset));
+        }
+
+        public FieldInfo GetInterfaceTablePointer(TypeDefinition interfaceType)
+        {
+            return GetTablePointer(VTablePointerFieldName + interfaceType.MangledName);
+        }
+
         public FieldInfo GetVTablePointer()
+        {
+            return GetTablePointer(VTablePointerFieldName);
+        }
+
+        private FieldInfo GetTablePointer(string fieldName)
         {
             Stack<TypeDefinition> typeHierarchy = new Stack<TypeDefinition>();
             TypeDefinition type = this;
@@ -198,7 +246,7 @@
                 {
                     if (!field.IsStatic && string.CompareOrdinal(
                         field.Name,
-                        VTablePointerFieldName) == 0)
+                        fieldName) == 0)
                     {
                         return field;
                     }
@@ -208,13 +256,26 @@
             return null;
         }
 
+        public FieldInfo AddInterfaceTablePointer(CompilerContext context, int offset, TypeDefinition interfaceType)
+        {
+            return AddTablePointer(
+                context,
+                offset,
+                VTablePointerFieldName + interfaceType.MangledName);
+        }
+
         public FieldInfo AddVTablePointer(CompilerContext context, int offset)
+        {
+            return AddTablePointer(context, offset, VTablePointerFieldName);
+        }
+
+        private FieldInfo AddTablePointer(CompilerContext context, int offset, string name)
         {
             TypeDefinition ptrType = null;
             context.TryFindTypeByName("^", out ptrType);
             FieldInfo field = new FieldInfo
             {
-                Name = VTablePointerFieldName, 
+                Name = name, 
                 IsPublic = true,
                 Offset = offset,
                 Type = context.GetArrayType(ptrType, 0)

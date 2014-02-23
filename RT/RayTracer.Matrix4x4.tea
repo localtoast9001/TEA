@@ -1,0 +1,154 @@
+namespace RayTracer;
+uses System, RayTracer;
+
+constructor Matrix4x4();
+var 
+    i : integer;
+begin
+    i := 0;
+    while i < 16 do
+    begin
+        _mat[i] := 0.0;
+        i := i + 1;
+    end;
+end;
+
+function Matrix4x4.Identity() : Matrix4x4;
+begin
+    Identity._mat[0] := 1.0;
+    Identity._mat[1] := 0.0;
+    Identity._mat[2] := 0.0;
+    Identity._mat[3] := 0.0;
+    Identity._mat[4] := 0.0;
+    Identity._mat[5] := 1.0;
+    Identity._mat[6] := 0.0;
+    Identity._mat[7] := 0.0;
+    Identity._mat[8] := 0.0;
+    Identity._mat[9] := 0.0;
+    Identity._mat[10] := 1.0;
+    Identity._mat[11] := 0.0;
+    Identity._mat[12] := 0.0;
+    Identity._mat[13] := 0.0;
+    Identity._mat[14] := 0.0;
+    Identity._mat[15] := 1.0;
+end;
+
+function Matrix4x4.Scale(value : double) : Matrix4x4;
+begin
+    Scale._mat[0] := value;
+    Scale._mat[1] := 0.0;
+    Scale._mat[2] := 0.0;
+    Scale._mat[3] := 0.0;
+    Scale._mat[4] := 0.0;
+    Scale._mat[5] := value;
+    Scale._mat[6] := 0.0;
+    Scale._mat[7] := 0.0;
+    Scale._mat[8] := 0.0;
+    Scale._mat[9] := 0.0;
+    Scale._mat[10] := value;
+    Scale._mat[11] := 0.0;
+    Scale._mat[12] := 0.0;
+    Scale._mat[13] := 0.0;
+    Scale._mat[14] := 0.0;
+    Scale._mat[15] := 1.0;
+end;
+
+function Matrix4x4.Translation(value : Vector3D) : Matrix4x4;
+begin
+    Translation._mat[0] := 0.0;
+    Translation._mat[1] := 0.0;
+    Translation._mat[2] := 0.0;
+    Translation._mat[3] := value.GetX();
+    Translation._mat[4] := 0.0;
+    Translation._mat[5] := 0.0;
+    Translation._mat[6] := 0.0;
+    Translation._mat[7] := value.GetY();
+    Translation._mat[8] := 0.0;
+    Translation._mat[9] := 0.0;
+    Translation._mat[10] := 0.0;
+    Translation._mat[11] := value.GetZ();
+    Translation._mat[12] := 0.0;
+    Translation._mat[13] := 0.0;
+    Translation._mat[14] := 0.0;
+    Translation._mat[15] := 1.0;
+end;
+
+function Matrix4x4.RotationX(radians : double) : Matrix4x4;
+begin
+end;
+
+function Matrix4x4.RotationY(radians : double) : Matrix4x4;
+begin
+end;
+
+function Matrix4x4.RotationZ(radians : double) : Matrix4x4;
+begin
+end;
+
+function Matrix4x4.mul(a, b : ^Matrix4x4) : Matrix4x4;
+var
+    i, j, k : integer;
+    cell : double;
+begin
+    i := 0;
+    while i < 4 do
+    begin
+        j := 0;
+        while j < 4 do
+        begin
+            k := 0;
+            cell := 0.0;
+            while k < 4 do
+            begin
+                cell := cell + a^._mat[k + j * 4] * b^._mat[i + k * 4];
+                k := k + 1;
+            end;
+            
+            mul._mat[i + j * 4] := cell;
+            j := j + 1;
+        end;
+
+        i := i + 1; 
+    end;
+end;
+
+function Matrix4x4.add(a, b : ^Matrix4x4) : Matrix4x4;
+var
+    i : integer;
+begin
+    i := 0;
+    while i < 16 do 
+    begin
+        add._mat[i] := a^._mat[i] + b^._mat[i];
+        i := i + 1;
+    end;
+end;
+
+function Matrix4x4.sub(a, b : ^Matrix4x4) : Matrix4x4;
+var
+    i : integer;
+begin
+    i := 0;
+    while i < 16 do 
+    begin
+        add._mat[i] := a^._mat[i] - b^._mat[i];
+        i := i + 1;
+    end;
+end;
+
+function Matrix4x4.negative() : Matrix4x4;
+var
+    i : integer;
+begin
+    i := 0;
+    while i < 16 do 
+    begin
+        negative._mat[i] := _mat[i];
+        i := i + 1;
+    end;
+end;
+
+function Matrix4x4.inverse() : Matrix4x4; 
+begin
+end;
+

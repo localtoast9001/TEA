@@ -90,6 +90,73 @@ namespace TEAC
             return symbolName;
         }
 
+        public void DefineInterfaceTables(TypeDefinition type)
+        {
+            IEnumerable<KeyValuePair<TypeDefinition, int>> allInterfaces = type.GetAllInterfaces();
+            foreach (var pair in allInterfaces)
+            {
+                string label = "$Vtbl_" + pair.Key.MangledName + "_" + type.MangledName;
+                if (this.DataSegment.Any(e => string.CompareOrdinal(e.Label, label) == 0))
+                {
+                    continue;
+                }
+
+                List<string> entries = new List<string>();
+                Stack<TypeDefinition> typeStack = new Stack<TypeDefinition>();
+                TypeDefinition t = pair.Key;
+                while (t != null)
+                {
+                    typeStack.Push(t);
+                    t = t.BaseClass;
+                }
+
+                while (typeStack.Count > 0)
+                {
+                    t = typeStack.Pop();
+                    foreach (MethodInfo m in t.Methods)
+                    {
+                        MethodInfo implMethod = type.FindMethod(
+                            m.Name,
+                            m.Parameters.Select(e => e.Type).ToList());
+                        if (implMethod == null)
+                        {
+                            throw new NotSupportedException();
+                        }
+
+                        if (entries.Count <= m.VTableIndex)
+                        {
+                            for (int i = entries.Count; i <= implMethod.VTableIndex; i++)
+                            {
+                                entries.Add("0");
+                            }
+                        }
+
+                        MethodInfo jumpMethod = new MethodInfo(type);
+                        jumpMethod.Parameters.AddRange(m.Parameters);
+                        jumpMethod.Name = t.FullName.Replace('.', '_') + "_" + m.Name;
+
+                        this.AddProto(implMethod);
+                        this.AddProto(jumpMethod);
+                        entries[m.VTableIndex] = jumpMethod.MangledName;
+
+                        if (!this.CodeSegment.Any(e => string.CompareOrdinal(e.Method.MangledName, jumpMethod.MangledName) == 0))
+                        {
+                            MethodImpl jumpMethodImpl = new MethodImpl(this);
+                            jumpMethodImpl.Method = jumpMethod;
+                            this.CodeSegment.Add(jumpMethodImpl);
+                            jumpMethodImpl.Symbols.Add(new KeyValuePair<string, int>("_this$", 4));
+                            jumpMethodImpl.Statements.Add(new AsmStatement { Instruction = "mov eax,_this$[esp]" });
+                            jumpMethodImpl.Statements.Add(new AsmStatement { Instruction = string.Format("sub eax,{0}", pair.Value) });
+                            jumpMethodImpl.Statements.Add(new AsmStatement { Instruction = "mov _this$[esp],eax" });
+                            jumpMethodImpl.Statements.Add(new AsmStatement { Instruction = "jmp " + implMethod.MangledName });
+                        }
+                    }
+                }
+
+                this.DataSegment.Add(new DataEntry { Label = label, Value = entries.ToArray() });
+            }
+        }
+
         public void DefineVTable(TypeDefinition type)
         {
             string label = "$Vtbl_" + type.MangledName;

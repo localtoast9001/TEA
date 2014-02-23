@@ -15,5 +15,6 @@ namespace TEAC
         }
 
         public string Name { get; private set; }
+        public bool IsPublic { get; set; }
     }
 }

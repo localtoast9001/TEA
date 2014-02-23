@@ -33,6 +33,7 @@ namespace TEAC
             { "if", Keyword.If },
             { "in", Keyword.In },
             { "inherited", Keyword.Inherited },
+            { "interface", Keyword.Interface },
             { "mod", Keyword.Mod },
             { "namespace", Keyword.Namespace },
             { "new", Keyword.New },

@@ -107,6 +107,7 @@ namespace TEAC
         If,
         In,
         Inherited,
+        Interface,
         Mod,
         Namespace,
         New,

@@ -11,23 +11,20 @@ namespace TEAC
         private List<MethodDeclaration> publicMethods = new List<MethodDeclaration>();
         private List<MethodDeclaration> protectedMethods = new List<MethodDeclaration>();
         private List<MethodDeclaration> privateMethods = new List<MethodDeclaration>();
+        private List<string> interfaces = new List<string>();
 
         public ClassDeclaration(
             Token start, 
             string name, 
             string baseType,
-            bool isStatic, 
-            bool isPublic)
+            bool isStatic)
             : base(start, name)
         {
-            this.IsPublic = isPublic;
             this.IsStatic = isStatic;
             this.BaseType = baseType;
         }
 
         public bool IsStatic { get; private set; }
-
-        public bool IsPublic { get; private set; }
 
         public string BaseType { get; private set; }
 
@@ -36,6 +33,7 @@ namespace TEAC
         public IEnumerable<MethodDeclaration> PublicMethods { get { return this.publicMethods; } }
         public IEnumerable<MethodDeclaration> ProtectedMethods { get { return this.protectedMethods; } }
         public IEnumerable<MethodDeclaration> PrivateMethods { get { return this.privateMethods; } }
+        public IEnumerable<string> Interfaces { get { return this.interfaces; } }
 
         public void AddPublicMethod(MethodDeclaration method)
         {
@@ -50,6 +48,11 @@ namespace TEAC
         public void AddPrivateMethod(MethodDeclaration method)
         {
             this.privateMethods.Add(method);
+        }
+
+        public void AddInterface(string interfaceName)
+        {
+            this.interfaces.Add(interfaceName);
         }
     }
 }

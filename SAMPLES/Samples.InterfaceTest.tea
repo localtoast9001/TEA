@@ -5,16 +5,16 @@ type
     IObject = public interface
         function AddRef() : integer;
         function Release() : integer;
-    end;
-    IEnumerator;
-    IEnumerable = public interface
-        function GetEnumerator() : ^IEnumerator;
+        function GetHashCode() : integer;
     end;
     IEnumerator = public interface(IObject)
         function Current() : ^IObject;
         function MoveNext() : boolean;
         procedure Reset();
     end; 
+    IEnumerable = public interface
+        function GetEnumerator() : ^IEnumerator;
+    end;
     ICollection = public interface(IEnumerable)
         function Count() : integer;
         function IsReadOnly() : boolean;
@@ -34,14 +34,27 @@ type
             constructor(obj : ^IObject);
             destructor();
             function Next() : ^LinkedListNode;
+            function Value() : ^IObject;
+            procedure SetNext(next : ^LinkedListNode);
         var
             _next : ^LinkedListNode;
             _obj : ^IObject;
     end;
-    LinkedList = public class interface(ICollection)
+    LinkedList = public class interface(IList)
         public
             constructor();
             virtual destructor();
+            virtual function GetEnumerator() : ^IEnumerator;
+            virtual function Count() : integer;
+            virtual function IsReadOnly() : boolean;
+            virtual procedure Add(item : ^IObject);
+            virtual procedure Clear();
+            virtual function Contains(item : ^IObject) : boolean;
+            virtual procedure CopyTo(targetArray : array of ^IObject; arrayIndex : integer);
+            virtual function Remove(item : ^IObject) : boolean;
+            virtual function IndexOf(item : ^IObject) : integer;
+            virtual procedure Insert(index : integer; item : ^IObject);
+            virtual procedure RemoveAt(index : integer);
         var
             _head : ^LinkedListNode;
             _count : integer;
@@ -50,27 +63,69 @@ type
         public 
             constructor();
             virtual destructor();
+            virtual function GetEnumerator() : ^IEnumerator;
+            virtual function Count() : integer;
+            virtual function IsReadOnly() : boolean;
+            virtual procedure Add(item : ^IObject);
+            virtual procedure Clear();
+            virtual function Contains(item : ^IObject) : boolean;
+            virtual procedure CopyTo(targetArray : array of ^IObject; arrayIndex : integer);
+            virtual function Remove(item : ^IObject) : boolean;
+            virtual function IndexOf(item : ^IObject) : integer;
+            virtual procedure Insert(index : integer; item : ^IObject);
+            virtual procedure RemoveAt(index : integer);
         var
             _storage : array of ^IObject;
             _count : integer;
     end;
-    RefCountedObject = abstract class interface(IObject)
+    RefCountedObject = {abstract} class interface(IObject)
         public 
             virtual destructor();
+            virtual function AddRef() : integer;
+            virtual function Release() : integer;
+            abstract function GetHashCode() : integer;
         protected
             constructor();
         var
             _refCount : integer;
     end;
     LinkedListEnumerator = class(RefCountedObject) interface(IEnumerator)
+        public 
+            constructor(head : ^LinkedListNode);
+            virtual destructor();
+            virtual function Current() : ^IObject;
+            virtual function MoveNext() : boolean;
+            virtual procedure Reset();
         var
             _head, _current : ^LinkedListNode;
             _started : boolean;
     end;
     VectorEnumerator = class(RefCountedObject) interface(IEnumerator)
+        public
+            virtual destructor();
+            virtual function AddRef() : integer;
+            virtual function Release() : integer;
+            virtual function GetHashCode() : integer;
+            virtual function Current() : ^IObject;
+            virtual function MoveNext() : boolean;
+            virtual procedure Reset();
         var
             _vector : array of ^IObject;
             _index, _count : integer;
+    end;
+    IntWrapper = class(RefCountedObject)
+        public
+            constructor(value : integer);
+            virtual destructor();
+            virtual function GetHashCode() : integer;
+        var
+            _value : integer;
+    end;
+    Program = public static class
+        public
+            static function Main(
+                argc : integer;
+                argv : array of array of character) : integer;
     end;
 
 constructor LinkedListNode(obj : ^IObject);
@@ -89,6 +144,21 @@ begin
     end;
 end;
 
+function LinkedListNode.Next() : ^LinkedListNode;
+begin
+    Next := _next;
+end;
+
+procedure LinkedListNode.SetNext(next : ^LinkedListNode);
+begin
+    _next := next;
+end;
+
+function LinkedListNode.Value() : ^LinkedListNode;
+begin
+    Value := _obj;
+end;
+
 constructor LinkedList();
 begin
     _head := nil;
@@ -96,6 +166,49 @@ begin
 end;
 
 destructor LinkedList();
+begin
+    Clear();
+end;
+
+function LinkedList.GetEnumerator() : ^IEnumerator;
+begin
+    GetEnumerator := new LinkedListEnumerator(_head); 
+end;
+
+function LinkedList.Count() : integer;
+begin
+    Count := _count;
+end;
+
+function LinkedList.IsReadOnly() : boolean;
+begin
+    IsReadOnly := false;
+end;
+
+procedure LinkedList.Add(item : ^IObject);
+var
+    node, tail : ^LinkedListNode;
+begin
+    node := new LinkedListNode(item);
+    if node <> nil then
+    begin
+        if _head = nil then
+        begin
+            _head := node;
+            _count := 1;
+        end
+        else
+        begin
+            tail := _head;
+            while tail^.Next() <> nil do
+                tail := tail^.Next();
+            tail^.SetNext(node);
+            _count := _count + 1;
+        end;
+    end;
+end;
+
+procedure LinkedList.Clear();
 var 
     node : ^LinkedListNode;
 begin
@@ -105,4 +218,159 @@ begin
         _head := _head^.Next();
         delete node;
     end;
+    _head := nil;
+end;
+
+function LinkedList.Contains(item : ^IObject) : boolean;
+var
+    node : ^LinkedListNode;
+begin
+    node := _head;
+    Contains := false;
+    while (not Contains) and (node <> nil) do
+    begin
+        if item = node^.Value() then
+            Contains := true;
+        node := node^.Next();
+    end;
+end;
+
+procedure LinkedList.CopyTo(
+    targetArray : array of ^IObject; 
+    arrayIndex : integer);
+begin
+end;
+
+function LinkedList.Remove(item : ^IObject) : boolean;
+begin
+    Remove := false;
+end;
+
+function LinkedList.IndexOf(item : ^IObject) : integer;
+begin
+    IndexOf := -1;
+end;
+
+procedure LinkedList.Insert(index : integer; item : ^IObject);
+begin
+end;
+
+procedure LinkedList.RemoveAt(index : integer);
+begin
+end;
+
+constructor LinkedListEnumerator(head : ^LinkedListNode);
+begin
+    _started := false;
+    _head := head;
+    _current := nil;
+end;
+
+destructor LinkedListEnumerator();
+begin
+end;
+
+function LinkedListEnumerator.Current() : ^IObject;
+begin
+    Current := nil;
+    if _current <> nil then
+    begin
+        Current := _current^.Value();
+        if Current <> nil then
+            Current^.AddRef();
+    end;
+end;
+
+function LinkedListEnumerator.MoveNext() : boolean;
+begin
+    if not _started then
+    begin
+        _started := true;
+        _current := _head;
+    end
+    else
+    begin
+        if _current <> nil then
+            _current := _current^.Next();
+    end;
+
+    MoveNext := _current <> nil;
+end;
+
+procedure LinkedListEnumerator.Reset();
+begin
+    _started := false;
+    _current := nil;
+end;
+
+constructor RefCountedObject();
+begin
+    _refCount := 0;
+end;
+
+destructor RefCountedObject();
+begin
+end;
+
+function RefCountedObject.AddRef() : integer;
+begin
+    _refCount := _refCount + 1;
+    AddRef := _refCount;
+end;
+
+function RefCountedObject.Release() : integer;
+begin
+    _refCount := _refCount - 1;
+    Release := _refCount;
+    if Release = 0 then
+        delete this;
+end;
+
+function RefCountedObject.GetHashCode() : integer;
+begin
+    GetHashCode := _refCount;
+end;
+
+constructor IntWrapper(value : integer);
+begin
+    _value := value;
+end;
+
+destructor IntWrapper();
+begin
+end;
+
+function IntWrapper.GetHashCode() : integer;
+begin
+    GetHashCode := _value;
+end;
+
+function Program.Main(
+    argc : integer;
+    argv : array of array of character) : integer;
+var
+    list : LinkedList;
+    iter : ^IEnumerator;
+    obj : ^IObject;
+    outBuffer : array [8] of character;
+begin
+    outBuffer[0] := Convert.ToCharacter(Convert.Lo(0));
+    outBuffer[1] := outBuffer[0];
+    list.Add(new IntWrapper(1));
+    list.Add(new IntWrapper(2));
+    list.Add(new IntWrapper(3));
+    list.Add(new IntWrapper(4));
+    iter := list.GetEnumerator();
+    if iter <> nil then
+    begin
+        while iter^.MoveNext() do
+        begin
+            obj := iter^.Current();
+            outBuffer[0] := Convert.ToCharacter(Convert.Lo(65 + obj^.GetHashCode()));
+            Console.WriteLine(outBuffer);
+            obj^.Release();
+        end;
+        iter^.Release();
+    end;
+    Main := 0;
 end;

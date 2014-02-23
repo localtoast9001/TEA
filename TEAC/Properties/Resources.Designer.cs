@@ -88,6 +88,15 @@ namespace TEAC.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Interface types can only be derived from other interface types. [{0}] is not an interface type..
+        /// </summary>
+        internal static string CodeGenerator_BaseInterfaceIsNotInterface {
+            get {
+                return ResourceManager.GetString("CodeGenerator_BaseInterfaceIsNotInterface", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The type {0} cannot be used as a base type because it is not a class..
         /// </summary>
         internal static string CodeGenerator_BaseTypeNotClass {
@@ -120,6 +129,15 @@ namespace TEAC.Properties {
         internal static string CodeGenerator_CannotFindConstructor {
             get {
                 return ResourceManager.GetString("CodeGenerator_CannotFindConstructor", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The class {0} does not fully implement interface {1}. It is missing a virtual or abstract declaration of method {2}..
+        /// </summary>
+        internal static string CodeGenerator_ClassDoesNotDeclareInterfaceMethod {
+            get {
+                return ResourceManager.GetString("CodeGenerator_ClassDoesNotDeclareInterfaceMethod", resourceCulture);
             }
         }
         

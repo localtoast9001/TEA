@@ -1,0 +1,23 @@
+namespace Raytracer.Shapes;
+uses System, RayTracer, RayTracer.Shapes;
+
+constructor Cylinder(startPoint, endPoint : Vector3D; radius : double);
+begin
+    _start := startPoint;
+    _end := endPoint;
+    _radius := radius;
+end;
+
+destructor Cylinder();
+begin
+end;
+
+{
+    Axt + Byt + Cyt = D
+}
+function Cylinder.Intersect(
+    ray : ^Ray3D;
+    distance : ^double;
+    point, normal : ^Vector3D) : boolean; 
+begin
+end;

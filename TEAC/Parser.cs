@@ -1053,7 +1053,15 @@ namespace TEAC
                     return false;
                 }
 
+                bool isPublic = false;
                 Token tok = reader.Peek();
+                if (tok.Is(Keyword.Public))
+                {
+                    isPublic = true;
+                    reader.Read();
+                    tok = reader.Peek();
+                }
+
                 if (tok.Is(Keyword.LeftParen))
                 {
                     if (!this.ParseEnumDeclaration(typeName, reader, out type))
@@ -1061,24 +1069,29 @@ namespace TEAC
                         return false;
                     }
                 }
-                else if (tok.Is(Keyword.Class) || tok.Is(Keyword.Static) || tok.Is(Keyword.Public))
+                else if (tok.Is(Keyword.Class) || tok.Is(Keyword.Static))
                 {
                     if (!this.ParseClassDeclaration(typeName, reader, out type))
                     {
                         return false;
                     }
                 }
-                else
+                else if (tok.Is(Keyword.Interface))
                 {
-                    if (tok.Is(Keyword.Function) || tok.Is(Keyword.Procedure))
+                    if (!this.ParseInterfaceDeclaration(typeName, reader, out type))
                     {
-                        if(!this.ParseMethodTypeDeclaration(typeName, reader, out type))
-                        {
-                            return false;
-                        }
+                        return false;
+                    }
+                }
+                else if (tok.Is(Keyword.Function) || tok.Is(Keyword.Procedure))
+                {
+                    if (!this.ParseMethodTypeDeclaration(typeName, reader, out type))
+                    {
+                        return false;
                     }
                 }
 
+                type.IsPublic = isPublic;
                 program.AddType(type);
                 if (!this.Expect(reader, Keyword.SemiColon))
                 {
@@ -1088,6 +1101,61 @@ namespace TEAC
                 typeName = reader.Peek() as IdentifierToken;
             }
 
+            return true;
+        }
+
+        private bool ParseInterfaceDeclaration(IdentifierToken typeName, TokenReader reader, out TypeDeclaration type)
+        {
+            InterfaceDeclaration interfaceDecl = new InterfaceDeclaration(typeName, typeName.Value);
+            type = null;
+
+            if (!this.Expect(reader, Keyword.Interface))
+            {
+                return false;
+            }
+
+            Token tok = reader.Peek();
+            if (tok.Is(Keyword.LeftParen))
+            {
+                reader.Read();
+                string baseInterfaceName = null;
+                if (!this.ParseFullNameDeclaration(reader, out baseInterfaceName))
+                {
+                    return false;
+                }
+
+                if (!this.Expect(reader, Keyword.RightParen))
+                {
+                    return false;
+                }
+
+                interfaceDecl.BaseInterfaceType = baseInterfaceName;
+            }
+
+            tok = reader.Peek();
+            while (tok != null && (tok.Is(Keyword.Function) || tok.Is(Keyword.Procedure)))
+            {
+                MethodDeclaration method = null;
+                if (!this.ParseMethodDeclaration(reader, out method))
+                {
+                    return false;
+                }
+
+                interfaceDecl.Methods.Add(method);
+                if (!this.Expect(reader, Keyword.SemiColon))
+                {
+                    return false;
+                }
+
+                tok = reader.Peek();
+            }
+
+            if (!Expect(reader, Keyword.End))
+            {
+                return false;
+            }
+
+            type = interfaceDecl;
             return true;
         }
 
@@ -1211,19 +1279,10 @@ namespace TEAC
         {
             type = null;
             Token tok = reader.Peek();
-            bool isPublic = false;
             bool isStatic = false;
-            while (tok.Is(Keyword.Public) || tok.Is(Keyword.Static))
+            if (tok.Is(Keyword.Static))
             {
-                if (tok.Is(Keyword.Public))
-                {
-                    isPublic = true;
-                }
-                else
-                {
-                    isStatic = true;
-                }
-
+                isStatic = true;
                 reader.Read();
                 tok = reader.Peek();
             }
@@ -1254,8 +1313,42 @@ namespace TEAC
                 typeName, 
                 typeName.Value,
                 baseType,
-                isStatic, 
-                isPublic);
+                isStatic);
+
+            tok = reader.Peek();
+            if (tok.Is(Keyword.Interface))
+            {
+                reader.Read();
+                if (!Expect(reader, Keyword.LeftParen))
+                {
+                    return false;
+                }
+
+                string interfaceName = null;
+                if (!ParseFullNameDeclaration(reader, out interfaceName))
+                {
+                    return false;
+                }
+
+                classDecl.AddInterface(interfaceName);
+                tok = reader.Peek();
+                while (tok.Is(Keyword.Comma))
+                {
+                    reader.Read();
+                    if (!ParseFullNameDeclaration(reader, out interfaceName))
+                    {
+                        return false;
+                    }
+
+                    classDecl.AddInterface(interfaceName);
+                    tok = reader.Peek();
+                }
+
+                if (!Expect(reader, Keyword.RightParen))
+                {
+                    return false;
+                }
+            }
 
             tok = reader.Peek();
             if (tok.Is(Keyword.Public))
