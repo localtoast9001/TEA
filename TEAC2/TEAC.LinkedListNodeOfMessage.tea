@@ -1,0 +1,31 @@
+namespace TEAC;
+uses System, System.IO, TEAC;
+
+constructor LinkedListNodeOfMessage(value : ^Message);
+begin
+    _next := nil;
+    _value := value;
+end;
+
+destructor LinkedListNodeOfMessage();
+begin
+    if _value <> nil then
+        delete _value;
+end;
+
+function LinkedListNodeOfMessage.GetValue() : ^Message;
+begin
+    GetValue := _value;
+end;
+
+procedure LinkedListNodeOfMessage.SetNext(
+    next : ^LinkedListNodeOfMessage);
+begin
+    _next := next;
+end;
+
+function LinkedListNodeOfMessage.GetNext() : ^LinkedListNodeOfMessage;
+begin
+    GetNext := _next;
+end;
+

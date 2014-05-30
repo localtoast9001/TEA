@@ -1,0 +1,491 @@
+namespace TEAC;
+uses TEAC, System, System.Text;
+
+constructor Parser(log : ^MessageLog);
+begin
+    _log := log;
+end;
+
+function Parser.TryParse(
+    reader : ^TokenReader) : ^ProgramUnit;
+var
+    tok : SharedOfToken;
+    programUnit : ^ProgramUnit;
+    success : boolean = true;
+begin
+    TryParse := nil;
+    success := reader^.Peek(@tok);
+    programUnit := new ProgramUnit(@tok);
+    if success and Token.Is(tok.Value(), Keyword.Namespace) then
+    begin
+        success := TryParseNamespaceDeclaration(reader, programUnit);
+    end;
+
+    if success then
+    begin
+        success := reader^.Peek(@tok);
+        if success and Token.Is(tok.Value(), Keyword.Uses) then
+        begin
+            success := TryParseUsesDeclaration(reader, programUnit);
+        end;
+    end;
+
+    if success then
+    begin
+        success := reader^.Peek(@tok);
+        if success and Token.Is(tok.Value(), Keyword.Type) then
+        begin
+            success := TryParseTypeBlock(reader, programUnit);
+        end;
+    end;
+
+    if success then
+    begin
+        success := reader^.Peek(@tok);
+        if success and Token.Is(tok.Value(), Keyword.Var) then
+        begin
+            success := TryParseGlobalVarBlock(reader, programUnit);
+        end;
+    end;
+
+    success := reader^.Peek(@tok);
+    while
+        success and ( 
+        Token.Is(tok.Value(), Keyword.Function) or 
+        Token.Is(tok.Value(), Keyword.Procedure) or
+        Token.Is(tok.Value(), Keyword.Constructor) or
+        Token.Is(tok.Value(), Keyword.Destructor)) do
+    begin
+        success := TryParseMethodDefinition(reader, programUnit);
+        if success then
+            success := reader^.Peek(@tok);
+    end;
+
+    if success and ExpectEndOfFile(reader) then
+    begin
+        TryParse := programUnit;
+    end;
+end;
+
+function Parser.ExpectEndOfFile(reader : ^TokenReader) : boolean;
+var
+    tok : SharedOfToken;
+    tokVal : ^Token;
+    message : ^Message;
+    success : boolean;
+begin
+    ExpectEndOfFile := true;
+    success := reader^.Read(@tok);
+    if success and tok.Value() <> nil then
+    begin
+        tokVal := tok.Value();
+        message := Message.Create(
+            tokVal^.GetPath(),
+            tokVal^.GetLine(),
+            tokVal^.GetColumn(),
+            Severity.Error,
+            'End of file expected.');
+        if message <> nil then
+        begin
+            if not _log^.Write(message) then
+                delete message;
+        end;
+ 
+        ExpectEndOfFile := false;
+    end;
+end;
+
+function Parser.TryParseNamespaceDeclaration(
+    reader : ^TokenReader;
+    programUnit : ^ProgramUnit) : boolean;
+var
+    namespaceDecl : String;
+begin
+    TryParseNamespaceDeclaration := Expect(reader, Keyword.Namespace);
+    if TryParseNamespaceDeclaration then
+        TryParseNamespaceDeclaration := TryParseFullNameDeclaration(
+            reader,
+            @namespaceDecl);
+    if TryParseNamespaceDeclaration then
+    begin
+        programUnit^.SetNamespace(@namespaceDecl);
+        TryParseNamespaceDeclaration := Expect(reader, Keyword.SemiColon);
+    end;
+end;
+
+function Parser.TryParseUsesDeclaration(
+    reader : ^TokenReader;
+    programUnit : ^ProgramUnit) : boolean;
+var
+    tok : SharedOfToken;
+    success, shouldContinue : boolean;
+    usesNamespace : String;
+begin
+    shouldContinue := false;
+    success := Expect(reader, Keyword.Uses);
+    if success then
+        success := TryParseFullNameDeclaration(reader, @usesNamespace);
+    if success then
+        success := programUnit^.AddUses(@usesNamespace);
+    if success then
+        success := reader^.Peek(@tok);
+    if success then
+        shouldContinue := Token.Is(tok.Value(), Keyword.Comma);
+    while success and shouldContinue do
+    begin
+        reader^.Read(@tok);
+        success := TryParseFullNameDeclaration(reader, @usesNamespace);
+        if success then
+            success := programUnit^.AddUses(@usesNamespace);
+        if success then
+            success := reader^.Peek(@tok);
+        if success then
+            shouldContinue := Token.Is(tok.Value(), Keyword.Comma);         
+    end;
+
+    if success then
+        success := Expect(reader, Keyword.SemiColon); 
+    TryParseUsesDeclaration := success;
+end;
+
+function Parser.TryParseTypeBlock(
+    reader : ^TokenReader;
+    programUnit : ^ProgramUnit) : boolean;
+var 
+    success, isPublic : boolean;
+    typeName : SharedOfToken;
+    tok : SharedOfToken;
+    typeDecl : ^TypeDeclaration;
+begin
+    success := Expect(reader, Keyword.Type);
+    if success then
+    begin
+        success := reader^.Peek(@typeName);
+        while success and Token.IsIdentifier(typeName.Value()) do
+        begin
+            reader^.Read(@tok);
+            success := Expect(reader, Keyword.Equals);
+            isPublic := false;
+            if success then
+                success := reader^.Peek(@tok);
+            if success and Token.Is(tok.Value(), Keyword.Public) then
+            begin
+                isPublic := true;
+                reader^.Read(@tok);
+                success := reader^.Peek(@tok);
+            end;
+
+            if success then
+            begin
+                typeDecl := nil;
+                if Token.Is(tok.Value(), Keyword.LeftParen) then
+                    success := TryParseEnumDeclaration(reader, @typeName, @typeDecl)
+                else if Token.Is(tok.Value(), Keyword.Class) or Token.Is(tok.Value(), Keyword.Static) then
+                    success := TryParseClassDeclaration(reader, @typeName, @typeDecl)
+                else if Token.Is(tok.Value(), Keyword.Interface) then
+                    success := TryParseInterfaceDeclaration(reader, @typeName, @typeDecl)
+                else if Token.Is(tok.Value(), Keyword.Function) or Token.Is(tok.Value(), Keyword.Procedure) then
+                    success := TryParseMethodTypeDeclaration(reader, @typeName, @typeDecl)
+                else
+                begin
+                    success := false;
+                end;
+
+                if success then
+                begin
+                    success := programUnit^.AddType(typeDecl);
+                    if not success then
+                        delete typeDecl;
+                end;
+            end;
+
+            if success then
+                success := Expect(reader, Keyword.SemiColon);
+            if success then
+                success := reader^.Peek(@typeName);
+        end;
+    end;
+    TryParseTypeBlock := success;
+end;
+
+function Parser.TryParseGlobalVarBlock(
+    reader : ^TokenReader;
+    programUnit : ^ProgramUnit) : boolean; 
+var
+    globalVars : ^VarBlock;
+begin
+    TryParseGlobalVarBlock := TryParseVarBlock(
+        reader,
+        true,
+        globalVars);
+    if TryParseGlobalVarBlock then
+        programUnit^.SetGlobalVars(globalVars);
+end;
+
+function Parser.TryParseMethodDefinition(
+    reader : ^TokenReader;
+    programUnit : ^ProgramUnit) : boolean;
+begin
+end;
+
+function Parser.TryParseFullNameDeclaration(
+    reader : ^TokenReader;
+    fullName : ^String) : boolean;
+var
+    tok : SharedOfToken;
+    tokVal : ^Token;
+    sb : SimpleStringBuilder;
+    success, shouldContinue : boolean;
+begin
+    success := reader^.Read(@tok);
+    if success then
+    begin
+        tokVal := tok.Value();
+        success := false;
+        if tokVal <> nil then
+            if tokVal^.GetType() = TokenType.Identifier then
+                success := sb.TryAppend(tokVal^.GetStringValue());
+    end;
+    shouldContinue := false;
+    success := reader^.Peek(@tok);
+    if success then
+        shouldContinue := Token.Is(tok.Value(), Keyword.Dot);
+    while success and shouldContinue do
+    begin
+        reader^.Read(@tok);
+        success := sb.TryAppend('.');
+        if success then
+            success := reader^.Read(@tok);
+        if success then
+        begin
+            tokVal := tok.Value();
+            success := false;
+            if tokVal <> nil then
+                if tokVal^.GetType() = TokenType.Identifier then
+                    success := sb.TryAppend(tokVal^.GetStringValue());
+        end;
+        
+        success := reader^.Peek(@tok);
+        if success then
+            shouldContinue := Token.Is(tok.Value(), Keyword.Dot);
+    end;
+
+    if success then
+        success := sb.ToString(fullName);
+    TryParseFullNameDeclaration := success;
+end;
+
+function Parser.TryParseVarBlock(
+    reader : ^TokenReader;
+    allowInitializers : boolean;
+    varBlock : ^VarBlock) : boolean;
+begin
+end;
+
+function Parser.TryParseEnumDeclaration(
+    reader : ^TokenReader;
+    name : ^SharedOfToken;
+    typeDeclRef : ^^TypeDeclaration) : boolean;
+var
+    typeDecl : ^EnumDeclaration = nil;
+    enumVal : String;
+    tok : SharedOfToken;
+    nameVal : ^Token;
+    success : boolean;
+begin
+    typeDeclRef^ := nil;
+    nameVal := name^.Value();
+    typeDecl := new EnumDeclaration(name, nameVal^.GetStringValue());
+    success := typeDecl <> nil;
+
+    if success then
+        success := Expect(reader, Keyword.LeftParen);
+
+    if success then
+        success := ExpectIdentifier(reader, @enumVal);
+
+    if success then
+        success := typeDecl^.AddValue(@enumVal);
+
+    if success then
+        success := reader^.Peek(@tok);
+    while success and Token.Is(tok.Value(), Keyword.Comma) do
+    begin
+        reader^.Read(@tok);
+        success := ExpectIdentifier(reader, @enumVal);
+        if success then
+            success := typeDecl^.AddValue(@enumVal);
+        if success then
+            success := reader^.Peek(@tok);
+    end;
+
+    if success then
+        success := Expect(reader, Keyword.RightParen);
+
+    if success then
+        typeDeclRef^ := typeDecl;
+    TryParseEnumDeclaration := success;
+end;
+
+function Parser.TryParseClassDeclaration(
+    reader : ^TokenReader;
+    name : ^SharedOfToken;
+    typeDeclRef : ^^TypeDeclaration) : boolean;
+var
+    typeDecl : ^ClassDeclaration = nil;
+    tok : SharedOfToken;
+    baseType : String;
+    isStatic : boolean = false;
+    success : boolean;
+begin
+    success := reader^.Peek(@tok);
+    if success then
+        if Token.Is(tok.Value(), Keyword.Static) then
+        begin
+            isStatic := true;
+            reader^.Read(@tok);
+            success := reader^.Peek(@tok);
+        end;
+    
+    if success then
+        success := Expect(reader, Keyword.Class);
+
+    if success then
+        success := reader^.Peek(@tok);
+
+    if success then
+        if Token.Is(tok.Value(), Keyword.LeftParen) then
+        begin
+            reader^.Read(@tok);
+
+            success := TryParseFullNameDeclaration(reader, @baseType);
+            if success then
+                success := Expect(reader, Keyword.RightParen);
+        end;
+
+    if success then
+    begin
+        typeDecl := new ClassDeclaration(
+            name,
+            name^.GetStringValue(),
+            @baseType,
+            isStatic);
+        success := typeDecl <> nil;
+    end;
+
+    if success then
+        typeDeclRef^ := typeDecl;
+    else
+        typeDeclRef^ := nil;
+    TryParseClassDeclaration := success;
+end;
+
+function Parser.TryParseInterfaceDeclaration(
+    reader : ^TokenReader;
+    name : ^SharedOfToken;
+    typeDeclRef : ^^TypeDeclaration) : boolean;
+begin
+end;
+
+function Parser.TryParseMethodTypeDeclaration(
+    reader : ^TokenReader;
+    name : ^SharedOfToken;
+    typeDeclRef : ^^TypeDeclaration) : boolean; 
+begin
+end;
+
+function Parser.Expect(
+    reader : ^TokenReader;
+    keyword : Keyword) : boolean;
+var
+    tok : SharedOfToken;
+    tokValue : ^Token;
+    message : ^Message;
+begin
+    Expect := reader^.Read(@tok);
+    if not Expect then
+    begin
+        message := Message.Create(
+            reader^.GetPath(),
+            reader^.GetLine(),
+            reader^.GetColumn(),
+            Severity.Error,
+            'Unexpected end of file.');
+        if message <> nil then
+        begin
+            if not _log^.Write(message) then
+                delete message;
+        end;
+    end
+    else
+    begin
+        Expect := false;
+        tokValue := tok.Value();
+        if tokValue <> nil then
+            if tokValue^.GetType() = TokenType.Keyword then
+                if tokValue^.GetKeywordValue() = keyword then
+                    Expect := true;
+        if not Expect then
+        begin
+            message := Message.Create(
+                tokValue^.GetPath(),
+                tokValue^.GetLine(),
+                tokValue^.GetColumn(),
+                Severity.Error,
+                'Keyword was expected.');
+            if message <> nil then
+                if not _log^.Write(message) then
+                    delete message;
+        end;
+    end;
+end;
+
+function Parser.ExpectIdentifier(
+    reader : ^TokenReader;
+    value : ^String) : boolean;
+var
+    tok : SharedOfToken;
+    tokVal : ^Token;
+    message : ^Message;
+    success : boolean;
+begin
+    success := reader^.Read(@tok);
+    if not success then
+    begin
+        message := Message.Create(
+            reader^.GetPath(),
+            reader^.GetLine(),
+            reader^.GetColumn(),
+            Severity.Error,
+            'Unexpected end of file.');
+        if message <> nil then
+        begin
+            if not _log^.Write(message) then
+                delete message;
+        end;
+    end
+    else
+    begin
+        success := false;
+        tokVal := tok.Value();
+        if tokVal <> nil then
+            if tokVal^.GetType() = TokenType.Identifier then
+            begin
+                success := true;
+                value^.assign(tokVal^.GetStringValue());
+            end;
+        if not success then
+        begin
+            message := Message.Create(
+                tokVal^.GetPath(),
+                tokVal^.GetLine(),
+                tokVal^.GetColumn(),
+                Severity.Error,
+                'Identifier was expected.');
+            if message <> nil then
+                if not _log^.Write(message) then
+                    delete message;
+        end;
+    end;
+    ExpectIdentifier := success;
+end;

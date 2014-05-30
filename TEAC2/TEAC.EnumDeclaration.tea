@@ -1,0 +1,23 @@
+namespace TEAC;
+uses System, TEAC;
+
+constructor EnumDeclaration(
+    start : ^SharedOfToken;
+    name : ^String);
+inherited(start, name);
+begin
+end;
+
+destructor EnumDeclaration();
+begin
+end;
+
+function EnumDeclaration.AddValue(value : ^String) : boolean;
+begin
+    AddValue := _values.Add(value);
+end;
+
+function EnumDeclaration.GetValues() : ^LinkedListOfString;
+begin
+    GetValues := @_values;
+end;

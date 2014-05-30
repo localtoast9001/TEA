@@ -1,0 +1,16 @@
+namespace TEAC;
+uses TEAC, System;
+
+destructor ParseNode();
+begin
+end;
+
+function ParseNode.GetStart() : ^Token;
+begin
+    GetStart := _start.Value();
+end;
+
+constructor ParseNode(start : ^SharedOfToken);
+begin
+    _start.assign(start);
+end;

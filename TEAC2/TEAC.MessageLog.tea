@@ -1,0 +1,56 @@
+namespace TEAC;
+uses System, System.IO, TEAC;
+
+constructor MessageLog();
+begin
+    _head := nil;
+    _tail := nil;
+    _hasErrors := false;
+end;
+
+destructor MessageLog();
+var 
+    node : ^LinkedListNodeOfMessage;
+begin
+    while _head <> nil do
+    begin
+        node := _head;
+        _head := _head^.GetNext();
+        delete node;
+    end;
+end;
+
+function MessageLog.HasErrors() : boolean;
+begin
+    HasErrors := _hasErrors;
+end;
+
+function MessageLog.Write(message : ^Message) : boolean;
+var
+    node : ^LinkedListNodeOfMessage;
+begin
+    node := new LinkedListNodeOfMessage(message);
+    Write := node <> nil;
+    if Write then
+    begin
+        if _tail = nil then
+        begin
+            _head := node;
+            _tail := node;
+        end
+        else
+        begin
+            _tail^.SetNext(node);
+            _tail := node;
+        end;
+
+        if message^.GetSeverity() = Severity.Error then
+            _hasErrors := true;
+    end;
+end;
+
+function MessageLog.GetEnumerator() : MessageLogEnumerator;
+begin
+    GetEnumerator := MessageLogEnumerator(_head);
+end;
+

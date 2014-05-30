@@ -1,0 +1,105 @@
+namespace TEAC;
+uses System, System.IO, TEAC;
+
+type
+    Program = public static class
+        public
+            static function Main(
+                argc : integer; 
+                argv : array of array of character) : integer;
+        private
+            static procedure WriteUsage();
+            static procedure WriteTestMessage(path : ^String; log : ^MessageLog);
+            static function ProcessMessageLog(log : ^MessageLog) : integer;
+            static procedure RunCompiler(arguments : ^Arguments; log : ^MessageLog);
+    end;
+
+procedure Program.WriteTestMessage(path : ^String; log : ^MessageLog);
+var
+    message : String;
+begin
+    message.TryAssign('Test Error');
+    log^.Write(new Message(path, 12, 34, Severity.Error, @message));
+end;
+
+procedure Program.WriteUsage();
+begin
+    Console.WriteLine('TEAC - TE@ Language Compiler.');
+    Console.WriteLine('Copyright (C) 2013-2014 Jon Rowlett. All rights reserved.');
+    Console.WriteLine('Usage:');
+    Console.WriteLine('TEAC.exe [Options] <input file.tea>');
+    Console.WriteLine('Options:');
+    Console.WriteLine('/Fa<output.asm> - writes the output listing to <output.asm>');
+    Console.WriteLine('/I<directory> - Include <directory> in searches for include files.');
+    Console.WriteLine('<input file.tea> - Source code to compile.');
+end;
+
+function Program.ProcessMessageLog(log : ^MessageLog) : integer;
+var
+    logEnum : MessageLogEnumerator;
+    message : ^Message;
+    messageText : String;
+begin
+    logEnum := log^.GetEnumerator();
+    while logEnum.MoveNext() do
+    begin
+        message := logEnum.GetCurrent();
+        if message^.ToString(@messageText) then
+            Console.WriteLine(messageText.Characters());
+    end;
+
+    ProcessMessageLog := 0;
+    if log^.HasErrors() then
+        ProcessMessageLog := 1;
+end;
+
+procedure Program.RunCompiler(
+    arguments : ^Arguments; 
+    log : ^MessageLog);
+var
+    reader : TokenReader;
+    context : CompilerContext;
+    programUnit : ^ProgramUnit = nil;
+    module : ^Module = nil;
+    parser : ^Parser = new Parser(log);
+    codeGen : ^CodeGenerator = new CodeGenerator(log);
+begin
+    if reader.Open(arguments^.GetInputFile(), log) then
+    begin
+        programUnit := parser^.TryParse(@reader);
+        if programUnit <> nil then
+        begin
+            if codeGen^.TryCreateTypes(@context, programUnit) then
+            begin
+                module := codeGen^.CreateModule(@context, programUnit);
+                if module <> nil then
+                begin
+                    delete module;
+                end;
+            end;    
+            delete programUnit;
+        end;
+    end;
+    delete codeGen;
+    delete parser;
+end;
+
+function Program.Main(
+    argc : integer;
+    argv : array of array of character) : integer;
+var
+    arguments : Arguments;
+    log : MessageLog;
+begin
+    Main := 0;
+    if not arguments.TryParse(argc, argv) then
+    begin
+        WriteUsage();
+        Main := 1;
+    end
+    else
+    begin
+        RunCompiler(@arguments, @log);
+        Main := ProcessMessageLog(@log);
+    end;
+end;

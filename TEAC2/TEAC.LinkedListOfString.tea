@@ -1,0 +1,85 @@
+namespace TEAC;
+uses System, System.IO, TEAC;
+
+constructor LinkedListNodeOfString(value : ^String);
+begin
+    _value.assign(value);
+    _next := nil;
+end;
+
+destructor LinkedListNodeOfString();
+begin
+end;
+
+function LinkedListNodeOfString.GetValue() : ^String;
+begin
+    GetValue := @_value;
+end;
+
+function LinkedListNodeOfString.GetNext() : ^LinkedListNodeOfString;
+begin
+    GetNext := _next;
+end;
+
+procedure LinkedListNodeOfString.SetNext(next : ^LinkedListNodeOfString);
+begin
+    _next := next;
+end;
+
+constructor LinkedListEnumeratorOfString(head : ^LinkedListNodeOfString);
+begin
+    _head := head;
+    _current := nil;
+    _started := false;
+end;
+
+constructor LinkedListOfString();
+begin
+    _head := nil;
+    _tail := nil;
+end;
+
+destructor LinkedListOfString();
+begin
+    Clear();
+end;
+
+function LinkedListOfString.Add(item : ^String) : boolean;
+var
+    node : ^LinkedListNodeOfString;
+begin
+    node := new LinkedListNodeOfString(item);
+    if node <> nil then
+    begin
+        Add := true;
+        if _tail <> nil then
+        begin
+            _tail^.SetNext(node);
+            _tail := node;
+        end
+        else
+        begin
+            _head := node;
+            _tail := node;
+        end;
+    end
+    else
+        Add := false;
+end;
+
+function LinkedListOfString.GetEnumerator() : LinkedListEnumeratorOfString;
+begin
+    GetEnumerator := LinkedListEnumeratorOfString(_head);
+end;
+
+procedure LinkedListOfString.Clear();
+var
+    node : ^LinkedListNodeOfString;
+begin
+    while _head <> nil do
+    begin
+        node := _head;
+        _head := _head^.GetNext();
+        delete node;
+    end;
+end;

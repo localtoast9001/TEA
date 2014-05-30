@@ -1,0 +1,870 @@
+namespace TEAC;
+uses System, System.IO;
+
+type
+    Severity = (Error, Warning, Info);
+    Message = class
+        public
+            constructor(
+                path : ^String;
+                line, column : integer;
+                severity : Severity;
+                message : ^String);
+            destructor();
+            static function Create(
+                path : ^String;
+                line, column : integer;
+                severity : Severity;
+                message : array of character) : ^Message;
+            function GetSeverity() : Severity;
+            function ToString(value : ^String) : boolean;
+        var
+            _path : String;
+            _line, _column : integer;
+            _severity : Severity;
+            _message : String;
+    end;
+    LinkedListNodeOfMessage = class
+        public
+            constructor(value : ^Message);
+            destructor();
+            function GetValue() : ^Message;
+            procedure SetNext(next : ^LinkedListNodeOfMessage);
+            function GetNext() : ^LinkedListNodeOfMessage;
+        var
+            _value : ^Message;
+            _next : ^LinkedListNodeOfMessage;
+    end;
+    MessageLogEnumerator = class
+        public
+            constructor(head : ^LinkedListNodeOfMessage);
+            function MoveNext() : boolean;
+            function GetCurrent() : ^Message;
+        var
+            _head, _current : ^LinkedListNodeOfMessage;
+            _started : boolean;
+    end;
+    MessageLog = class
+        public
+            constructor();
+            destructor();
+            function HasErrors() : boolean;
+            function Write(message : ^Message) : boolean;
+            function GetEnumerator() : MessageLogEnumerator;
+        var
+            _head, _tail : ^LinkedListNodeOfMessage;
+            _hasErrors : boolean;
+    end;
+    LinkedListNodeOfString = class
+        public
+            constructor(value : ^String);
+            destructor();
+            function GetValue() : ^String;
+            function GetNext() : ^LinkedListNodeOfString;
+            procedure SetNext(next : ^LinkedListNodeOfString);
+        var
+            _value : String;
+            _next : ^LinkedListNodeOfString;
+    end;
+    LinkedListEnumeratorOfString = class
+        public
+            constructor(head : ^LinkedListNodeOfString);
+        var
+            _head, _current : ^LinkedListNodeOfString;
+            _started : boolean;
+    end;
+    LinkedListOfString = class
+        public
+            constructor();
+            destructor();
+            function Add(item : ^String) : boolean;
+            function GetEnumerator() : LinkedListEnumeratorOfString;
+            procedure Clear();
+        var
+            _head, _tail : ^LinkedListNodeOfString;
+    end;
+    Arguments = class
+        public
+            constructor();
+            destructor();
+            function TryParse(
+                argc : integer;
+                argv : array of array of character) : boolean;
+            function GetInputFile() : ^String;
+            function GetOutputListing() : ^String;
+            function GetIncludes() : LinkedListEnumeratorOfString;
+        var
+            _inputFile, _outputListing : String;
+            _includes : LinkedListOfString;
+    end;
+    TokenType = (
+        Identifier, 
+        Keyword, 
+        LiteralString, 
+        LiteralInteger,
+        LiteralDouble);
+    Keyword = (
+        Dot,
+        LeftParen,
+        RightParen,
+        LeftBracket,
+        RightBracket,
+        SemiColon,
+        Colon,
+        Equals,
+        Assign,
+        GreaterThan,
+        GreaterThanOrEquals,
+        LessThan,
+        LessThanOrEquals,
+        NotEqual,
+        Comma,
+        Address,
+        Pointer,
+        Star,
+        Plus,
+        Minus,
+        Slash,
+        Abstract,
+        And,
+        Array,
+        Begin,
+        Case,
+        Class,
+        Const,
+        Constructor,
+        Delete,
+        Destructor,
+        Div,
+        Do,
+        DownTo,
+        Else,
+        End,
+        Extern,
+        False,
+        For,
+        Function,
+        If,
+        In,
+        Inherited,
+        Interface,
+        Mod,
+        Namespace,
+        New,
+        Nil,
+        Not,
+        Of,
+        Or,
+        Packed,
+        Private,
+        Procedure,
+        Program,
+        Protected,
+        Public,
+        Record,	
+        Repeat,
+        Set,
+        Static,
+        Then,
+        To,
+        True,
+        Type,
+        Until,
+        Uses,
+        Var,
+        Virtual,
+        While);
+    Token = class
+        public
+            destructor();
+            function GetType() : TokenType;
+            function GetStringValue() : ^String;
+            function GetIntValue() : integer;
+            function GetDoubleValue() : double;
+            function GetKeywordValue() : Keyword;
+            function GetPath() : ^String;
+            function GetLine() : integer;
+            function GetColumn() : integer;
+
+            static function Is(
+                tok : ^Token;
+                keyword : Keyword) : boolean;
+            static function IsIdentifier(
+                tok : ^Token) : boolean;
+
+            static function CreateIdentifier(
+                identifier : ^String;
+                path : ^String;
+                line, column : integer) : ^Token;
+            static function CreateKeyword(
+                keyword : Keyword;
+                path : ^String;
+                line, column : integer) : ^Token;
+            static function CreateLiteral(
+                value : ^String;
+                path : ^String;
+                line, column : integer) : ^Token;
+            static function CreateLiteral(
+                value : integer;
+                path : ^String;
+                line, column : integer) : ^Token;
+            static function CreateLiteral(
+                value : double;
+                path : ^String;
+                line, column : integer) : ^Token;
+        private
+            constructor(
+                tokenType : TokenType; 
+                keywordValue : Keyword;
+                stringValue : ^String;
+                intValue : integer;
+                doubleValue : double;
+                path : ^String;
+                line, column : integer);
+        var
+            _type : TokenType;
+            _keywordValue : Keyword;
+            _stringValue : String;
+            _intValue : integer;
+            _doubleValue : double;
+            _path : String;
+            _line, _column : integer;
+    end;
+    SharedBodyOfToken = class
+        public
+            function Value() : ^Token;
+            function AddRef() : integer;
+            function Release() : integer;
+            static function Create(value : ^Token) : ^SharedBodyOfToken;
+        protected
+            constructor(value : ^Token);
+            destructor();            
+        var
+            _value : ^Token;
+            _refCount : integer;
+    end;
+    SharedOfToken = class
+        public
+            constructor();
+            constructor(copy : ^SharedOfToken);
+            destructor();
+            procedure assign(copy : ^SharedOfToken);
+            procedure Clear();
+            function TryAssign(value : ^Token) : boolean;
+            function Value() : ^Token;
+        var
+            _value : ^SharedBodyOfToken;
+    end;
+    TokenReader = class
+        public
+            constructor();
+            destructor();
+            function Open(path : ^String; log : ^MessageLog) : boolean;
+            function GetPath() : ^String;
+            function GetLine() : integer;
+            function GetColumn() : integer;
+            procedure Close();
+            function Read(token : ^SharedOfToken) : boolean;
+            function Peek(token : ^SharedOfToken) : boolean;
+        private
+            function InnerRead() : ^Token;
+            function EatCommentsAndWhiteSpace() : ^Token;
+            function ReadNumber() : ^Token;
+            function ReadIdentifierOrKeyword() : ^Token;
+            function ReadStringLiteral() : ^Token;
+            function ReadChar() : integer;
+            function ReadDecimalAfterDot() : ^Token;
+            function InnerReadDecimalAfterDot() : double;
+            procedure EatWhiteSpace();
+            procedure WriteUnsupportedCharacterErrorMessage(ch : character);
+            function MatchKeyword(
+                element : ^String;
+                keyword : ^Keyword) : boolean;
+        var
+            _path : String;
+            _line, _column : integer;
+            _log : ^MessageLog;
+            _next : SharedOfToken;
+            _inner : ^TextReader;
+    end;
+    ParseNode = class
+        public
+            virtual destructor();
+            function GetStart() : ^Token;
+        protected
+            constructor(start : ^SharedOfToken);
+        var 
+            _start : SharedOfToken;
+    end;
+    Expression = class(ParseNode)
+        protected
+            constructor(start : ^SharedOfToken);
+    end;
+    LinkedListNodeOfExpression = class
+        public
+            constructor(value : ^Expression);
+            destructor();
+            function GetValue() : ^Expression;
+            function GetNext() : ^LinkedListNodeOfExpression;
+            procedure SetNext(next : ^LinkedListNodeOfExpression);
+        var
+            _value : ^Expression;
+            _next : ^LinkedListNodeOfExpression;
+    end;
+    LinkedListEnumeratorOfExpression = class
+        public
+            constructor(head : ^LinkedListNodeOfExpression);
+        var
+            _head, _current : ^LinkedListNodeOfExpression;
+            _started : boolean;
+    end;
+    LinkedListOfExpression = class
+        public
+            constructor();
+            destructor();
+            function Add(item : ^Expression) : boolean;
+            function GetEnumerator() : LinkedListEnumeratorOfExpression;
+            procedure Clear();
+        var
+            _head, _tail : ^LinkedListNodeOfExpression;
+    end;
+    ReferenceExpression = class(Expression)
+        protected
+            constructor(start : ^SharedOfToken);
+    end;
+    NamedReferenceExpression = class(ReferenceExpression)
+    end;
+    InheritedReferenceExpression = class(ReferenceExpression)
+    end;
+    MemberReferenceExpression = class(ReferenceExpression)
+    end;
+    CallReferenceExpression = class(ReferenceExpression)
+    end;
+    ArrayIndexReferenceExpression = class(ReferenceExpression)
+    end;
+    DereferenceExpression = class(ReferenceExpression)
+    end;
+    AddressExpression = class(Expression)
+        public
+            constructor(start : ^SharedOfToken; inner : ^ReferenceExpression);
+            function GetInner() : ^ReferenceExpression;
+        var
+            _inner : ^ReferenceExpression;
+    end;
+    LiteralExpression = class(Expression)
+    end;
+    NegativeExpression = class(Expression)
+        public
+            constructor(start : ^SharedOfToken; inner : ^Expression);
+            function GetInner() : ^Expression;
+        var
+            _inner : ^Expression;
+    end;
+    NewExpression = class(Expression)
+    end;
+    NotExpression = class(Expression)
+        public
+            constructor(start : ^SharedOfToken; inner : ^Expression);
+            function GetInner() : ^Expression;
+        var
+            _inner : ^Expression;
+    end;
+    RelationalExpression = class(Expression)
+    end;
+    SimpleExpression = class(Expression)
+    end;
+    TermExpression = class(Expression)
+    end;
+    Statement = class(ParseNode)
+        protected
+            constructor(start : ^SharedOfToken);
+    end;
+    LinkedListNodeOfStatement = class
+        public
+            constructor(value : ^String);
+            destructor();
+            function GetValue() : ^String;
+            function GetNext() : ^LinkedListNodeOfStatement;
+            procedure SetNext(next : ^LinkedListNodeOfStatement);
+        var
+            _value : String;
+            _next : ^LinkedListNodeOfStatement;
+    end;
+    LinkedListEnumeratorOfStatement = class
+        public
+            constructor(head : ^LinkedListNodeOfStatement);
+        var
+            _head, _current : ^LinkedListNodeOfStatement;
+            _started : boolean;
+    end;
+    LinkedListOfStatement = class
+        public
+            constructor();
+            destructor();
+            function Add(item : ^Statement) : boolean;
+            function GetEnumerator() : LinkedListEnumeratorOfStatement;
+            procedure Clear();
+        var
+            _head, _tail : ^LinkedListNodeOfStatement;
+    end;
+    BlockStatement = class(Statement)
+        public
+            constructor(start : ^Token);
+            function GetStatements() : ^LinkedListOfStatement;
+        var
+            _statements : LinkedListOfStatement;
+    end;
+    AssignmentStatement = class(Statement)
+        public
+            constructor(
+                start : ^Token;
+                storage : ^ReferenceExpression;
+                value : ^Expression);
+            function GetStorage() : ^ReferenceExpression;
+            function GetValue() : ^Expression;
+        var
+            _storage : ^ReferenceExpression;
+            _value : ^Expression; 
+    end;
+    CallStatement = class(Statement)
+        public 
+            constructor(
+                start : ^Token; 
+                callExpression : ^ReferenceExpression);
+        var
+            _expression : ^ReferenceExpression;
+    end;
+    DeleteStatement = class(Statement)
+        public
+            constructor(
+                start : ^Token;
+                value : ^Expression);
+            function GetValue() : ^Expression; 
+        var
+            _value : ^Expression;
+    end;
+    IfStatement = class(Statement)
+        public
+            constructor(
+                start : ^Token;
+                condition : ^Expression;
+                trueStatement : ^Statement;
+                falseStatement : ^Statement);
+            function GetCondition() : ^Expression;
+            function GetTrueStatement() : ^Statement;
+            function GetFalseStatement() : ^Statement;
+        var
+            _condition : ^Expression;
+            _trueStatement : ^Statement;
+            _falseStatement : ^Statement;
+    end;
+    WhileStatement = class(ParseNode)
+        public
+            constructor(
+                start : ^Token;
+                condition : ^Expression;
+                bodyStatement : ^Statement);
+            function GetCondition() : ^Expression;
+            function GetBodyStatement() : ^Statement;
+        var
+            _condition : ^Expression;
+            _bodyStatement : ^Statement;
+    end;
+    TypeDeclaration = class(ParseNode)
+        public 
+            virtual destructor();
+            function GetName() : ^String;
+            function GetIsPublic() : boolean;
+            procedure SetIsPublic(value : boolean);
+        protected
+            constructor(start : ^SharedOfToken; name : ^String);
+        var
+            _name : String;
+            _isPublic : boolean;
+    end;
+    EnumDeclaration = class(TypeDeclaration)
+        public
+            constructor(start : ^SharedOfToken; name : ^String);
+            virtual destructor();
+            function AddValue(value : ^String) : boolean;
+            function GetValues() : ^LinkedListOfString;
+        var
+            _values : LinkedListOfString;
+    end;
+    TypeReference = class(ParseNode)
+        protected
+            constructor(start : ^SharedOfToken);
+    end;
+    NamedTypeReference = class(TypeReference)
+        public
+            constructor(start : ^SharedOfToken; typeName : ^String);
+            function GetTypeName() : ^String;
+        var
+            _typeName : String;
+    end;
+    ArrayTypeReference = class(TypeReference)
+        public 
+            constructor(
+                start : ^SharedOfToken; 
+                elementCount : ^Expression;
+                elementType : ^TypeReference);
+            function GetElementCount() : ^Expression;
+            function GetElementType() : ^TypeReference;
+        var
+            _elementCount : ^Expression;
+            _elementType : ^TypeReference; 
+    end;
+    PointerTypeReference = class(TypeReference)
+        public
+            constructor(
+                start : ^SharedOfToken;
+                elementType : ^TypeReference);
+        var
+            _elementType : ^TypeReference;
+    end;
+    VariableDeclaration = class(ParseNode)
+        public
+            constructor(
+                start : ^SharedOfToken;
+                variableType : ^TypeReference;
+                initExpression : ^Expression);
+            function GetVariableType() : ^TypeReference;
+            function GetInitExpression() : ^TypeReference;
+            function GetVariableNames() : ^LinkedListOfString;
+        var
+            _variableNames : LinkedListOfString;
+            _variableType : ^TypeReference;
+            _initExpression : ^Expression;
+    end;
+    LinkedListNodeOfVariableDeclaration = class
+        public
+            constructor(value : ^VariableDeclaration);
+            destructor();
+            function GetValue() : ^VariableDeclaration;
+            function GetNext() : ^LinkedListNodeOfVariableDeclaration;
+            procedure SetNext(next : ^LinkedListNodeOfVariableDeclaration);
+        var
+            _value : ^VariableDeclaration;
+            _next : ^LinkedListNodeOfVariableDeclaration;
+    end;
+    LinkedListEnumeratorOfVariableDeclaration = class
+        public
+            constructor(head : ^LinkedListNodeOfVariableDeclaration);
+        var
+            _head, _current : ^LinkedListNodeOfVariableDeclaration;
+            _started : boolean;
+    end;
+    LinkedListOfVariableDeclaration = class
+        public
+            constructor();
+            destructor();
+            function Add(item : ^VariableDeclaration) : boolean;
+            function GetEnumerator() : LinkedListEnumeratorOfVariableDeclaration;
+            procedure Clear();
+        var
+            _head, _tail : ^LinkedListNodeOfVariableDeclaration;
+    end;
+    VarBlock = class(ParseNode)
+        public
+            constructor(start : ^SharedOfToken);
+            virtual destructor();
+            function GetVariables() : ^LinkedListOfVariableDeclaration;
+        var
+            variables : LinkedListOfVariableDeclaration;
+    end;
+    ParameterDeclaration = class(ParseNode)
+        public
+            constructor(
+                start : ^SharedOfToken);
+            function GetParameterType() : ^TypeReference;
+            function GetParameterNames() : ^LinkedListOfString;
+        var
+            _parameterType : ^TypeReference;
+            _parameterNames : LinkedListOfString;
+    end;
+    LinkedListNodeOfParameterDeclaration = class
+        public
+            constructor(value : ^String);
+            destructor();
+            function GetValue() : ^String;
+            function GetNext() : ^LinkedListNodeOfParameterDeclaration;
+            procedure SetNext(next : ^LinkedListNodeOfParameterDeclaration);
+        var
+            _value : String;
+            _next : ^LinkedListNodeOfParameterDeclaration;
+    end;
+    LinkedListEnumeratorOfParameterDeclaration = class
+        public
+            constructor(head : ^LinkedListNodeOfParameterDeclaration);
+        var
+            _head, _current : ^LinkedListNodeOfParameterDeclaration;
+            _started : boolean;
+    end;
+    LinkedListOfParameterDeclaration = class
+        public
+            constructor();
+            destructor();
+            function Add(item : ^ParameterDeclaration) : boolean;
+            function GetEnumerator() : LinkedListEnumeratorOfParameterDeclaration;
+            procedure Clear();
+        var
+            _head, _tail : ^LinkedListNodeOfParameterDeclaration;
+    end;
+    MethodDeclaration = class(ParseNode)
+        public
+            constructor(
+                start : ^SharedOfToken; 
+                name : ^String;
+                isStatic, isVirtual, isAbstract : boolean);
+            function GetReturnType() : ^TypeReference;
+            function GetMethodName() : ^String;
+            procedure SetReturnType(value : ^TypeReference);
+            function GetParameters() : ^LinkedListOfParameterDeclaration;
+            function GetIsStatic() : boolean;
+            function GetIsVirtual() : boolean;  
+            function GetIsAbstract() : boolean;
+        var
+            _methodName : String;
+            _parameters : LinkedListOfParameterDeclaration;
+            _returnType : ^TypeReference;
+            _isStatic, _isVirtual, _isAbstract : boolean;
+    end;
+    LinkedListNodeOfMethodDeclaration = class
+        public
+            constructor(value : ^MethodDeclaration);
+            destructor();
+            function GetValue() : ^MethodDeclaration;
+            function GetNext() : ^LinkedListNodeOfMethodDeclaration;
+            procedure SetNext(next : ^LinkedListNodeOfMethodDeclaration);
+        var
+            _value : ^MethodDeclaration;
+            _next : ^LinkedListNodeOfMethodDeclaration;
+    end;
+    LinkedListEnumeratorOfMethodDeclaration = class
+        public
+            constructor(head : ^LinkedListNodeOfMethodDeclaration);
+        var
+            _head, _current : ^LinkedListNodeOfMethodDeclaration;
+            _started : boolean;
+    end;
+    LinkedListOfMethodDeclaration = class
+        public
+            constructor();
+            destructor();
+            function Add(item : ^MethodDeclaration) : boolean;
+            function GetEnumerator() : LinkedListEnumeratorOfMethodDeclaration;
+            procedure Clear();
+        var
+            _head, _tail : ^LinkedListNodeOfMethodDeclaration;
+    end;
+    MethodDefinition = class(ParseNode)
+        public
+            constructor(
+                start : ^SharedOfToken;
+                name : ^String);
+            function GetMethodNameReference() : ^String;
+            function GetExternImpl() : ^String;
+            procedure SetExternImpl(value : ^String);
+        var
+            _externImpl : String;
+            _methodNameReference : String;
+            _returnType : ^TypeReference;
+            _localVariables : ^VarBlock;
+            _body : ^BlockStatement;
+            _parameters : LinkedListOfParameterDeclaration;
+            _baseConstructorArguments : LinkedListOfExpression;
+    end;
+    LinkedListNodeOfTypeDeclaration = class
+        public
+            constructor(value : ^TypeDeclaration);
+            destructor();
+            function GetValue() : ^TypeDeclaration;
+            function GetNext() : ^LinkedListNodeOfTypeDeclaration;
+            procedure SetNext(next : ^LinkedListNodeOfTypeDeclaration);
+        var
+            _value : ^TypeDeclaration;
+            _next : ^LinkedListNodeOfTypeDeclaration;
+    end;
+    LinkedListEnumeratorOfTypeDeclaration = class
+        public
+            constructor(head : ^LinkedListNodeOfTypeDeclaration);
+        var
+            _head, _current : ^LinkedListNodeOfTypeDeclaration;
+            _started : boolean;
+    end;
+    LinkedListOfTypeDeclaration = class
+        public
+            constructor();
+            destructor();
+            function Add(item : ^TypeDeclaration) : boolean;
+            function GetEnumerator() : LinkedListEnumeratorOfTypeDeclaration;
+            procedure Clear();
+        var
+            _head, _tail : ^LinkedListNodeOfTypeDeclaration;
+    end;
+    LinkedListNodeOfMethodDefinition = class
+        public
+            constructor(value : ^MethodDefinition);
+            destructor();
+            function GetValue() : ^MethodDefinition;
+            function GetNext() : ^LinkedListNodeOfMethodDefinition;
+            procedure SetNext(next : ^LinkedListNodeOfMethodDefinition);
+        var
+            _value : ^MethodDefinition;
+            _next : ^LinkedListNodeOfMethodDefinition;
+    end;
+    LinkedListEnumeratorOfMethodDefinition = class
+        public
+            constructor(head : ^LinkedListNodeOfMethodDefinition);
+        var
+            _head, _current : ^LinkedListNodeOfMethodDefinition;
+            _started : boolean;
+    end;
+    LinkedListOfMethodDefinition = class
+        public
+            constructor();
+            destructor();
+            function Add(item : ^MethodDefinition) : boolean;
+            function GetEnumerator() : LinkedListEnumeratorOfMethodDefinition;
+            procedure Clear();
+        var
+            _head, _tail : ^LinkedListNodeOfMethodDefinition;
+    end;
+
+    InterfaceDeclaration = class(TypeDeclaration)
+        public
+            constructor(start : ^SharedOfToken; name : ^String);
+            virtual destructor();
+            function GetBaseInterfaceType() : ^String;
+            procedure SetBaseInterfaceType(value : ^String);
+            function GetMethods() : ^LinkedListOfMethodDeclaration;
+        var
+            _baseInterfaceType : String;
+            _methods : LinkedListOfMethodDeclaration;
+    end;
+
+    MethodTypeDeclaration = class(TypeDeclaration)
+        public
+            constructor(start : ^SharedOfToken; name : ^String);
+            virtual destructor();
+            function GetReturnType() : ^TypeReference;
+            procedure SetReturnType(value : ^TypeReference);
+            function GetImplicitArgType() : ^TypeReference;
+            procedure SetImplicitArgType(value : ^TypeReference);
+            function GetParameters() : ^LinkedListOfParameterDeclaration;
+        var
+            _returnType : ^TypeReference;
+            _implicitArgType : ^TypeReference;
+            _parameters : LinkedListOfParameterDeclaration;
+    end;
+
+    ClassDeclaration = class(TypeDeclaration)
+        public
+            constructor(
+                start : ^SharedOfToken; 
+                name : ^String;
+                baseType : ^String;
+                isStatic : boolean);
+            virtual destructor();
+        var
+            _isStatic : boolean;
+            _baseType : String;
+            _fields : VarBlock;
+            _publicMethods : LinkedListOfMethodDeclaration;
+            _protectedMethods : LinkedListOfMethodDeclaration;
+            _privateMethods : LinkedListOfMethodDeclaration;
+            _interfaces : LinkedListOfString;
+    end;
+
+    ProgramUnit = class(ParseNode)
+        public
+            constructor(start : ^SharedOfToken);
+            destructor();
+            procedure SetNamespace(value : ^String);
+            function AddUses(item : ^String) : boolean;
+            procedure SetGlobalVars(varBlock : ^VarBlock);
+            function GetGlobalVars() : ^VarBlock;
+            function AddType(item : ^TypeDeclaration) : boolean;
+            function GetTypes() : ^LinkedListOfTypeDeclaration;
+        var
+            _typeList : LinkedListOfTypeDeclaration;
+            _methods : LinkedListOfMethodDefinition;
+            _namespace : String;
+            _usesReferences : LinkedListOfString;
+            _globalVars : ^VarBlock;
+    end;
+    CompilerContext = class
+        public
+            constructor();
+            destructor();
+        var
+            usesList : LinkedListOfString;
+            includeList : LinkedListOfString;
+    end;
+    Parser = class
+        public
+            constructor(log : ^MessageLog);
+            function TryParse(reader : ^TokenReader) : ^ProgramUnit;
+        private
+            function ExpectEndOfFile(reader : ^TokenReader) : boolean;
+            function TryParseNamespaceDeclaration(
+                reader : ^TokenReader;
+                programUnit : ^ProgramUnit) : boolean;
+            function TryParseUsesDeclaration(
+                reader : ^TokenReader;
+                programUnit : ^ProgramUnit) : boolean;
+            function TryParseTypeBlock(
+                reader : ^TokenReader;
+                programUnit : ^ProgramUnit) : boolean;
+            function TryParseGlobalVarBlock(
+                reader : ^TokenReader;
+                programUnit : ^ProgramUnit) : boolean; 
+            function TryParseMethodDefinition(
+                reader : ^TokenReader;
+                programUnit : ^ProgramUnit) : boolean;
+            function TryParseFullNameDeclaration(
+                reader : ^TokenReader;
+                fullName : ^String) : boolean;
+            function TryParseVarBlock(
+                reader : ^TokenReader;
+                allowInitializers : boolean;
+                varBlock : ^VarBlock) : boolean;
+            function TryParseEnumDeclaration(
+                reader : ^TokenReader;
+                name : ^SharedOfToken;
+                typeDeclRef : ^^TypeDeclaration) : boolean;
+            function TryParseClassDeclaration(
+                reader : ^TokenReader;
+                name : ^SharedOfToken;
+                typeDeclRef : ^^TypeDeclaration) : boolean;
+            function TryParseInterfaceDeclaration(
+                reader : ^TokenReader;
+                name : ^SharedOfToken;
+                typeDeclRef : ^^TypeDeclaration) : boolean;
+            function TryParseMethodTypeDeclaration(
+                reader : ^TokenReader;
+                name : ^SharedOfToken;
+                typeDeclRef : ^^TypeDeclaration) : boolean; 
+            function Expect(
+                reader : ^TokenReader;
+                keyword : Keyword) : boolean;
+            function ExpectIdentifier(
+                reader : ^TokenReader;
+                value : ^String) : boolean;
+        var
+            _log : ^MessageLog;
+    end;
+    Module = class
+    end;
+    CodeGenerator = class
+        public
+            constructor(log : ^MessageLog);
+            function TryCreateTypes(
+                context : ^CompilerContext;
+                programUnit : ^ProgramUnit) : boolean;
+            function CreateModule(
+                context : ^CompilerContext;
+                programUnit : ^ProgramUnit) : ^Module; 
+        var
+            _log : ^MessageLog;
+    end;

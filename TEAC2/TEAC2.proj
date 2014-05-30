@@ -1,0 +1,17 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+    <PropertyGroup>
+        <AssemblyName>TEAC</AssemblyName>
+        <OutputType>exe</OutputType>
+        <OutputPath>..\bin\</OutputPath>
+        <IntermediateOutputPath>obj\</IntermediateOutputPath>
+        <Includes>/I..\System /I..\System\IO /I..\System\Text /I.</Includes>
+    </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="$(OutputPath)System.lib" />
+  </ItemGroup>  
+  <ItemGroup>
+    <Compile Include="*.tea" />
+  </ItemGroup>
+  <Import Project="..\TEA.targets" />
+</Project>

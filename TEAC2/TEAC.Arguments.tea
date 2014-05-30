@@ -1,0 +1,95 @@
+namespace TEAC;
+uses System, System.IO, TEAC;
+
+constructor Arguments();
+begin
+end;
+
+destructor Arguments();
+begin
+end;
+
+function Arguments.TryParse(
+    argc : integer;
+    argv : array of array of character) : boolean;
+var
+    index : integer;
+    arg : array of character;
+    doneWithOptions : boolean;
+    includePath, emptyString : String;
+    charConst : array of character = '/FaI';
+begin
+    _inputFile.assign(@emptyString);
+    _outputListing.assign(@emptyString);
+    _includes.Clear();
+    TryParse := true;
+    if argc < 2 then
+        TryParse := false;
+    if TryParse then
+    begin
+        index := 1;
+        doneWithOptions := false;
+        while 
+            (not doneWithOptions) and
+            TryParse and 
+            (index < argc) do
+        begin
+            arg := argv[index];
+            if arg[0] = charConst[0] then
+            begin
+                if arg[1] = charConst[1] then
+                begin
+                    if arg[2] = charConst[2] then
+                    begin
+                        TryParse := _outputListing.TryAssign(
+                            arg + 3);
+                    end
+                    else
+                    begin
+                        doneWithOptions := false;
+                        TryParse := false;
+                    end;
+                end
+                else if arg[1] = charConst[3] then
+                begin
+                    TryParse := includePath.TryAssign(arg + 1);
+                    if TryParse then
+                        TryParse := _includes.Add(@includePath);
+                end
+                else
+                begin
+                    doneWithOptions := true;
+                    TryParse := false;
+                end;
+            end
+            else
+                doneWithOptions := true;            
+            if not doneWithOptions then 
+                index := index + 1;
+        end;
+        if TryParse then
+            TryParse := index = argc - 1;
+        if TryParse then
+            TryParse := _inputFile.TryAssign(argv[index]);
+        if TryParse then
+        begin
+            if _outputListing.Length() = 0 then
+                TryParse := false;
+        end;
+    end;
+end;
+
+function Arguments.GetInputFile() : ^String;
+begin
+    GetInputFile := @_inputFile;
+end;
+
+function Arguments.GetOutputListing() : ^String;
+begin
+    GetOutputListing := @_outputListing;
+end;
+
+function Arguments.GetIncludes() : LinkedListEnumeratorOfString;
+begin
+    GetIncludes := _includes.GetEnumerator();
+end;

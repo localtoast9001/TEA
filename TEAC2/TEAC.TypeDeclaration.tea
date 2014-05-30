@@ -1,0 +1,29 @@
+namespace TEAC;
+uses TEAC, System;
+
+destructor TypeDeclaration();
+begin
+end;
+
+function TypeDeclaration.GetName() : ^String;
+begin
+    GetName := @_name;
+end;
+
+function TypeDeclaration.GetIsPublic() : boolean;
+begin
+    GetIsPublic := _isPublic;
+end;
+
+procedure TypeDeclaration.SetIsPublic(value : boolean);
+begin
+    _isPublic := value;
+end;
+
+constructor TypeDeclaration(start : ^SharedOfToken; name : ^String);
+inherited(start);
+begin
+    _name.assign(name);
+    _isPublic := false;
+end;
+

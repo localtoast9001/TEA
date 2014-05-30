@@ -1,0 +1,732 @@
+namespace TEAC;
+uses System, System.IO, System.Text, TEAC;
+
+constructor TokenReader();
+begin
+    _inner := nil;
+    _log := nil;
+    _line := 1;
+    _column := 1;
+end;
+
+destructor TokenReader();
+begin
+    Close();
+end;
+
+function TokenReader.Open(
+    path : ^String; 
+    log : ^MessageLog) : boolean;
+var
+    message : ^Message;
+    reader : ^StreamReader;
+begin
+    Open := false;
+    Close();
+    _log := log;
+    _path.assign(path);
+    reader := new StreamReader();
+    if reader <> nil then
+    begin
+        _inner := reader;
+        Open := reader^.Open(_path.Characters());
+        if not Open then
+        begin
+            message := Message.Create(
+                path,
+                1,
+                1,
+                Severity.Error,
+                'Unable to open source file.');
+            if message <> nil then
+                if not log^.Write(message) then
+                    delete message;
+        end;
+    end;
+end;
+
+function TokenReader.GetPath() : ^String;
+begin
+    GetPath := @_path;
+end;
+
+function TokenReader.GetLine() : integer;
+begin
+    GetLine := _line;
+end;
+
+function TokenReader.GetColumn() : integer;
+begin
+    GetColumn := _column;
+end;
+
+procedure TokenReader.Close();
+begin
+    _log := nil;
+    _line := 1;
+    _column := 1;
+    _next.Clear();
+    if _inner <> nil then
+        delete _inner;
+    _inner := nil;
+end;
+
+function TokenReader.Read(token : ^SharedOfToken) : boolean;
+begin
+    Read := true;
+    if _next.Value() = nil then
+        Read := Peek(token)
+    else
+        token^.assign(@_next);
+    _next.Clear();
+end;
+
+function TokenReader.Peek(token : ^SharedOfToken) : boolean;
+var
+    innerReadResult : ^Token;
+begin
+    Peek := true;
+    if _next.Value() = nil then
+    begin
+        innerReadResult := InnerRead();
+        Peek := _next.TryAssign(innerReadResult);
+        if not Peek then
+            delete innerReadResult;
+    end;
+    if Peek then
+        token^.assign(@_next);
+end;
+
+function TokenReader.InnerRead() : ^Token;
+var
+    ch : integer;
+    c : character;
+    lineStart, colStart : integer;
+begin
+    InnerRead := EatCommentsAndWhiteSpace();
+    if InnerRead = nil then
+    begin
+        ch := _inner^.Peek();
+        if ch > 0 then
+        begin
+            c := Convert.ToCharacter(ch);
+            if CharacterUtility.IsDigit(c) then
+            begin
+                InnerRead := ReadNumber();
+            end 
+            else if CharacterUtility.IsLetter(c) or (ch = 95) then
+            begin
+                InnerRead := ReadIdentifierOrKeyword();
+            end
+            else if (ch = 39) or (ch = 35) then
+            begin
+                InnerRead := ReadStringLiteral();
+            end
+            else
+            begin
+                lineStart := _line;
+                colStart := _column;
+                if ch = 46 {.} then
+                begin
+                    ReadChar();
+                    ch := _inner^.Peek();
+                    if (ch > 0) and CharacterUtility.IsDigit(Convert.ToCharacter(ch)) then
+                        InnerRead := ReadDecimalAfterDot()
+                    else
+                        InnerRead := Token.CreateKeyword(
+                            Keyword.Dot,
+                            @_path,
+                            lineStart,
+                            colStart);
+                end
+                else if ch = 59 {;} then
+                begin
+                    ReadChar();
+                    InnerRead := Token.CreateKeyword(
+                        Keyword.SemiColon,
+                        @_path, 
+                        lineStart,
+                        colStart);
+                end
+                else if ch = 58 {:} then
+                begin
+                    ReadChar();
+                    ch := _inner^.Peek();
+                    if ch = 61 {=} then
+                    begin
+                        ReadChar();
+                        InnerRead := Token.CreateKeyword(
+                            Keyword.Assign,
+                            @_path,
+                            lineStart,
+                            colStart);
+                    end
+                    else
+                        InnerRead := Token.CreateKeyword(
+                            Keyword.Colon,
+                            @_path,
+                            lineStart,
+                            colStart);
+                end
+                else if ch = 61 {=} then
+                begin
+                    ReadChar();
+                    InnerRead := Token.CreateKeyword(
+                        Keyword.Equals,
+                        @_path,
+                        lineStart,
+                        colStart);
+                end
+                else if ch = 44 {,} then
+                begin
+                    ReadChar();
+                    InnerRead := Token.CreateKeyword(
+                        Keyword.Comma,
+                        @_path,
+                        lineStart,
+                        colStart);
+                end
+                else if ch = 60 {<} then
+                begin
+                    ReadChar();
+                    ch := _inner^.Peek();
+                    if ch = 62 {>} then
+                    begin
+                        ReadChar();
+                        InnerRead := Token.CreateKeyword(
+                            Keyword.NotEqual,
+                            @_path,
+                            lineStart,
+                            colStart);
+                    end
+                    else if ch = 61 {=} then
+                    begin
+                        ReadChar();
+                        InnerRead := Token.CreateKeyword(
+                            Keyword.LessThanOrEquals,
+                            @_path,
+                            lineStart,
+                            colStart);
+                    end
+                    else
+                        InnerRead := Token.CreateKeyword(
+                            Keyword.LessThan,
+                            @_path,
+                            lineStart,
+                            colStart);
+                end
+                else if ch = 62 {>} then
+                begin
+                    ReadChar();
+                    ch := _inner^.Peek();
+                    if ch = 61 {=} then
+                    begin
+                        ReadChar();
+                        InnerRead := Token.CreateKeyword(   
+                            Keyword.GreaterThanOrEquals,
+                            @_path,
+                            lineStart,
+                            colStart);
+                    end
+                    else
+                        InnerRead := Token.CreateKeyword(
+                            Keyword.GreaterThan,
+                            @_path,
+                            lineStart,
+                            colStart);
+                end
+                else if ch = 64 {@} then
+                begin
+                    ReadChar();
+                    InnerRead := Token.CreateKeyword(
+                        Keyword.Address,
+                        @_path,
+                        lineStart,
+                        colStart);
+                end
+                else if ch = 42 {*} then
+                begin
+                    ReadChar();
+                    InnerRead := Token.CreateKeyword(
+                        Keyword.Star,
+                        @_path,
+                        lineStart,
+                        colStart);
+                end
+                else if ch = 47 {/} then
+                begin
+                    ReadChar();
+                    InnerRead := Token.CreateKeyword(
+                        Keyword.Slash,
+                        @_path,
+                        lineStart,
+                        colStart);
+                end
+                else if ch = 43 {+} then
+                begin
+                    ReadChar();
+                    InnerRead := Token.CreateKeyword(
+                        Keyword.Plus,
+                        @_path,
+                        lineStart,
+                        colStart);
+                end
+                else if ch = 45 {-} then
+                begin
+                    ReadChar();
+                    InnerRead := Token.CreateKeyword(
+                        Keyword.Minus,
+                        @_path,
+                        lineStart,
+                        colStart);
+                end
+                else if ch = 94 {^} then
+                begin
+                    ReadChar();
+                    InnerRead := Token.CreateKeyword(
+                        Keyword.Pointer,
+                        @_path,
+                        lineStart,
+                        colStart);
+                end
+                else if ch = 41 {)} then
+                begin
+                    ReadChar();
+                    InnerRead := Token.CreateKeyword(
+                        Keyword.RightParen,
+                        @_path,
+                        lineStart,
+                        colStart);
+                end
+                else if ch = 91 {[} then
+                begin
+                    ReadChar();
+                    InnerRead := Token.CreateKeyword(
+                        Keyword.LeftBracket,
+                        @_path,
+                        lineStart,
+                        colStart);
+                end
+                else if ch = 93 {]} then
+                begin
+                    ReadChar();
+                    InnerRead := Token.CreateKeyword(
+                        Keyword.RightBracket,
+                        @_path,
+                        lineStart,
+                        colStart);
+                end
+                else
+                begin
+                    ReadChar();
+                    WriteUnsupportedCharacterErrorMessage(
+                        Convert.ToCharacter(ch));
+                end;
+            end; 
+        end;
+    end;
+end;
+
+procedure TokenReader.WriteUnsupportedCharacterErrorMessage(ch : character);
+var
+    sb : SimpleStringBuilder;
+    sbString : String;
+begin
+    sb.TryAppend('Character (');
+    sb.TryAppend(ch);
+    sb.TryAppend(') is not supported');
+    sb.ToString(@sbString);
+    _log^.Write(new Message(
+        @_path,
+        _line,
+        _column,
+        Severity.Error,
+        @sbString));
+end;
+
+function TokenReader.EatCommentsAndWhiteSpace() : ^Token;
+var
+    done : boolean = false;
+    ch : integer;
+    terminated : boolean = false;
+    lineStart : integer;
+    columnStart : integer;
+begin
+    EatCommentsAndWhiteSpace := nil;
+    while not done do
+    begin
+        EatWhiteSpace();
+        ch := _inner^.Peek();
+        done := ch <= 0;
+        if not done then
+        begin
+            if ch = 40 then
+            begin
+                ReadChar();
+                ch := _inner^.Peek();
+                if (ch <= 0) or (ch <> 42) then
+                begin
+                    done := true;
+                    EatCommentsAndWhiteSpace := Token.CreateKeyword(
+                        Keyword.LeftParen,
+                        @_path,
+                        _line,
+                        _column);
+                end;
+            end
+            else if ch = 123 then
+            begin
+                ReadChar();
+            end
+            else
+                done := true;
+
+            if not done then
+            begin
+                terminated := false;
+                lineStart := _line;
+                columnStart := _column;
+                ch := _inner^.Peek();
+                while (ch > 0) and not done and not terminated do
+                begin
+                    ReadChar();
+                    if ch = 125 then
+                        terminated := true
+                    else if ch = 42 then
+                    begin
+                        ch := _inner^.Peek();
+                        if ch = 41 then
+                        begin
+                            ReadChar();
+                            terminated := true;
+                        end;
+                    end;
+
+                    if not done and not terminated then
+                        ch := _inner^.Peek(); 
+                end;
+
+                if not terminated then
+                begin
+                    _log^.Write(
+                        Message.Create(
+                            @_path,  
+                            lineStart,
+                            columnStart,
+                            Severity.Error,
+                            'Comment not terminated.'));
+                end;
+            end;
+        end;
+    end;
+end;
+
+function TokenReader.ReadNumber() : ^Token;
+var
+    intPart : integer;
+    lineStart, colStart : integer;
+    ch : integer;
+    decimalPart : double;
+begin
+    intPart := 0;
+    lineStart := _line;
+    colStart := _column;
+    ch := _inner^.Peek();
+    while (ch > 0) and (CharacterUtility.IsDigit(Convert.ToCharacter(ch))) do
+    begin
+        intPart := intPart * 10;
+        intPart := intPart + (ch - 48);
+        ReadChar();
+        ch := _inner^.Peek();
+    end;
+
+    if ch = 46 then
+    begin
+        ReadChar();
+        decimalPart := InnerReadDecimalAfterDot();
+        ReadNumber := Token.CreateLiteral(
+            Convert.ToDouble(intPart) + decimalPart,
+            @_path,
+            lineStart,
+            colStart);
+    end
+    else
+    begin
+        ReadNumber := Token.CreateLiteral(intPart, @_path, lineStart, colStart);
+    end;
+end;
+
+function TokenReader.ReadIdentifierOrKeyword() : ^Token;
+var
+    startLine : integer = _line;
+    startColumn : integer = _column;
+    element : SimpleStringBuilder;
+    elementString : String;
+    ch : integer = _inner^.Peek();
+    chr : character;
+    done : boolean = false;
+    keyword : Keyword;
+begin
+    while (ch > 0) and not done do
+    begin
+        chr := Convert.ToCharacter(ch);
+        if (ch = 95 {_}) or CharacterUtility.IsLetterOrDigit(chr) then
+        begin
+            element.TryAppend(chr);
+            ReadChar();
+            ch := _inner^.Peek();
+        end
+        else
+            done := true;
+    end;
+
+    element.ToString(@elementString);
+    if MatchKeyword(@elementString, @keyword) then
+        ReadIdentifierOrKeyword := Token.CreateKeyword(
+            keyword,
+            @_path,
+            startLine,
+            startColumn)
+    else
+        ReadIdentifierOrKeyword := Token.CreateIdentifier(
+            @elementString,
+            @_path,
+            startLine,
+            startColumn);
+end;
+
+function TokenReader.ReadStringLiteral() : ^Token;
+var
+    sb : SimpleStringBuilder;
+    sbVal : String;
+    startLine : integer = _line;
+    startCol : integer = _column;
+    ch : integer = _inner^.Peek();
+    done : boolean = false;
+    fail : boolean = false;
+    chr : character;
+begin
+    ReadStringLiteral := nil;
+    while not done and (ch > 0) do
+    begin
+        chr := Convert.ToCharacter(ch);
+        if ch = 39 then
+        begin
+            ReadChar();
+            ch := _inner^.Peek();
+            while not done and (ch > 0) do
+            begin
+                if ch = 39 then
+                begin
+                    ReadChar();
+                    ch := _inner^.Peek();
+                    if (ch <= 0) or (ch <> 39) then
+                        done := true;        
+                end;
+
+                if not done then
+                begin
+                    sb.TryAppend(Convert.ToCharacter(ch));
+                    ReadChar();
+                    ch := _inner^.Peek();
+                end;
+            end;
+
+            if not done and (ch <= 0) then
+            begin
+                done := true;
+                _log^.Write(
+                    Message.Create(
+                        @_path,
+                        startLine,
+                        startCol,
+                        Severity.Error,
+                        'Literal string not terminated.'));
+                fail := true;
+            end;
+        end
+        else if ch = 35 then
+        begin
+            ReadChar();
+            ch := ReadChar();
+        end
+        else
+        begin
+            done := true;
+            fail := true;
+        end;
+    end;
+
+    if not fail then
+    begin
+        sb.ToString(@sbVal);
+        ReadStringLiteral := Token.CreateLiteral(
+            @sbVal,
+            @_path,
+            startLine,
+            startCol);
+    end;
+end;
+
+function TokenReader.ReadDecimalAfterDot() : ^Token;
+var
+    lineStart : integer = _line;
+    colStart : integer = _column;
+    value : double = InnerReadDecimalAfterDot();
+begin
+    ReadDecimalAfterDot := Token.CreateLiteral(
+        value,
+        @_path,
+        lineStart,
+        colStart);
+end;
+
+function TokenReader.InnerReadDecimalAfterDot() : double;
+var
+    ch, digit : integer;
+    factor : double = 0.1;
+begin
+    InnerReadDecimalAfterDot := 0.0;
+    ch := _inner^.Peek();
+    while (ch > 0) and CharacterUtility.IsDigit(Convert.ToCharacter(ch)) do
+    begin
+        digit := ch - 48;
+        InnerReadDecimalAfterDot := InnerReadDecimalAfterDot + 
+            Convert.ToDouble(digit) * factor;
+        factor := factor * 0.1;
+        ReadChar();
+        ch := _inner^.Peek();
+    end;
+end;
+
+function TokenReader.MatchKeyword(
+    element : ^String;
+    keyword : ^Keyword) : boolean;
+begin
+    MatchKeyword := true;
+    if String.CompareOrdinal(element, 'and') = 0 then
+        keyword^ := Keyword.And
+    else if String.CompareOrdinal(element, 'abstract') = 0 then
+        keyword^ := Keyword.Abstract
+    else if String.CompareOrdinal(element, 'array') = 0 then
+        keyword^ := Keyword.Array
+    else if String.CompareOrdinal(element, 'begin') = 0 then
+        keyword^ := Keyword.Begin
+    else if String.CompareOrdinal(element, 'case') = 0 then
+        keyword^ := Keyword.Case
+    else if String.CompareOrdinal(element, 'class') = 0 then
+        keyword^ := Keyword.Class
+    else if String.CompareOrdinal(element, 'const') = 0 then
+        keyword^ := Keyword.Const
+    else if String.CompareOrdinal(element, 'constructor') = 0 then
+        keyword^ := Keyword.Constructor
+    else if String.CompareOrdinal(element, 'delete') = 0 then
+        keyword^ := Keyword.Delete
+    else if String.CompareOrdinal(element, 'destructor') = 0 then
+        keyword^ := Keyword.Destructor
+    else if String.CompareOrdinal(element, 'do') = 0 then
+        keyword^ := Keyword.Do
+    else if String.CompareOrdinal(element, 'downto') = 0 then
+        keyword^ := Keyword.DownTo
+    else if String.CompareOrdinal(element, 'else') = 0 then
+        keyword^ := Keyword.Else
+    else if String.CompareOrdinal(element, 'end') = 0 then
+        keyword^ := Keyword.End
+    else if String.CompareOrdinal(element, 'extern') = 0 then
+        keyword^ := Keyword.Extern
+    else if String.CompareOrdinal(element, 'false') = 0 then
+        keyword^ := Keyword.False
+    else if String.CompareOrdinal(element, 'for') = 0 then
+        keyword^ := Keyword.For
+    else if String.CompareOrdinal(element, 'function') = 0 then
+        keyword^ := Keyword.Function
+    else if String.CompareOrdinal(element, 'if') = 0 then
+        keyword^ := Keyword.If
+    else if String.CompareOrdinal(element, 'in') = 0 then
+        keyword^ := Keyword.In
+    else if String.CompareOrdinal(element, 'inherited') = 0 then
+        keyword^ := Keyword.Inherited
+    else if String.CompareOrdinal(element, 'interface') = 0 then
+        keyword^ := Keyword.Interface
+    else if String.CompareOrdinal(element, 'mod') = 0 then
+        keyword^ := Keyword.Mod
+    else if String.CompareOrdinal(element, 'namespace') = 0 then
+        keyword^ := Keyword.Namespace
+    else if String.CompareOrdinal(element, 'new') = 0 then
+        keyword^ := Keyword.New
+    else if String.CompareOrdinal(element, 'nil') = 0 then
+        keyword^ := Keyword.Nil
+    else if String.CompareOrdinal(element, 'not') = 0 then
+        keyword^ := Keyword.Not
+    else if String.CompareOrdinal(element, 'of') = 0 then
+        keyword^ := Keyword.Of
+    else if String.CompareOrdinal(element, 'or') = 0 then
+        keyword^ := Keyword.Or
+    else if String.CompareOrdinal(element, 'packed') = 0 then
+        keyword^ := Keyword.Packed
+    else if String.CompareOrdinal(element, 'private') = 0 then
+        keyword^ := Keyword.Private
+    else if String.CompareOrdinal(element, 'procedure') = 0 then
+        keyword^ := Keyword.Procedure
+    else if String.CompareOrdinal(element, 'program') = 0 then
+        keyword^ := Keyword.Program
+    else if String.CompareOrdinal(element, 'protected') = 0 then
+        keyword^ := Keyword.Protected
+    else if String.CompareOrdinal(element, 'public') = 0 then
+        keyword^ := Keyword.Public
+    else if String.CompareOrdinal(element, 'record') = 0 then
+        keyword^ := Keyword.Record
+    else if String.CompareOrdinal(element, 'repeat') = 0 then
+        keyword^ := Keyword.Repeat
+    else if String.CompareOrdinal(element, 'set') = 0 then
+        keyword^ := Keyword.Set
+    else if String.CompareOrdinal(element, 'static') = 0 then
+        keyword^ := Keyword.Static
+    else if String.CompareOrdinal(element, 'then') = 0 then
+        keyword^ := Keyword.Then
+    else if String.CompareOrdinal(element, 'to') = 0 then
+        keyword^ := Keyword.To
+    else if String.CompareOrdinal(element, 'true') = 0 then
+        keyword^ := Keyword.True
+    else if String.CompareOrdinal(element, 'type') = 0 then
+        keyword^ := Keyword.Type
+    else if String.CompareOrdinal(element, 'until') = 0 then
+        keyword^ := Keyword.Until
+    else if String.CompareOrdinal(element, 'uses') = 0 then
+        keyword^ := Keyword.Uses
+    else if String.CompareOrdinal(element, 'var') = 0 then
+        keyword^ := Keyword.Var
+    else if String.CompareOrdinal(element, 'virtual') = 0 then
+        keyword^ := Keyword.Virtual
+    else if String.CompareOrdinal(element, 'while') = 0 then
+        keyword^ := Keyword.While
+    else
+        MatchKeyword := false;
+end;
+
+procedure TokenReader.EatWhiteSpace();
+var
+    ch : integer;
+begin
+    ch := _inner^.Peek();
+    while (ch > 0) and CharacterUtility.IsWhiteSpace(Convert.ToCharacter(ch)) do
+    begin
+        ReadChar();
+        ch := _inner^.Peek();
+    end; 
+end;
+
+function TokenReader.ReadChar() : integer;
+begin
+    ReadChar := _inner^.Read();
+    if ReadChar > 0 then
+    begin
+        if ReadChar = 10 then
+        begin
+            _column := 0;
+            _line := _line + 1;
+        end; 
+
+        _column := _column + 1;
+    end;
+end;

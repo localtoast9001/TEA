@@ -1,0 +1,88 @@
+namespace TEAC;
+uses System, System.IO, TEAC;
+
+constructor LinkedListNodeOfTypeDeclaration(value : ^TypeDeclaration);
+begin
+    _value := value;
+    _next := nil;
+end;
+
+destructor LinkedListNodeOfTypeDeclaration();
+begin
+    if _value <> nil then
+        delete _value;
+end;
+
+function LinkedListNodeOfTypeDeclaration.GetValue() : ^TypeDeclaration;
+begin
+    GetValue := _value;
+end;
+
+function LinkedListNodeOfTypeDeclaration.GetNext() : ^LinkedListNodeOfTypeDeclaration;
+begin
+    GetNext := _next;
+end;
+
+procedure LinkedListNodeOfTypeDeclaration.SetNext(next : ^LinkedListNodeOfTypeDeclaration);
+begin
+    _next := next;
+end;
+
+constructor LinkedListEnumeratorOfTypeDeclaration(head : ^LinkedListNodeOfTypeDeclaration);
+begin
+    _head := head;
+    _current := nil;
+    _started := false;
+end;
+
+constructor LinkedListOfTypeDeclaration();
+begin
+    _head := nil;
+    _tail := nil;
+end;
+
+destructor LinkedListOfTypeDeclaration();
+begin
+    Clear();
+end;
+
+function LinkedListOfTypeDeclaration.Add(item : ^TypeDeclaration) : boolean;
+var
+    node : ^LinkedListNodeOfTypeDeclaration;
+begin
+    node := new LinkedListNodeOfTypeDeclaration(item);
+    if node <> nil then
+    begin
+        Add := true;
+        if _tail <> nil then
+        begin
+            _tail^.SetNext(node);
+            _tail := node;
+        end
+        else
+        begin
+            _head := node;
+            _tail := node;
+        end;
+    end
+    else
+        Add := false;
+end;
+
+function LinkedListOfTypeDeclaration.GetEnumerator() : LinkedListEnumeratorOfTypeDeclaration;
+begin
+    GetEnumerator := LinkedListEnumeratorOfTypeDeclaration(_head);
+end;
+
+procedure LinkedListOfTypeDeclaration.Clear();
+var
+    node : ^LinkedListNodeOfTypeDeclaration;
+begin
+    while _head <> nil do
+    begin
+        node := _head;
+        _head := _head^.GetNext();
+        delete node;
+    end;
+end;
+

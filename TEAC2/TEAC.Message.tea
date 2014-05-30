@@ -1,0 +1,74 @@
+namespace TEAC;
+uses System, System.IO, System.Text, TEAC;
+
+constructor Message(
+    path : ^String;
+    line, column : integer;
+    severity : Severity;
+    message : ^String);
+begin
+    _path.assign(path);
+    _line := line;
+    _column := column;
+    _severity := severity;
+    _message.assign(message);
+end;
+
+destructor Message();
+begin
+end;
+
+function Message.Create(
+    path : ^String;
+    line, column : integer;
+    severity : Severity;
+    message : array of character) : ^Message;
+var
+    messageString : String;
+begin
+    Create := nil;
+    if messageString.TryAssign(message) then
+        Create := new Message(
+            path, 
+            line, 
+            column, 
+            severity, 
+            @messageString);
+end;
+
+function Message.GetSeverity() : Severity;
+begin
+    GetSeverity := _severity;
+end;
+
+function Message.ToString(value : ^String) : boolean;
+var
+    sb : SimpleStringBuilder;
+begin
+    ToString := sb.TryAppend(_path.Characters());
+    if ToString then
+        ToString := sb.TryAppend('(');
+    if ToString then
+        ToString := DefaultFormatter.TryFormat(_line, nil, @sb);
+    if ToString then
+        ToString := sb.TryAppend(',');
+    if ToString then
+        ToString := DefaultFormatter.TryFormat(_column, nil, @sb);
+    if ToString then
+        ToString := sb.TryAppend('):');
+    if ToString then
+    begin
+        if _severity = Severity.Error then
+            ToString := sb.TryAppend('Error')
+        else if _severity = Severity.Warning then
+            ToString := sb.TryAppend('Warning')
+        else
+            ToString := sb.TryAppend('Info');
+    end;
+    if ToString then
+        ToString := sb.TryAppend(':');
+    if ToString then
+        ToString := sb.TryAppend(_message.Characters());
+    if ToString then
+        ToString := sb.ToString(value);
+end;

@@ -1,0 +1,278 @@
+namespace TEAC;
+uses System, TEAC;
+
+destructor Token();
+begin
+end;
+
+function Token.GetType() : TokenType;
+begin
+    GetType := _type;
+end;
+
+function Token.GetStringValue() : ^String;
+begin
+    GetStringValue := @_stringValue;
+end;
+
+function Token.GetIntValue() : integer;
+begin
+    GetIntValue := _intValue;
+end;
+
+function Token.GetDoubleValue() : double;
+begin
+    GetDoubleValue := _doubleValue;
+end;
+
+function Token.GetKeywordValue() : Keyword;
+begin
+    GetKeywordValue := _keywordValue;
+end;
+
+function Token.GetPath() : ^String;
+begin
+    GetPath := @_path;
+end;
+
+function Token.GetLine() : integer;
+begin
+    GetLine := _line;
+end;
+
+function Token.GetColumn() : integer;
+begin
+    GetColumn := _column;
+end;
+
+function Token.Is(
+    tok : ^Token;
+    keyword : Keyword) : boolean;
+begin
+    Is := false;
+    if tok <> nil then
+        if tok^.GetType() = TokenType.Keyword then
+            if tok^.GetKeywordValue() = keyword then
+                Is := true;
+end;
+
+function Token.IsIdentifier(
+    tok : ^Token) : boolean;
+begin
+    IsIdentifier := false;
+    if tok <> nil then
+        if tok^.GetType() = TokenType.Identifier then
+            IsIdentifier := true;
+end;
+
+function Token.CreateIdentifier(
+    identifier : ^String;
+    path : ^String;
+    line, column : integer) : ^Token;
+begin
+    CreateIdentifier := new Token(
+        TokenType.Identifier,
+        Keyword.Dot,
+        identifier,
+        0,
+        0.0,
+        path,
+        line, column);
+end;
+
+function Token.CreateKeyword(
+    keyword : Keyword;
+    path : ^String;
+    line, column : integer) : ^Token;
+var
+    emptyString : String;
+begin
+    CreateKeyword := new Token(
+        TokenType.Keyword,
+        keyword,
+        @emptyString,
+        0,
+        0.0,
+        path,
+        line, 
+        column);
+end;
+
+function Token.CreateLiteral(
+    value : ^String;
+    path : ^String;
+    line, column : integer) : ^Token;
+begin
+    CreateLiteral := new Token(
+        TokenType.LiteralString,
+        Keyword.Dot,
+        value,
+        0,
+        0.0,
+        path,
+        line, 
+        column);
+end;
+
+function Token.CreateLiteral(
+    value : integer;
+    path : ^String;
+    line, column : integer) : ^Token;
+var
+    emptyString : String;
+begin
+    CreateLiteral := new Token(
+        TokenType.LiteralInteger,
+        Keyword.Dot,
+        @emptyString,
+        value,
+        0.0,
+        path,
+        line, 
+        column);
+end;
+
+function Token.CreateLiteral(
+    value : double;
+    path : ^String;
+    line, column : integer) : ^Token;
+var
+    emptyString : String;
+begin
+    CreateLiteral := new Token(
+        TokenType.LiteralDouble,
+        Keyword.Dot,
+        @emptyString,
+        0,
+        value,
+        path,
+        line,
+        column);
+end;
+
+constructor Token(
+    tokenType : TokenType; 
+    keywordValue : Keyword;
+    stringValue : ^String;
+    intValue : integer;
+    doubleValue : double;
+    path : ^String;
+    line, column : integer);
+begin
+    _path.assign(path);
+    _line := line;
+    _column := column;
+    _intValue := intValue;
+    _doubleValue := doubleValue;
+    _type := tokenType;
+    _keywordValue := keywordValue;
+    if stringValue <> nil then
+        _stringValue.assign(stringValue);
+end;
+
+function SharedBodyOfToken.Value() : ^Token;
+begin
+    Value := _value;
+end;
+
+function SharedBodyOfToken.AddRef() : integer;
+begin
+    _refCount := _refCount + 1;
+    AddRef := _refCount;
+end;
+
+function SharedBodyOfToken.Release() : integer;
+begin
+    _refCount := _refCount - 1;
+    Release := _refCount;
+    if _refCount = 0 then
+        delete this;
+end;
+
+function SharedBodyOfToken.Create(value : ^Token) : ^SharedBodyOfToken;
+var
+    res : ^SharedBodyOfToken;
+begin
+    res := new SharedBodyOfToken(value);
+    if res <> nil then
+        res^.AddRef();
+    Create := res;
+end;
+
+constructor SharedBodyOfToken(value : ^Token);
+begin
+    _value := value;
+    _refCount := 0;
+end;
+
+destructor SharedBodyOfToken();            
+begin
+    if _value <> nil then
+        delete _value;
+end;
+
+constructor SharedOfToken();
+begin
+    _value := nil;
+end;
+
+constructor SharedOfToken(copy : ^SharedOfToken);
+begin
+    _value := copy^._value;
+    if _value <> nil then
+        _value^.AddRef();
+end;
+
+destructor SharedOfToken();
+begin
+    if _value <> nil then
+        _value^.Release();
+end;
+
+procedure SharedOfToken.assign(copy : ^SharedOfToken);
+begin
+    if copy <> this then
+    begin
+        if _value <> nil then
+            _value^.Release();
+        _value := copy^._value;
+        if _value <> nil then
+            _value^.AddRef();
+    end;
+end;
+
+function SharedOfToken.TryAssign(value : ^Token) : boolean;
+var
+    newBody : ^SharedBodyOfToken = nil;
+begin
+    TryAssign := true;
+    if value <> nil then
+    begin
+        newBody := SharedBodyOfToken.Create(value);
+        TryAssign := newBody <> nil;
+    end;
+
+    if TryAssign then
+    begin
+        if _value <> nil then
+            _value^.Release();
+        _value := newBody;
+    end;
+end;
+
+function SharedOfToken.Value() : ^Token;
+begin
+    Value := nil;
+    if _value <> nil then
+        Value := _value^.Value();
+end;
+
+procedure SharedOfToken.Clear();
+begin
+    if _value <> nil then
+    begin
+        _value^.Release();
+        _value := nil;
+    end;
+end;
+

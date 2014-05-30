@@ -1,0 +1,21 @@
+namespace TEAC;
+uses TEAC, System;
+
+constructor CodeGenerator(log : ^MessageLog);
+begin
+    _log := log;
+end;
+
+function CodeGenerator.TryCreateTypes(
+    context : ^CompilerContext;
+    programUnit : ^ProgramUnit) : boolean;
+begin
+    TryCreateTypes := false;
+end;
+
+function CodeGenerator.CreateModule(
+    context : ^CompilerContext;
+    programUnit : ^ProgramUnit) : ^Module; 
+begin
+    CreateModule := nil;
+end;

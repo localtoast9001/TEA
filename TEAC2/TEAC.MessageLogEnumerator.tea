@@ -1,0 +1,34 @@
+namespace TEAC;
+uses System, System.IO, TEAC;
+
+constructor MessageLogEnumerator(head : ^LinkedListNodeOfMessage);
+begin
+    _head := head;
+    _current := nil;
+    _started := false;
+end;
+
+function MessageLogEnumerator.MoveNext() : boolean;
+begin
+    if not _started then
+    begin
+        _current := _head;
+        _started := true;
+    end
+    else
+    begin
+        if _current <> nil then
+            _current := _current^.GetNext();
+    end;
+
+    MoveNext := _current <> nil; 
+end;
+
+function MessageLogEnumerator.GetCurrent() : ^Message;
+begin
+    if _current = nil then
+        GetCurrent := nil
+    else
+        GetCurrent := _current^.GetValue();
+end;
+

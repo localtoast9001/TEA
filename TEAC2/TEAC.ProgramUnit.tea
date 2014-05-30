@@ -1,0 +1,46 @@
+namespace TEAC;
+uses TEAC, System;
+
+constructor ProgramUnit(start : ^SharedOfToken);
+inherited(start);
+begin
+    _globalVars := nil;
+end;
+
+destructor ProgramUnit();
+begin
+    if _globalVars <> nil then
+        delete _globalVars;
+end;
+
+procedure ProgramUnit.SetNamespace(value : ^String);
+begin
+    _namespace.assign(value);
+end;
+
+function ProgramUnit.AddUses(item : ^String) : boolean;
+begin
+    AddUses := _usesReferences.Add(item);
+end;
+
+procedure ProgramUnit.SetGlobalVars(varBlock : ^VarBlock);
+begin
+    if _globalVars <> nil then
+        delete _globalVars;
+    _globalVars := varBlock;
+end;
+
+function ProgramUnit.GetGlobalVars() : ^VarBlock;
+begin
+    GetGlobalVars := _globalVars;
+end;
+
+function ProgramUnit.AddType(item : ^TypeDeclaration) : boolean;
+begin
+    AddType := _typeList.Add(item);
+end;
+
+function ProgramUnit.GetTypes() : ^LinkedListOfTypeDeclaration;
+begin
+    GetTypes := @_typeList;
+end;

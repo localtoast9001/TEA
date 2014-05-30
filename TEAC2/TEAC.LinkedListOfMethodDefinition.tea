@@ -1,0 +1,88 @@
+namespace TEAC;
+uses System, System.IO, TEAC;
+
+constructor LinkedListNodeOfMethodDefinition(value : ^MethodDefinition);
+begin
+    _value := value;
+    _next := nil;
+end;
+
+destructor LinkedListNodeOfMethodDefinition();
+begin
+    if _value <> nil then
+        delete _value;
+end;
+
+function LinkedListNodeOfMethodDefinition.GetValue() : ^MethodDefinition;
+begin
+    GetValue := _value;
+end;
+
+function LinkedListNodeOfMethodDefinition.GetNext() : ^LinkedListNodeOfMethodDefinition;
+begin
+    GetNext := _next;
+end;
+
+procedure LinkedListNodeOfMethodDefinition.SetNext(next : ^LinkedListNodeOfMethodDefinition);
+begin
+    _next := next;
+end;
+
+constructor LinkedListEnumeratorOfMethodDefinition(head : ^LinkedListNodeOfMethodDefinition);
+begin
+    _head := head;
+    _current := nil;
+    _started := false;
+end;
+
+constructor LinkedListOfMethodDefinition();
+begin
+    _head := nil;
+    _tail := nil;
+end;
+
+destructor LinkedListOfMethodDefinition();
+begin
+    Clear();
+end;
+
+function LinkedListOfMethodDefinition.Add(item : ^MethodDefinition) : boolean;
+var
+    node : ^LinkedListNodeOfMethodDefinition;
+begin
+    node := new LinkedListNodeOfMethodDefinition(item);
+    if node <> nil then
+    begin
+        Add := true;
+        if _tail <> nil then
+        begin
+            _tail^.SetNext(node);
+            _tail := node;
+        end
+        else
+        begin
+            _head := node;
+            _tail := node;
+        end;
+    end
+    else
+        Add := false;
+end;
+
+function LinkedListOfMethodDefinition.GetEnumerator() : LinkedListEnumeratorOfMethodDefinition;
+begin
+    GetEnumerator := LinkedListEnumeratorOfMethodDefinition(_head);
+end;
+
+procedure LinkedListOfMethodDefinition.Clear();
+var
+    node : ^LinkedListNodeOfMethodDefinition;
+begin
+    while _head <> nil do
+    begin
+        node := _head;
+        _head := _head^.GetNext();
+        delete node;
+    end;
+end;
+
