@@ -1,0 +1,160 @@
+namespace System.Text;
+uses System, System.Text;
+
+constructor SimpleStringBuilder();
+begin
+    _buffer := nil;
+    _capacity := 16;
+    _growth := 16;
+    _size := 0;
+    _length := 0;
+end;
+
+constructor SimpleStringBuilder(capacity : integer);
+begin
+    _buffer := nil;
+    _capacity := capacity;
+    _growth := 16;
+    _size := 0;
+    _length := 0;
+end;
+
+destructor SimpleStringBuilder();
+begin
+    if _buffer <> nil then
+        Memory.Free(_buffer);
+end;
+
+function SimpleStringBuilder.TryAppend(source : ^String) : boolean;
+begin
+    TryAppend := false;
+    if source <> nil then
+        TryAppend := this^.TryAppend(source^.Characters());
+end;
+
+function SimpleStringBuilder.TryAppend(source : character) : boolean;
+begin
+    if GrowBuffer(_length + 2) then
+    begin
+        TryAppend := true;
+        _buffer[_length] := source;
+        _length := _length + 1;
+        _buffer[_length] := Convert.ToCharacter(0);
+    end
+    else
+        TryAppend := false;
+end;
+
+function SimpleStringBuilder.TryAppend(source : array of character) : boolean;
+var
+    sourceLen : integer = GetLength(source);
+    sourceIndex : integer = 0;
+    targetIndex : integer = _length;
+begin
+    if GrowBuffer(_length + sourceLen + 1) then
+    begin
+        while sourceIndex <= sourceLen do
+        begin
+            _buffer[targetIndex] := source[sourceIndex];
+            sourceIndex := sourceIndex + 1;
+            targetIndex := targetIndex + 1;
+        end;
+
+        _length := _length + sourceLen;
+        TryAppend := true;
+    end
+    else
+        TryAppend := false;
+end;
+
+function SimpleStringBuilder.TryAssign(source : ^String) : boolean;
+begin
+    TryAssign := false;
+    if source <> nil then
+        TryAssign := this^.TryAssign(source^.Characters());
+end;
+
+function SimpleStringBuilder.TryAssign(source : array of character) : boolean;
+var
+    sourceLen : integer = GetLength(source);
+    targetIndex : integer = 0;
+    sourceIndex : integer = 0;
+begin
+    if GrowBuffer(sourceLen + 1) then
+    begin
+        while sourceIndex <= sourceLen do
+        begin
+            _buffer[targetIndex] := source[sourceIndex];
+            sourceIndex := sourceIndex + 1;
+            targetIndex := targetIndex + 1;
+        end;
+
+        _length := sourceLen;
+        TryAppend := true;
+    end
+    else
+        TryAppend := false;
+end;
+
+function SimpleStringBuilder.ToString(value : ^String) : boolean;
+begin
+    if _buffer <> nil then
+        ToString := value^.TryAssign(_buffer)
+    else
+        ToString := value^.TryAssign('');
+end;
+
+function SimpleStringBuilder.GetBuffer() : array of character;
+begin
+    GetBuffer := _buffer;
+end;
+
+function SimpleStringBuilder.GrowBuffer(newSize : integer) : boolean;
+var
+    chunkedSize : integer = _size;
+    newBuffer : array of character;
+    index : integer;
+begin
+    if newSize <= _size then
+        GrowBuffer := true
+    else
+    begin
+        if chunkedSize < _capacity then
+            chunkedSize := _capacity;
+        while chunkedSize < newSize do
+            chunkedSize := chunkedSize + _growth;
+        newBuffer := Memory.Alloc(chunkedSize * 2);
+        GrowBuffer := newBuffer <> nil;
+
+        if GrowBuffer then
+        begin
+            if _buffer <> nil then
+            begin
+                index := 0;
+                while index < _size do
+                begin   
+                    newBuffer[index] := _buffer[index];
+                    index := index + 1;
+                end;
+                Memory.Free(_buffer);
+                _buffer := newBuffer;
+                _size := chunkedSize;
+            end
+            else
+            begin
+                _buffer := newBuffer;
+                _size := chunkedSize;
+                _buffer[0] := Convert.ToCharacter(0);
+            end;
+        end;
+    end;
+end;
+
+function SimpleStringBuilder.GetLength(source : array of character) : integer;
+var
+    nullTerm : character = Convert.ToCharacter(0);
+begin
+    GetLength := 0;
+    while source[GetLength] <> nullTerm do
+        GetLength := GetLength + 1;
+end;

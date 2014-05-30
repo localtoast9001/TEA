@@ -1,0 +1,62 @@
+namespace System.Text;
+uses System, System.Text;
+
+constructor ASCIIEncoding();
+begin
+end;
+
+destructor ASCIIEncoding();
+begin
+end;
+
+function ASCIIEncoding.GetChars(
+    bytes : array of byte;
+    byteIndex, byteCount : integer;
+    chars : array of character;
+    charsSize, charIndex : integer) : integer;
+var
+    i : integer = 0;
+begin
+    if byteCount > charsSize - charIndex then
+        GetChars := 0
+    else
+    begin
+        while i < byteCount do
+        begin
+            chars[charIndex] := Convert.ToCharacter(Convert.ToShort(bytes[byteIndex]));
+            charIndex := charIndex + 1;
+            byteIndex := byteIndex + 1;
+            i := i + 1;
+        end;
+
+        GetChars := i;
+    end;
+end;
+
+function ASCIIEncoding.GetBytes(
+    chars : array of character;
+    charIndex, charCount : integer;
+    bytes : array of byte;
+    bytesSize, byteIndex : integer) : integer;
+var
+    i : integer = 0;
+    ch : short;
+    unresolved : byte = Convert.Lo(Convert.Lo(63));
+begin
+    if bytesSize - byteIndex < charCount then
+        GetBytes := 0
+    else
+    begin
+        while i < charCount do
+        begin
+            ch := Convert.ToShort(chars[charIndex]);
+            if (ch < 256) and (ch >= 0) then
+                bytes[byteIndex] := Convert.Lo(ch)
+            else
+                bytes[byteIndex] := unresolved;
+            i := i + 1;
+            byteIndex := byteIndex + 1;
+            charIndex := charIndex + 1;
+        end;
+    end;
+end;

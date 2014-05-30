@@ -1,0 +1,74 @@
+namespace System.Text;
+uses System;
+
+type
+    CharacterUtility = public static class
+        public
+            static function IsWhiteSpace(ch : character) : boolean;
+            static function IsDigit(ch : character) : boolean;
+            static function IsLetter(ch : character) : boolean;
+            static function IsLetterOrDigit(ch : character) : boolean;
+    end;
+    SimpleStringBuilder = public class
+        public
+            constructor();
+            constructor(capacity : integer);
+            virtual destructor();
+            function TryAppend(source : character) : boolean;
+            function TryAppend(source : ^String) : boolean;
+            function TryAppend(source : array of character) : boolean;
+            function TryAssign(source : array of character) : boolean;
+            function TryAssign(source : ^String) : boolean;
+            function ToString(value : ^String) : boolean;
+            function GetBuffer() : array of character;
+        private
+            function GrowBuffer(newSize : integer) : boolean;
+            static function GetLength(source : array of character) : integer;
+        var
+            _buffer : array of character;
+            _length, _size, _capacity, _growth : integer;
+    end;
+    IFormatter = public interface
+        function TryFormat(
+            value : integer; 
+            format : array of character; 
+            outputBuffer : ^SimpleStringBuilder) : boolean;
+    end;
+    DefaultFormatter = public static class
+        public
+            static function TryFormat(
+                value : integer; 
+                format : array of character; 
+                outputBuffer : ^SimpleStringBuilder) : boolean;
+    end;
+    Encoding = public {abstract} class
+        public
+            virtual destructor();
+            abstract function GetChars(
+                bytes : array of byte;
+                byteIndex, byteCount : integer;
+                chars : array of character;
+                charsSize, charIndex : integer) : integer;
+            abstract function GetBytes(
+                chars : array of character;
+                charIndex, charCount : integer;
+                bytes : array of byte;
+                bytesSize, byteIndex : integer) : integer;
+        protected
+            constructor();
+    end;
+    ASCIIEncoding = public class(Encoding)
+        public
+            constructor();
+            virtual destructor();
+            virtual function GetChars(
+                bytes : array of byte;
+                byteIndex, byteCount : integer;
+                chars : array of character;
+                charsSize, charIndex : integer) : integer;
+            virtual function GetBytes(
+                chars : array of character;
+                charIndex, charCount : integer;
+                bytes : array of byte;
+                bytesSize, byteIndex : integer) : integer;
+    end;

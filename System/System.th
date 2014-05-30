@@ -69,6 +69,17 @@ type
             constructor(source : ^String);
             destructor();
 
+            static function CompareOrdinal(
+                a, b : ^String) : integer;
+            static function CompareOrdinal(
+                a : ^String;
+                b : array of character) : integer;
+            static function CompareOrdinal(
+                a : array of character;
+                b : ^String) : integer;
+            static function CompareOrdinal(
+                a, b : array of character) : integer;
+
             procedure assign(source : ^String);
             function Length() : integer;
             function Characters() : array of character;

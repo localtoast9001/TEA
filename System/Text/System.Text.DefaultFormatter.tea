@@ -1,0 +1,46 @@
+namespace System.Text;
+uses System, System.Text;
+
+function DefaultFormatter.TryFormat(
+    value : integer; 
+    format : array of character; 
+    outputBuffer : ^SimpleStringBuilder) : boolean;
+var
+    buffer : array [16] of character;
+    index : integer = 15;
+    zeroString : array of character = '0';
+    zero : character;
+    negativeString : array of character = '-';
+    negativeChar : character;
+    negative : boolean;
+    digit : integer;
+begin
+    negative := value < 0;
+    if negative then
+        value := -value;
+    zero := zeroString[0];
+    negativeChar := negativeString[0];
+    buffer[index] := Convert.ToCharacter(0);
+    if value = 0 then
+    begin
+        index := index - 1;
+        buffer[index] := zero;
+    end
+    else
+    begin
+        while value <> 0 do
+        begin
+            digit := value mod 10;
+            value := value div 10;
+            index := index - 1;
+            buffer[index] := zero + digit;
+        end;
+        if negative then
+        begin
+            index := index - 1;
+            buffer[index] := negativeChar;
+        end;
+    end;
+
+    TryFormat := outputBuffer^.TryAppend(buffer + index);
+end;     

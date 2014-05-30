@@ -1,5 +1,5 @@
 namespace System.IO;
-uses System;
+uses System, System.Text;
 
 type
     Stream = public {abstract} class
@@ -155,4 +155,29 @@ type
             abstract function Write(
                 buffer : array of character;
                 index, count : integer) : boolean;
-    end; 
+    end;
+
+    StreamReader = public class(TextReader)
+        public
+            constructor();
+            constructor(
+                stream : ^Stream; 
+                ownStream : boolean;
+                encoding : ^Encoding;
+                ownEncoding : boolean);
+            function Open(path : array of character) : boolean;
+            virtual destructor();
+            virtual procedure Close();
+            virtual function Peek() : integer;
+            virtual function Read() : integer;
+            virtual function Read(
+                buffer : array of character;
+                index, count : integer) : integer;
+        var
+            _stream : ^Stream;
+            _ownStream : boolean;
+            _encoding : ^Encoding;
+            _ownEncoding : boolean;
+            _peekChar : integer;
+    end;
+ 

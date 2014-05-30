@@ -1,0 +1,22 @@
+namespace System.Text;
+uses System, System.IO, System.Text;
+
+function CharacterUtility.IsWhiteSpace(ch : character) : boolean;
+begin
+    IsWhiteSpace := (ch = 9) or (ch = 32) or (ch = 10) or (ch = 13);
+end;
+
+function CharacterUtility.IsDigit(ch : character) : boolean;
+begin
+    IsDigit := (ch >= 48) and (ch <= 57);
+end;
+
+function CharacterUtility.IsLetter(ch : character) : boolean;
+begin
+    IsLetter := (ch >= 65) and (ch <= 90) or (ch >= 91) and (ch <= 122);
+end;
+
+function CharacterUtility.IsLetterOrDigit(ch : character) : boolean;
+begin
+    IsLetterOrDigit := IsLetter(ch) or IsDigit(ch);
+end;

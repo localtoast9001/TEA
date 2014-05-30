@@ -107,6 +107,55 @@ begin
     end;
 end;
 
+function String.CompareOrdinal(
+    a, b : ^String) : integer;
+begin
+    CompareOrdinal := String.CompareOrdinal(
+        a^.Characters(),
+        b^.Characters());
+end;
+
+function String.CompareOrdinal(
+    a : ^String;
+    b : array of character) : integer;
+begin
+    CompareOrdinal := String.CompareOrdinal(
+        a^.Characters(),
+        b);
+end;
+
+function String.CompareOrdinal(
+    a : array of character;
+    b : ^String) : integer;
+begin
+    CompareOrdinal := String.CompareOrdinal(
+        a,
+        b^.Characters());
+end;
+
+function String.CompareOrdinal(
+    a, b : array of character) : integer;
+var
+    i : integer = 0;
+    c, as, bs : integer;
+    done : boolean = false;
+begin
+    while not done do
+    begin
+        as := Convert.ToInteger(Convert.ToShort(a[i]));
+        bs := Convert.ToInteger(Convert.ToShort(b[i]));
+        c := bs - as;
+        i := i + 1;
+        done := (c <> 0) or (as = 0) or (bs = 0); 
+    end;
+    if c < 0 then
+        CompareOrdinal := -1
+    else if c > 0 then
+        CompareOrdinal := 1
+    else 
+        CompareOrdinal := 0;
+end;
+
 procedure String.assign(source : ^String);
 begin
     if source <> nil then

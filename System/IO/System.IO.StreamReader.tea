@@ -1,0 +1,158 @@
+namespace System.IO;
+uses System, System.IO, System.Text;
+
+constructor StreamReader();
+begin
+    _peekChar := -1;
+    _stream := nil;
+    _ownStream := false;
+    _encoding := nil;
+    _ownEncoding := false;
+end;
+
+constructor StreamReader(
+    stream : ^Stream; 
+    ownStream : boolean;
+    encoding : ^Encoding;
+    ownEncoding : boolean);
+begin
+    _peekChar := -1;
+    _stream := stream;
+    _ownStream := ownStream;
+    _encoding := encoding;
+    _ownEncoding := ownEncoding;
+end;
+
+function StreamReader.Open(
+    path : array of character) : boolean;
+var
+    fs : ^FileStream = nil;
+begin
+    Close();
+    _encoding := new ASCIIEncoding();
+    _ownEncoding := true;
+    Open := _encoding <> nil;
+    if Open then
+    begin
+        fs := new FileStream();
+        _stream := fs;
+        _ownStream := true;
+        Open := _stream <> nil;
+        if Open then
+        begin
+            Open := fs^.Open(path, true, false);
+        end;
+    end;
+end;
+
+destructor StreamReader();
+begin
+    Close();
+end;
+
+procedure StreamReader.Close();
+begin
+    _peekChar := -1;
+    if _ownStream and (_stream <> nil) then
+        delete _stream;
+    _ownStream := false;
+    _stream := nil;
+    if _ownEncoding and (_encoding <> nil) then
+        delete _encoding;
+    _ownEncoding := false;
+    _encoding := nil;
+end;
+
+function StreamReader.Peek() : integer;
+begin
+    if _peekChar >= 0 then
+        Peek := _peekChar
+    else
+    begin
+        _peekChar := Read();
+        Peek := _peekChar;
+    end;
+end;
+
+function StreamReader.Read() : integer;
+var
+    buffer : array [2] of character;
+begin
+    if _peekChar >= 0 then
+    begin
+        Read := _peekChar;
+        _peekChar := -1;
+    end
+    else
+    begin
+        if this^.Read(buffer, 0, 1) = 1 then
+            Read := Convert.ToInteger(Convert.ToShort(buffer[0]))
+        else
+            Read := -1;
+    end;
+end;
+
+function StreamReader.Read(
+    buffer : array of character;
+    index, count : integer) : integer;
+var
+    byteBuffer : array [16] of byte;
+    charsRead : integer = 0;
+    charsConverted : integer = 0;
+    bytesRead : integer = 0;
+    done : boolean = false;
+begin
+    if (_stream = nil) or (_encoding = nil) then
+    begin
+        done := true;
+        Read := 0;
+    end;
+    if not done and (_peekChar >= 0) then
+    begin
+        buffer[index] := Convert.ToCharacter(Convert.Lo(_peekChar));
+        charsRead := charsRead + 1;
+        _peekChar := -1;
+        index := index + 1;
+        count := count - 1;
+    end;
+
+    while (count > 16) and not done do
+    begin
+        bytesRead := _stream^.Read(byteBuffer, 0, 16);
+        if bytesRead <= 0 then
+            done := true
+        else
+        begin
+            charsConverted := _encoding^.GetChars(
+                byteBuffer,
+                0,
+                bytesRead,
+                buffer,
+                count,
+                index);
+            index := index + charsConverted;
+            count := count - charsConverted;
+            charsRead := charsRead + charsConverted; 
+        end;
+    end;
+    if (count > 0) and not done then
+    begin
+        bytesRead := _stream^.Read(byteBuffer, 0, count);
+        if bytesRead <= 0 then
+            done := true
+        else
+        begin
+            charsConverted := _encoding^.GetChars(
+                byteBuffer,
+                0,
+                bytesRead,
+                buffer,
+                count,
+                index);
+            index := index + charsConverted;
+            count := count - charsConverted;
+            charsRead := charsRead + charsConverted; 
+        end;        
+    end; 
+    Read := charsRead;
+end;

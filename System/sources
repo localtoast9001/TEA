@@ -13,3 +13,10 @@ Graphics\System.Graphics.Size.tea
 IO\System.IO.FileStream.tea
 IO\System.IO.MemoryStream.tea
 IO\System.IO.Stream.tea
+IO\System.IO.TextReader.tea
+IO\System.IO.StreamReader.tea
+Text\System.Text.SimpleStringBuilder.tea
+Text\System.Text.DefaultFormatter.tea
+Text\System.Text.ASCIIEncoding.tea
+Text\System.Text.CharacterUtility.tea
+Text\System.Text.Encoding.tea

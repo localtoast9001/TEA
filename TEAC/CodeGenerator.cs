@@ -2424,6 +2424,12 @@ namespace TEAC
                     {
                         case Keyword.Plus:
                             {
+                                if (leftSideType.IsPointer || leftSideType.IsArray)
+                                {
+                                    int elementSize = leftSideType.InnerType.Size;
+                                    method.Statements.Add(new AsmStatement { Instruction = "imul ecx," + elementSize });
+                                }
+
                                 method.Statements.Add(new AsmStatement { Instruction = "add eax,ecx" });
                             } break;
                         case Keyword.Minus:
@@ -2809,7 +2815,7 @@ namespace TEAC
                     return false;
                 }
 
-                if (innerType.Size > 4)
+                if (innerType.ArrayElementCount > 0)
                 {
                     method.Statements.Add(new AsmStatement { Instruction = "lea ecx," + innerLoc });
                 }
