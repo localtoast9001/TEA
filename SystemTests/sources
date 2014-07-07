@@ -1,2 +1,4 @@
 SystemTests.MathModule.tea
+SystemTests.TextModule.tea
+SystemTests.StringModule.tea
 SystemTests.Program.tea

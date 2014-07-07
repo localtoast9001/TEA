@@ -14,6 +14,12 @@ function Program.Main(
     argv : array of array of character) : integer;
 var
     mathModule : MathModule;
+    textModule : TextModule;
+    stringModule : StringModule;
 begin
     Main := TestRunner.Run(@mathModule, argc, argv);
+    if Main = 0 then
+        Main := TestRunner.Run(@textModule, argc, argv);
+    if Main = 0 then
+        Main := TestRunner.Run(@stringModule, argc, argv);
 end;

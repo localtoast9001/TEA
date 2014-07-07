@@ -1,0 +1,88 @@
+namespace SystemTests;
+uses SystemTests, System, System.Text, Test;
+
+type
+    DefaultFormatter1 = class(Test)
+        public
+            constructor();
+            virtual destructor();
+            virtual function Execute(context : ^TestContext) : boolean;
+            virtual function Name() : array of character;
+            virtual function Description() : array of character;
+    end;
+
+constructor DefaultFormatter1();
+begin
+end;
+
+destructor DefaultFormatter1();
+begin
+end;
+
+function DefaultFormatter1.Execute(context : ^TestContext) : boolean;
+var
+    sb : SimpleStringBuilder; 
+    expected : array of character = '1234';
+    actual : String;
+    actualChars : array of character;
+begin
+    Execute := DefaultFormatter.TryFormat(1234, nil, @sb);
+    if Execute then
+    begin
+        Execute := sb.ToString(@actual);
+    end;
+
+    if Execute then
+    begin
+        Execute := actual.Length() = 4;
+        if Execute then
+        begin
+            actualChars := actual.Characters();
+            Execute := 
+                (expected[0] = actualChars[0]) and
+                (expected[1] = actualChars[1]) and
+                (expected[2] = actualChars[2]) and
+                (expected[3] = actualChars[3]);
+        end;
+    end;
+end;
+
+function DefaultFormatter1.Name() : array of character;
+begin
+    Name := 'DefaultFormatter1Test';
+end;
+
+function DefaultFormatter1.Description() : array of character;
+begin
+    Description := 'Tests integer format.';
+end;
+
+constructor TextModule();
+begin
+    _tests[0] := new DefaultFormatter1();
+end;
+
+destructor TextModule();
+begin
+    delete _tests[0];
+end;
+
+function TextModule.Name() : array of character;
+begin
+    Name := 'TextModule';
+end;
+
+function TextModule.Description() : array of character;
+begin
+    Description := 'System.Text tests.';
+end;
+
+function TextModule.Tests() : ^TestIterator;
+begin
+    Tests := new ArrayTestIterator(_tests, 1);
+end;
+
+function TextModule.Init(context : ^TestContext) : boolean;
+begin
+    Init := true;
+end;

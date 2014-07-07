@@ -70,15 +70,25 @@ namespace TEAC
                 if (!context.TryDeclareType(typeDecl.Name, out typeDef))
                 {
                     string message = string.Format(
-                        Properties.Resources.CodeGenerator_TypeAlreadyDeclared, 
+                        Properties.Resources.CodeGenerator_TypeAlreadyDeclared,
                         typeDecl.Name);
                     log.Write(new Message(
-                        typeDecl.Start.Path, 
-                        typeDecl.Start.Line, 
-                        typeDecl.Start.Column, 
+                        typeDecl.Start.Path,
+                        typeDecl.Start.Line,
+                        typeDecl.Start.Column,
                         Severity.Error,
                         message));
                     failed = true;
+                }
+            }
+
+            foreach (TypeDeclaration typeDecl in programUnit.Types)
+            {
+                TypeDefinition typeDef = null;
+                if (!context.TryFindTypeByName(typeDecl.Name, out typeDef))
+                {
+                    failed = true;
+                    continue;
                 }
 
                 EnumDeclaration enumDecl = typeDecl as EnumDeclaration;

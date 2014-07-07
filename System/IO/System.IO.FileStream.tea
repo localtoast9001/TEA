@@ -57,7 +57,7 @@ function FileStream.Read(
     buffer : array of byte;
     offset, count : integer) : integer;
 var
-    pStart : ^byte;
+    pStart : array of byte;
 begin
     pStart := buffer;
     pStart := pStart + offset;
@@ -68,7 +68,7 @@ function FileStream.Write(
     buffer : array of byte;
     offset, count : integer) : boolean;
 var
-    pStart : ^byte;
+    pStart : array of byte;
     bytesWritten : integer;
 begin
     pStart := buffer;

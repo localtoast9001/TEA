@@ -9,17 +9,30 @@ end;
 
 function StringBuffer.Create(source : array of character) : ^StringBuffer;
 var
-    bufferLen, index : integer = 0;    
-    charBuffer : array of character = nil;
+    bufferLen : integer = 0;
 begin
-    Create := nil;
     if source <> nil then
     begin
         while source[bufferLen] <> 0 do
         begin
             bufferLen := bufferLen + 1;
         end;
-        bufferLen := bufferLen + 1;
+    end;
+    Create := StringBuffer.Create(source, 0, bufferLen);
+end;
+
+function StringBuffer.Create(
+    source : array of character;
+    startIndex, length : integer) : ^StringBuffer;
+var
+    index : integer = 0;
+    bufferLen : integer = 0;  
+    charBuffer : array of character = nil;
+begin
+    Create := nil;
+    if source <> nil then
+    begin
+        bufferLen := length + 1;
         charBuffer := Memory.Alloc(bufferLen * 2);
         if charBuffer <> nil then
         begin
@@ -28,11 +41,12 @@ begin
             begin
                 Create^.AddRef();
                 Create^._buffer := charBuffer;
-                while index < bufferLen do
+                while index < length do
                 begin
-                    charBuffer[index] := source[index];
+                    charBuffer[index] := source[startIndex + index];
                     index := index + 1;
                 end;
+                charBuffer[index] := Convert.ToCharacter(0);
             end
             else
             begin
@@ -210,4 +224,56 @@ begin
     Characters := '';
     if _bufferRef <> nil then
         Characters := _bufferRef^.GetBuffer();
+end;
+
+function String.LastIndexOf(
+    ch : character) : integer;
+var
+    index : integer = 0;
+    chars : array of character = Characters();
+begin
+    LastIndexOf := -1;
+    while chars[index] <> 0 do
+    begin
+        if chars[index] = ch then
+            LastIndexOf := index;
+        index := index + 1;
+    end;
+end;
+
+function String.Substring(
+    startIndex : integer;
+    value : ^String) : boolean;
+begin
+    Substring := this^.Substring(
+        startIndex,
+        Length() - startIndex,
+        value);
+end;
+
+function String.Substring(
+    startIndex, length : integer;
+    value : ^String) : boolean;
+var
+    actualStartIndex : integer = startIndex;
+    actualLength : integer = length;
+    chars : array of character = Characters();
+    newBuffer : ^StringBuffer = 0;
+begin
+    if startIndex < 0 then
+        actualStartIndex := 0;
+    if actualLength > Length() - actualStartIndex then
+        actualLength := Length() - actualStartIndex;
+    newBuffer := StringBuffer.Create(
+        chars, 
+        actualStartIndex, 
+        actualLength);
+    if newBuffer <> nil then
+    begin
+        if value^._bufferRef <> nil then
+            value^._bufferRef^.Release();
+        value^._bufferRef := newBuffer;
+    end;
+
+    Substring := newBuffer <> nil;
 end;

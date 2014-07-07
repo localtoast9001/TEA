@@ -1,0 +1,81 @@
+namespace SystemTests;
+uses SystemTests, System, System.Text, Test;
+
+type
+    SubstringTest1 = class(Test)
+        public
+            constructor();
+            virtual destructor();
+            virtual function Execute(context : ^TestContext) : boolean;
+            virtual function Name() : array of character;
+            virtual function Description() : array of character;
+    end;
+
+constructor SubstringTest1();
+begin
+end;
+
+destructor SubstringTest1();
+begin
+end;
+
+function SubstringTest1.Execute(context : ^TestContext) : boolean;
+var
+    source : String;
+    actual1 : String;
+    actual2 : String;
+begin
+    Execute := source.TryAssign('A.B.C.D');
+    if Execute then
+        Execute := source.Substring(4, @actual1);
+    if Execute then
+        Execute := actual1.Length() = 3;
+    if Execute then
+        Execute := String.CompareOrdinal(@actual1, 'C.D') = 0;
+    if Execute then
+        Execute := source.Substring(2, 3, @actual2);
+    if Execute then
+        Execute := actual2.Length() = 3;
+    if Execute then
+        Execute := String.CompareOrdinal(@actual2, 'B.C') = 0;
+end;
+
+function SubstringTest1.Name() : array of character;
+begin
+    Name := 'SubstringTest1Test';
+end;
+
+function SubstringTest1.Description() : array of character;
+begin
+    Description := 'Tests Substring.';
+end;
+
+constructor StringModule();
+begin
+    _tests[0] := new SubstringTest1();
+end;
+
+destructor StringModule();
+begin
+    delete _tests[0];
+end;
+
+function StringModule.Name() : array of character;
+begin
+    Name := 'StringModule';
+end;
+
+function StringModule.Description() : array of character;
+begin
+    Description := 'System.String tests.';
+end;
+
+function StringModule.Tests() : ^TestIterator;
+begin
+    Tests := new ArrayTestIterator(_tests, 1);
+end;
+
+function StringModule.Init(context : ^TestContext) : boolean;
+begin
+    Init := true;
+end;

@@ -54,6 +54,9 @@ type
         public
             constructor();
             static function Create(source : array of character) : ^StringBuffer;
+            static function Create(
+                source : array of character;
+                startIndex, length : integer) : ^StringBuffer;
             static function GetEmpty() : ^StringBuffer;
             procedure AddRef();
             procedure Release();
@@ -87,6 +90,14 @@ type
                 source : array of character) : boolean;
             function TryAppend(
                 source : ^String) : boolean;
+            function LastIndexOf(
+                ch : character) : integer;
+            function Substring(
+                startIndex : integer;
+                value : ^String) : boolean;
+            function Substring(
+                startIndex, length : integer;
+                value : ^String) : boolean;
         var
             _bufferRef : ^StringBuffer;
     end;
