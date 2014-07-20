@@ -1,0 +1,121 @@
+namespace System.IO;
+uses System, System.IO, System.Text;
+
+constructor StreamWriter();
+begin
+    _stream := nil;
+    _ownStream := false;
+    _encoding := nil;
+    _ownEncoding := false;
+end;
+
+constructor StreamWriter(
+    stream : ^Stream; 
+    ownStream : boolean;
+    encoding : ^Encoding;
+    ownEncoding : boolean);
+begin
+    _stream := stream;
+    _ownStream := ownStream;
+    _encoding := encoding;
+    _ownEncoding := ownEncoding;
+end;
+
+destructor StreamWriter();
+begin
+    Close();
+end;
+
+procedure StreamWriter.Close();
+begin
+    if _ownStream and (_stream <> nil) then
+        delete _stream;
+    _stream := nil;
+    _ownStream := false;
+    if _ownEncoding and (_encoding <> nil) then
+        delete _encoding;
+    _encoding := nil;
+    _ownEncoding := false;
+end;
+
+function StreamWriter.Flush() : boolean;
+begin
+    if _stream <> nil then
+        Flush := _stream^.Flush()
+    else
+        Flush := false;
+end;
+
+function StreamWriter.Write(
+    buffer : array of character;
+    index, count : integer) : boolean;
+var
+    bytes : array [16] of byte;
+    byteCount : integer;
+    charCountLeft : integer = count;
+    offset : integer = 0;
+    done, success : boolean = false;
+begin
+    if (_stream <> nil) and (_encoding <> nil) then
+    begin
+        success := true;
+        while (charCountLeft > 16) and not done do
+        begin
+            {TODO: Fix this for MB}
+            _encoding^.GetBytes(
+                buffer, 
+                index + offset, 
+                16,
+                bytes,
+                16,
+                0);
+            if _stream^.Write(bytes, 0, 16) then
+            begin
+                offset := offset + 16;
+                charCountLeft := charCountLeft - 16;
+            end
+            else
+            begin
+                done := true;
+                success := false;
+            end;
+        end;
+        if not done and (charCountLeft > 0) then
+        begin
+            byteCount := _encoding^.GetBytes(
+                buffer,
+                index + offset,
+                charCountLeft,
+                bytes,
+                16,
+                0);
+            if not _stream^.Write(bytes, 0, byteCount) then
+            begin
+                success := false;
+            end;
+        end;
+    end; 
+    Write := success;
+end;
+
+function StreamWriter.Open(path : array of character) : boolean;
+var
+    fs : ^FileStream = nil;
+begin
+    Close();
+    _encoding := new ASCIIEncoding();
+    _ownEncoding := true;
+    Open := _encoding <> nil;
+    if Open then
+    begin
+        fs := new FileStream();
+        _stream := fs;
+        _ownStream := true;
+        Open := _stream <> nil;
+        if Open then
+        begin
+            Open := fs^.Open(path, false, true);
+        end;
+    end;
+end;
+

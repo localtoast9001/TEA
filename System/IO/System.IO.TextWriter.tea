@@ -1,0 +1,36 @@
+namespace System.IO;
+uses System, System.IO, System.Text;
+
+destructor TextWriter();
+begin
+end;
+
+procedure TextWriter.Close();
+begin
+end;
+
+function TextWriter.Flush() : boolean;
+begin
+    Flush := true;
+end;
+
+function TextWriter.Write(value : character) : boolean;
+var
+    valArray : array of character = @value;
+begin
+    Write := this^.Write(valArray, 0, 1);
+end;
+
+function TextWriter.Write(value : ^String) : boolean;
+begin
+    Write := this^.Write(value^.Characters(), 0, value^.Length());
+end;
+
+function TextWriter.Write(value : array of character) : boolean;
+var
+    len : integer = 0;
+begin
+    while value[len] <> 0 do
+        len := len + 1;
+    Write := this^.Write(value, 0, len); 
+end;

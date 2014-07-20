@@ -150,7 +150,7 @@ type
             virtual procedure Close();
             virtual function Flush() : boolean;
             virtual function Write(value : character) : boolean;
-            virtual function Write(value : String) : boolean;
+            virtual function Write(value : ^String) : boolean;
             virtual function Write(value : array of character) : boolean;
             abstract function Write(
                 buffer : array of character;
@@ -180,4 +180,25 @@ type
             _ownEncoding : boolean;
             _peekChar : integer;
     end;
- 
+
+    StreamWriter = public class(TextWriter)
+        public
+            constructor();
+            constructor(
+                stream : ^Stream; 
+                ownStream : boolean;
+                encoding : ^Encoding;
+                ownEncoding : boolean);
+            virtual destructor();
+            virtual procedure Close();
+            virtual function Flush() : boolean;
+            virtual function Write(
+                buffer : array of character;
+                index, count : integer) : boolean;
+            function Open(path : array of character) : boolean;
+        var
+            _stream : ^Stream;
+            _ownStream : boolean;
+            _encoding : ^Encoding;
+            _ownEncoding : boolean;
+    end;
