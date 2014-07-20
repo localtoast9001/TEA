@@ -1,0 +1,24 @@
+namespace TEAC;
+uses System, TEAC;
+
+constructor ParameterInfo(
+    name : ^String; 
+    parameterType : ^TypeDefinition);
+begin
+    _name.assign(name);
+    _type := parameterType;
+end;
+
+destructor ParameterInfo();
+begin
+end;
+
+function ParameterInfo.GetName() : ^String;
+begin
+    GetName := @_name;
+end;
+
+function ParameterInfo.GetType() : ^TypeDefinition;
+begin
+    GetType := _type;
+end;

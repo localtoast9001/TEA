@@ -1,0 +1,88 @@
+namespace TEAC;
+uses System, System.IO, TEAC;
+
+constructor LinkedListNodeOfMethodImpl(value : ^MethodImpl);
+begin
+    _value := value;
+    _next := nil;
+end;
+
+destructor LinkedListNodeOfMethodImpl();
+begin
+    if _value <> nil then
+        delete _value;
+end;
+
+function LinkedListNodeOfMethodImpl.GetValue() : ^MethodImpl;
+begin
+    GetValue := _value;
+end;
+
+function LinkedListNodeOfMethodImpl.GetNext() : ^LinkedListNodeOfMethodImpl;
+begin
+    GetNext := _next;
+end;
+
+procedure LinkedListNodeOfMethodImpl.SetNext(next : ^LinkedListNodeOfMethodImpl);
+begin
+    _next := next;
+end;
+
+constructor LinkedListEnumeratorOfMethodImpl(head : ^LinkedListNodeOfMethodImpl);
+begin
+    _head := head;
+    _current := nil;
+    _started := false;
+end;
+
+constructor LinkedListOfMethodImpl();
+begin
+    _head := nil;
+    _tail := nil;
+end;
+
+destructor LinkedListOfMethodImpl();
+begin
+    Clear();
+end;
+
+function LinkedListOfMethodImpl.Add(item : ^MethodImpl) : boolean;
+var
+    node : ^LinkedListNodeOfMethodImpl;
+begin
+    node := new LinkedListNodeOfMethodImpl(item);
+    if node <> nil then
+    begin
+        Add := true;
+        if _tail <> nil then
+        begin
+            _tail^.SetNext(node);
+            _tail := node;
+        end
+        else
+        begin
+            _head := node;
+            _tail := node;
+        end;
+    end
+    else
+        Add := false;
+end;
+
+function LinkedListOfMethodImpl.GetEnumerator() : LinkedListEnumeratorOfMethodImpl;
+begin
+    GetEnumerator := LinkedListEnumeratorOfMethodImpl(_head);
+end;
+
+procedure LinkedListOfMethodImpl.Clear();
+var
+    node : ^LinkedListNodeOfMethodImpl;
+begin
+    while _head <> nil do
+    begin
+        node := _head;
+        _head := _head^.GetNext();
+        delete node;
+    end;
+end;
+

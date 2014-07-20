@@ -1,0 +1,36 @@
+namespace TEAC;
+uses System, TEAC, System.Text, System.IO;
+
+constructor X86AsmModuleWriter();
+begin
+    _log := nil;
+    _inner := nil;
+end;
+
+destructor X86AsmModuleWriter();
+begin
+    if _inner <> nil then
+        delete _inner;
+end;
+
+function X86AsmModuleWriter.Open(
+    path : ^String; 
+    log : ^MessageLog) : boolean;
+var
+    inner : ^StreamWriter;
+begin
+    _log := log;
+    if _inner <> nil then
+        delete _inner;
+    inner := new StreamWriter();
+    _inner := inner;
+    if inner <> nil then
+        Open := inner^.Open(path^.Characters())
+    else
+        Open := false;
+end;
+
+procedure X86AsmModuleWriter.Write(module : ^Module);
+begin
+    _inner^.Write('.model flat,C');
+end;

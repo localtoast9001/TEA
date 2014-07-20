@@ -1,0 +1,18 @@
+namespace TEAC;
+uses System, TEAC;
+
+constructor MemberReferenceExpression(
+    start : ^SharedOfToken;
+    inner : ^ReferenceExpression;
+    name : ^String);
+inherited(start);
+begin
+    _inner := inner;
+    _name.assign(name);
+end;
+
+destructor MemberReferenceExpression();
+begin
+    if _inner <> nil then
+        delete _inner;
+end;

@@ -1,0 +1,14 @@
+namespace TEAC;
+uses TEAC, System;
+
+constructor LiteralIntExpression(
+    start : ^SharedOfToken;
+    value : integer);
+inherited(start);
+begin
+    _value := value;
+end;
+
+destructor LiteralIntExpression();
+begin
+end;

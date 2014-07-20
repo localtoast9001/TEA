@@ -1,0 +1,83 @@
+namespace TEAC;
+uses System, TEAC;
+
+constructor ClassDeclaration(
+    start : ^SharedOfToken; 
+    name : ^String;
+    baseType : ^String;
+    isStatic : boolean);
+inherited(start, name);
+begin
+    _baseType.assign(baseType);
+    _isStatic := isStatic;
+    _isAbstract := false;
+    _fields := nil;
+end;
+
+destructor ClassDeclaration();
+begin
+    if _fields <> nil then
+        delete _fields;
+end;
+
+function ClassDeclaration.AddInterface(
+    item : ^String) : boolean;
+begin
+    AddInterface := _interfaces.Add(item);
+end;
+
+function ClassDeclaration.AddPublicMethod(
+    item : ^MethodDeclaration) : boolean;
+begin
+    AddPublicMethod := _publicMethods.Add(item);
+end;
+
+function ClassDeclaration.GetPublicMethods() : ^LinkedListOfMethodDeclaration;
+begin
+    GetPublicMethods := @_publicMethods;
+end;
+
+function ClassDeclaration.AddProtectedMethod(
+    item : ^MethodDeclaration) : boolean;
+begin
+    AddProtectedMethod := _protectedMethods.Add(item);
+end;
+
+function ClassDeclaration.AddPrivateMethod(
+    item : ^MethodDeclaration) : boolean;
+begin
+    AddPrivateMethod := _privateMethods.Add(item);
+end;
+
+function ClassDeclaration.GetFields() : ^VarBlock;
+begin
+    GetFields := _fields;
+end;
+
+procedure ClassDeclaration.SetFields(value : ^VarBlock);
+begin
+    if _fields <> nil then
+        delete _fields;
+    _fields := value;
+end;
+
+function ClassDeclaration.GetIsStatic() : boolean;
+begin
+    GetIsStatic := _isStatic;
+end;
+
+function ClassDeclaration.GetIsAbstract() : boolean;
+begin
+    GetIsAbstract := _isAbstract;
+end;
+
+function ClassDeclaration.GetBaseType() : ^String;
+begin
+    GetBaseType := @_baseType;
+end;
+
+procedure ClassDeclaration.Accept(visitor : ^ITypeDeclarationVisitor);
+begin
+    visitor^.Visit(this);
+end;
+

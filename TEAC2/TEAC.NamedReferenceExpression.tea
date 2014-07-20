@@ -1,0 +1,15 @@
+namespace TEAC;
+uses TEAC, System;
+
+constructor NamedReferenceExpression(
+    start : ^SharedOfToken;
+    name : ^String);
+inherited(start);
+begin
+    _name.assign(name);
+end;
+
+destructor NamedReferenceExpression();
+begin
+end;
+

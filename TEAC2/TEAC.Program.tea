@@ -63,7 +63,9 @@ var
     module : ^Module = nil;
     parser : ^Parser = new Parser(log);
     codeGen : ^CodeGenerator = new CodeGenerator(log);
+    writer : X86AsmModuleWriter;
 begin
+    context.Initialize();
     if reader.Open(arguments^.GetInputFile(), log) then
     begin
         programUnit := parser^.TryParse(@reader);
@@ -74,9 +76,13 @@ begin
                 module := codeGen^.CreateModule(@context, programUnit);
                 if module <> nil then
                 begin
+                    if writer.Open(arguments^.GetOutputListing(), log) then
+                    begin
+                        writer.Write(module);
+                    end;
                     delete module;
                 end;
-            end;    
+            end; 
             delete programUnit;
         end;
     end;

@@ -1,6 +1,213 @@
 namespace TEAC;
 uses TEAC, System;
 
+type
+    TypeCreationVisitor = class interface(ITypeDeclarationVisitor)
+        public
+            constructor(
+                context : ^CompilerContext;
+                generator : ^CodeGenerator;
+                log : ^MessageLog);
+            function IsFailed() : boolean;
+            procedure SetTarget(value : ^TypeDefinition);
+            virtual procedure Visit(enumDecl : ^EnumDeclaration);
+            virtual procedure Visit(classDecl : ^ClassDeclaration);
+            virtual procedure Visit(methodTypeDecl : ^MethodTypeDeclaration);
+            virtual procedure Visit(interfaceDecl : ^InterfaceDeclaration);
+        var
+            _context : ^CompilerContext;
+            _generator : ^CodeGenerator;
+            _log : ^MessageLog;
+            _target : ^TypeDefinition;
+            _failed : boolean;
+    end;
+    TypeResolverVisitor = class interface(ITypeReferenceVisitor)
+        public
+            constructor(
+                context : ^CompilerContext;
+                generator : ^CodeGenerator;
+                log : ^MessageLog);
+            function GetResult() : ^TypeDefinition;
+            virtual procedure Visit(namedTypeRef : ^NamedTypeReference);
+            virtual procedure Visit(arrayTypeRef : ^ArrayTypeReference);
+            virtual procedure Visit(pointerTypeRef : ^PointerTypeReference);
+        var
+            _context : ^CompilerContext;
+            _generator : ^CodeGenerator;
+            _log : ^MessageLog;
+            _result : ^TypeDefinition;
+    end;
+
+constructor TypeCreationVisitor(
+    context : ^CompilerContext;
+    generator : ^CodeGenerator;
+    log : ^MessageLog);
+begin
+    _context := context;
+    _generator := generator;
+    _log := log;
+    _target := nil;
+    _failed := false;
+end;
+
+function TypeCreationVisitor.IsFailed() : boolean;
+begin
+    IsFailed := _failed;
+end;
+
+procedure TypeCreationVisitor.SetTarget(value : ^TypeDefinition);
+begin
+    _target := value;
+end;
+
+procedure TypeCreationVisitor.Visit(enumDecl : ^EnumDeclaration);
+var
+    constValue : integer = 0;
+    valuesList : ^LinkedListOfString;
+    valuesEnum : LinkedListEnumeratorOfString;
+    enumValues : ^DictionaryOfStringToInteger;
+    failed : boolean = false;
+begin
+    _target^.SetIsEnum(true);
+    _target^.SetSize(4); 
+    valuesList := enumDecl^.GetValues();
+    valuesEnum := valuesList^.GetEnumerator();
+    enumValues := _target^.GetEnumValues();
+    { TODO: Validate values }
+    while valuesEnum.MoveNext() do
+    begin
+        if not enumValues^.TryAssign(
+            valuesEnum.GetCurrent(),
+            constValue) then
+            failed := true;
+        constValue := constValue + 1;
+    end;
+
+    if failed then
+        _failed := true;
+end;
+
+procedure TypeCreationVisitor.Visit(classDecl : ^ClassDeclaration);
+var
+    baseType : String;
+    baseTypeDef : ^TypeDefinition = nil;
+    methodList : ^LinkedListOfMethodDeclaration = nil;
+    methodInfo : ^MethodInfo = nil;
+    methodEnum : LinkedListEnumeratorOfMethodDeclaration;
+begin
+    _target^.SetIsClass(true);
+    _target^.SetIsStaticClass(classDecl^.GetIsStatic());
+    _target^.SetIsAbstractClass(classDecl^.GetIsAbstract());
+    baseType.assign(classDecl^.GetBaseType());
+    if baseType.Length() > 0 then
+    begin
+        if _context^.TryFindTypeByName(
+            @baseType,
+            @baseTypeDef) then
+        begin
+            _target^.SetBaseType(baseTypeDef);
+        end
+        else
+        begin
+            {TODO: log message }
+            _failed := true;
+        end;
+    end;
+
+    methodList := classDecl^.GetPublicMethods();
+    methodEnum := methodList^.GetEnumerator();
+    while methodEnum.MoveNext() do 
+    begin
+        if _generator^.TryCreateMethod(
+            _context,
+            _target,
+            methodEnum.GetCurrent(),
+            @methodInfo) then
+        begin
+            methodInfo^.SetIsPublic(true);
+            if not _target^.AddMethod(methodInfo) then
+            begin
+                delete methodInfo;
+                methodInfo := nil;
+                _failed := true;
+            end;
+        end 
+        else
+        begin
+            _failed := true;
+        end;
+    end; 
+end;
+
+procedure TypeCreationVisitor.Visit(methodTypeDecl : ^MethodTypeDeclaration);
+begin
+    _target^.SetIsMethod(true);
+end;
+
+procedure TypeCreationVisitor.Visit(interfaceDecl : ^InterfaceDeclaration);
+begin
+    _target^.SetIsInterface(true);
+end;
+
+constructor TypeResolverVisitor(
+    context : ^CompilerContext;
+    generator : ^CodeGenerator;
+    log : ^MessageLog);
+begin
+    _context := context;
+    _generator := generator;
+    _log := log;
+    _result := nil;
+end;
+
+function TypeResolverVisitor.GetResult() : ^TypeDefinition;
+begin
+    GetResult := _result;
+end;
+
+procedure TypeResolverVisitor.Visit(namedTypeRef : ^NamedTypeReference);
+begin
+    if not _context^.TryFindTypeByName(
+        namedTypeRef^.GetTypeName(),
+        @_result) then
+    begin
+        {TODO: message type can't be found.}
+    end;
+end;
+
+procedure TypeResolverVisitor.Visit(arrayTypeRef : ^ArrayTypeReference);
+var
+    elementResolver : TypeResolverVisitor;
+    elementTypeRef : ^TypeReference = nil;
+    elementType : ^TypeDefinition = nil;
+begin
+    elementResolver := TypeResolverVisitor(_context, _generator, _log);
+    elementTypeRef := arrayTypeRef^.GetElementType();
+    elementTypeRef^.Accept(@elementResolver);
+    elementType := elementResolver.GetResult();
+    if elementType <> nil then 
+    begin
+        {TODO: evaluate element count}
+        _context^.TryGetArrayType(elementType, 0, @_result); 
+    end;
+end;
+
+procedure TypeResolverVisitor.Visit(pointerTypeRef : ^PointerTypeReference);
+var
+    elementResolver : TypeResolverVisitor;
+    elementTypeRef : ^TypeReference = nil;
+    elementType : ^TypeDefinition = nil;
+begin
+    elementResolver := TypeResolverVisitor(_context, _generator, _log);
+    elementTypeRef := pointerTypeRef^.GetElementType();
+    elementTypeRef^.Accept(@elementResolver);
+    elementType := elementResolver.GetResult();
+    if elementType <> nil then 
+    begin
+        _context^.TryGetPointerType(elementType, @_result);
+    end;
+end;
+
 constructor CodeGenerator(log : ^MessageLog);
 begin
     _log := log;
@@ -9,13 +216,260 @@ end;
 function CodeGenerator.TryCreateTypes(
     context : ^CompilerContext;
     programUnit : ^ProgramUnit) : boolean;
+var
+    visitor : TypeCreationVisitor;
+    typeList : ^LinkedListOfTypeDeclaration;
+    typeEnum : LinkedListEnumeratorOfTypeDeclaration;
+    typeDef : ^TypeDefinition = nil;
+    typeDecl : ^TypeDeclaration = nil;
+    usesList : ^LinkedListOfString;
+    usesEnum : LinkedListEnumeratorOfString;
+    failed : boolean = false;
 begin
+    visitor := TypeCreationVisitor(context, this, _log);
     TryCreateTypes := false;
+    
+    {Set namespace and uses in the context for type resolution}
+    context^.SetNamespace(programUnit^.GetNamespace());
+    usesList := programUnit^.GetUses();
+    usesEnum := usesList^.GetEnumerator();
+    while usesEnum.MoveNext() do
+    begin
+        if not context^.AddUses(usesEnum.GetCurrent()) then
+            failed := true;
+    end;
+
+    typeList := programUnit^.GetTypes();
+    typeEnum := typeList^.GetEnumerator();
+    while typeEnum.MoveNext() do
+    begin
+        typeDecl := typeEnum.GetCurrent();
+        if not context^.TryDeclareType(
+            typeDecl^.GetName(),
+            @typeDef) then
+        begin
+            {TODO: Message} 
+            failed := true;
+        end; 
+    end;
+
+    typeEnum := typeList^.GetEnumerator();
+    while typeEnum.MoveNext() do
+    begin
+        typeDecl := typeEnum.GetCurrent();
+        if context^.TryFindTypeByName(
+            typeDecl^.GetName(),
+            @typeDef) then
+        begin
+            typeDef^.SetIsPublic(typeDecl^.GetIsPublic());
+            visitor.SetTarget(typeDef);
+            typeDecl^.Accept(@visitor);
+        end
+        else
+            failed := true;
+    end;
+
+    failed := failed or visitor.IsFailed();
+    TryCreateTypes := not failed;
+end;
+
+function CodeGenerator.TryCreateMethod(
+    context : ^CompilerContext;
+    typeDef : ^TypeDefinition;
+    method : ^MethodDeclaration;
+    methodInfoRef : ^^MethodInfo) : boolean;
+var
+    methodInfo : ^MethodInfo = nil;
+    methodReturnType : ^TypeReference = nil;
+    resolvedMethodReturnType : ^TypeDefinition = nil;
+    paramDef : ^TypeDefinition = nil;
+    paramInfo : ^ParameterInfo = nil;
+    methodParams : ^LinkedListOfParameterDeclaration = nil;
+    currentParam : ^ParameterDeclaration = nil;
+    paramNames : ^LinkedListOfString = nil;
+    paramEnum : LinkedListEnumeratorOfParameterDeclaration;
+    paramNameEnum : LinkedListEnumeratorOfString;
+    success : boolean;
+begin
+    methodInfo := new MethodInfo(typeDef);
+    success := methodInfo <> nil;
+    if success then
+    begin
+        methodInfo^.SetName(method^.GetMethodName());
+        methodInfo^.SetIsStatic(method^.GetIsStatic());
+        methodInfo^.SetIsVirtual(
+            method^.GetIsVirtual() or 
+            method^.GetIsAbstract() or
+            typeDef^.GetIsInterface());
+        methodInfo^.SetIsAbstract(
+            method^.GetIsAbstract() or
+            typeDef^.GetIsInterface());
+        methodReturnType := method^.GetReturnType();
+        if methodReturnType <> nil then
+        begin
+            success := TryResolveTypeReference(
+                context,
+                methodReturnType,
+                @resolvedMethodReturnType);
+            if success then
+            begin
+                methodInfo^.SetReturnType(resolvedMethodReturnType);
+            end;
+        end;
+
+        methodParams := method^.GetParameters();
+        paramEnum := methodParams^.GetEnumerator();
+        while success and paramEnum.MoveNext() do
+        begin
+            currentParam := paramEnum.GetCurrent();
+            success := TryResolveTypeReference(
+                context,
+                currentParam^.GetParameterType(),
+                @paramDef);
+            if success then 
+            begin
+                paramNames := currentParam^.GetParameterNames();
+                paramNameEnum := paramNames^.GetEnumerator();
+                while success and paramNameEnum.MoveNext() do
+                begin
+                    paramInfo := new ParameterInfo(
+                        paramNameEnum.GetCurrent(),
+                        paramDef);
+                    success := paramInfo <> nil;
+                    if success then
+                    begin
+                        success := methodInfo^.AddParameter(paramInfo);
+                        if not success then
+                            delete paramInfo;
+                    end;
+                end;
+            end;
+        end;
+    end;
+    
+    if not success and (methodInfo <> nil) then
+    begin
+        delete methodInfo;
+        methodInfo := nil;
+    end;
+
+    methodInfoRef^ := methodInfo;
+    TryCreateMethod := success;
 end;
 
 function CodeGenerator.CreateModule(
     context : ^CompilerContext;
-    programUnit : ^ProgramUnit) : ^Module; 
+    programUnit : ^ProgramUnit) : ^Module;
+var
+    module : ^Module = nil;
+    methodDefs : ^LinkedListOfMethodDefinition;
+    methodDef : ^MethodDefinition;
+    methodDefEnum : LinkedListEnumeratorOfMethodDefinition; 
+    failed : boolean = false;
 begin
-    CreateModule := nil;
+    module := new Module();
+    if module <> nil then
+    begin
+        methodDefs := programUnit^.GetMethods();
+        methodDefEnum := methodDefs^.GetEnumerator();
+        while methodDefEnum.MoveNext() do 
+        begin
+            methodDef := methodDefEnum.GetCurrent();                
+            if not TryImplementMethod(
+                context,
+                module,
+                methodDef) then
+                failed := true;
+        end;
+    end;
+
+    if failed then
+    begin
+        delete module;
+        module := nil;
+    end;
+
+    CreateModule := module;
 end;
+
+function CodeGenerator.TryImplementMethod(
+    context : ^CompilerContext;
+    module : ^Module;
+    methodDef : ^MethodDefinition) : boolean; 
+var
+    methodInfo : ^MethodInfo = nil;
+    methodImpl : ^MethodImpl = nil;
+    parameters : LinkedListOfTypeDefinition;
+    sourceParameters : ^LinkedListOfParameterDeclaration;
+    paramEnum : LinkedListEnumeratorOfParameterDeclaration;
+    paramNames : ^LinkedListOfString;
+    paramNameEnum : LinkedListEnumeratorOfString;
+    paramDecl : ^ParameterDeclaration;
+    paramType : ^TypeDefinition;
+    methodOwnerType : ^TypeDefinition = nil;
+    success : boolean = true;
+begin
+    sourceParameters := methodDef^.GetParameters();
+    paramEnum := sourceParameters^.GetEnumerator();
+    while success and paramEnum.MoveNext() do 
+    begin
+        paramDecl := paramEnum.GetCurrent();
+        success := TryResolveTypeReference(
+            context,
+            paramDecl^.GetParameterType(),
+            @paramType);
+        if success then
+        begin
+            paramNames := paramDecl^.GetParameterNames();
+            paramNameEnum := paramNames^.GetEnumerator();
+            while success and paramNameEnum.MoveNext() do
+            begin
+                success := parameters.Add(paramType);
+            end;
+        end;
+    end;
+
+    if success then
+        success := context^.TryFindMethodAndType(
+            methodDef^.GetMethodNameReference(),
+            @parameters,
+            @methodOwnerType,
+            @methodInfo);
+    if not success then
+    begin
+        {TODO: Can't find method error}
+    end;
+
+    if success then
+    begin
+        methodImpl := new MethodImpl(module, methodInfo);
+        success := methodImpl <> nil;
+    end;
+
+    if success then
+        success := module^.AddMethodImpl(methodImpl);
+
+    if not success and (methodImpl <> nil) then
+    begin
+        delete methodImpl;
+    end;
+
+    TryImplementMethod := success;
+end;
+
+function CodeGenerator.TryResolveTypeReference(
+    context : ^CompilerContext;
+    typeRef : ^TypeReference;
+    typeDefRef : ^^TypeDefinition) : boolean; 
+var
+    visitor : TypeResolverVisitor;
+begin
+    visitor := TypeResolverVisitor(
+        context,
+        this,
+        _log);
+    typeRef^.Accept(@visitor);
+    typeDefRef^ := visitor.GetResult();
+    TryResolveTypeReference := typeDefRef^ <> nil;
+end;
+

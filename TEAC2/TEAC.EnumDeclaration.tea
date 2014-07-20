@@ -21,3 +21,10 @@ function EnumDeclaration.GetValues() : ^LinkedListOfString;
 begin
     GetValues := @_values;
 end;
+
+procedure EnumDeclaration.Accept(visitor : ^ITypeDeclarationVisitor);
+begin
+    visitor^.Visit(this);
+end;
+
+

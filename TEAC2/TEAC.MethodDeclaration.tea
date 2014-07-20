@@ -1,0 +1,64 @@
+namespace TEAC;
+uses System, TEAC;
+
+constructor MethodDeclaration(
+    start : ^SharedOfToken; 
+    name : ^String;
+    isStatic, isVirtual, isAbstract : boolean);
+inherited(start);
+begin
+    _methodName.assign(name);
+    _isStatic := isStatic;
+    _isVirtual := isVirtual;
+    _isAbstract := isAbstract;
+    _returnType := nil;
+end;
+
+destructor MethodDeclaration();
+begin
+    if _returnType <> nil then
+        delete _returnType;
+end;
+
+function MethodDeclaration.GetReturnType() : ^TypeReference;
+begin
+    GetReturnType := _returnType;
+end;
+
+function MethodDeclaration.GetMethodName() : ^String;
+begin
+    GetMethodName := @_methodName;
+end;
+
+procedure MethodDeclaration.SetReturnType(value : ^TypeReference);
+begin
+    if _returnType <> nil then
+        delete _returnType;
+    _returnType := value;
+end;
+
+function MethodDeclaration.GetParameters() : ^LinkedListOfParameterDeclaration;
+begin
+    GetParameters := @_parameters;
+end;
+
+function MethodDeclaration.AddParameter(
+    item : ^ParameterDeclaration) : boolean;
+begin
+    AddParameter := _parameters.Add(item);
+end;
+
+function MethodDeclaration.GetIsStatic() : boolean;
+begin
+    GetIsStatic := _isStatic;
+end;
+
+function MethodDeclaration.GetIsVirtual() : boolean;  
+begin
+    GetIsVirtual := _isVirtual;
+end;
+
+function MethodDeclaration.GetIsAbstract() : boolean;
+begin
+    GetIsAbstract := _isAbstract;
+end;

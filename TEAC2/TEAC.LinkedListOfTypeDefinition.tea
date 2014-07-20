@@ -1,41 +1,41 @@
 namespace TEAC;
 uses System, System.IO, TEAC;
 
-constructor LinkedListNodeOfTypeDeclaration(value : ^TypeDeclaration);
+constructor LinkedListNodeOfTypeDefinition(value : ^TypeDefinition);
 begin
     _value := value;
     _next := nil;
 end;
 
-destructor LinkedListNodeOfTypeDeclaration();
+destructor LinkedListNodeOfTypeDefinition();
 begin
-    if _value <> nil then
-        delete _value;
+{    if _value <> nil then
+        delete _value;}
 end;
 
-function LinkedListNodeOfTypeDeclaration.GetValue() : ^TypeDeclaration;
+function LinkedListNodeOfTypeDefinition.GetValue() : ^TypeDefinition;
 begin
     GetValue := _value;
 end;
 
-function LinkedListNodeOfTypeDeclaration.GetNext() : ^LinkedListNodeOfTypeDeclaration;
+function LinkedListNodeOfTypeDefinition.GetNext() : ^LinkedListNodeOfTypeDefinition;
 begin
     GetNext := _next;
 end;
 
-procedure LinkedListNodeOfTypeDeclaration.SetNext(next : ^LinkedListNodeOfTypeDeclaration);
+procedure LinkedListNodeOfTypeDefinition.SetNext(next : ^LinkedListNodeOfTypeDefinition);
 begin
     _next := next;
 end;
 
-constructor LinkedListEnumeratorOfTypeDeclaration(head : ^LinkedListNodeOfTypeDeclaration);
+constructor LinkedListEnumeratorOfTypeDefinition(head : ^LinkedListNodeOfTypeDefinition);
 begin
     _head := head;
     _current := nil;
     _started := false;
 end;
 
-function LinkedListEnumeratorOfTypeDeclaration.MoveNext() : boolean;
+function LinkedListEnumeratorOfTypeDefinition.MoveNext() : boolean;
 begin
     if not _started then
     begin
@@ -51,29 +51,29 @@ begin
     MoveNext := _current <> nil;
 end;
 
-function LinkedListEnumeratorOfTypeDeclaration.GetCurrent() : ^String;
+function LinkedListEnumeratorOfTypeDefinition.GetCurrent() : ^TypeDefinition;
 begin
     GetCurrent := nil;
     if _current <> nil then
         GetCurrent := _current^.GetValue();
 end;
 
-constructor LinkedListOfTypeDeclaration();
+constructor LinkedListOfTypeDefinition();
 begin
     _head := nil;
     _tail := nil;
 end;
 
-destructor LinkedListOfTypeDeclaration();
+destructor LinkedListOfTypeDefinition();
 begin
     Clear();
 end;
 
-function LinkedListOfTypeDeclaration.Add(item : ^TypeDeclaration) : boolean;
+function LinkedListOfTypeDefinition.Add(item : ^TypeDefinition) : boolean;
 var
-    node : ^LinkedListNodeOfTypeDeclaration;
+    node : ^LinkedListNodeOfTypeDefinition;
 begin
-    node := new LinkedListNodeOfTypeDeclaration(item);
+    node := new LinkedListNodeOfTypeDefinition(item);
     if node <> nil then
     begin
         Add := true;
@@ -92,14 +92,14 @@ begin
         Add := false;
 end;
 
-function LinkedListOfTypeDeclaration.GetEnumerator() : LinkedListEnumeratorOfTypeDeclaration;
+function LinkedListOfTypeDefinition.GetEnumerator() : LinkedListEnumeratorOfTypeDefinition;
 begin
-    GetEnumerator := LinkedListEnumeratorOfTypeDeclaration(_head);
+    GetEnumerator := LinkedListEnumeratorOfTypeDefinition(_head);
 end;
 
-procedure LinkedListOfTypeDeclaration.Clear();
+procedure LinkedListOfTypeDefinition.Clear();
 var
-    node : ^LinkedListNodeOfTypeDeclaration;
+    node : ^LinkedListNodeOfTypeDefinition;
 begin
     while _head <> nil do
     begin

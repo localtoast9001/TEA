@@ -1,0 +1,88 @@
+namespace TEAC;
+uses System, System.IO, TEAC;
+
+constructor LinkedListNodeOfOpStatement(value : ^OpStatement);
+begin
+    _value := value;
+    _next := nil;
+end;
+
+destructor LinkedListNodeOfOpStatement();
+begin
+    if _value <> nil then
+        delete _value;
+end;
+
+function LinkedListNodeOfOpStatement.GetValue() : ^OpStatement;
+begin
+    GetValue := _value;
+end;
+
+function LinkedListNodeOfOpStatement.GetNext() : ^LinkedListNodeOfOpStatement;
+begin
+    GetNext := _next;
+end;
+
+procedure LinkedListNodeOfOpStatement.SetNext(next : ^LinkedListNodeOfOpStatement);
+begin
+    _next := next;
+end;
+
+constructor LinkedListEnumeratorOfOpStatement(head : ^LinkedListNodeOfOpStatement);
+begin
+    _head := head;
+    _current := nil;
+    _started := false;
+end;
+
+constructor LinkedListOfOpStatement();
+begin
+    _head := nil;
+    _tail := nil;
+end;
+
+destructor LinkedListOfOpStatement();
+begin
+    Clear();
+end;
+
+function LinkedListOfOpStatement.Add(item : ^OpStatement) : boolean;
+var
+    node : ^LinkedListNodeOfOpStatement;
+begin
+    node := new LinkedListNodeOfOpStatement(item);
+    if node <> nil then
+    begin
+        Add := true;
+        if _tail <> nil then
+        begin
+            _tail^.SetNext(node);
+            _tail := node;
+        end
+        else
+        begin
+            _head := node;
+            _tail := node;
+        end;
+    end
+    else
+        Add := false;
+end;
+
+function LinkedListOfOpStatement.GetEnumerator() : LinkedListEnumeratorOfOpStatement;
+begin
+    GetEnumerator := LinkedListEnumeratorOfOpStatement(_head);
+end;
+
+procedure LinkedListOfOpStatement.Clear();
+var
+    node : ^LinkedListNodeOfOpStatement;
+begin
+    while _head <> nil do
+    begin
+        node := _head;
+        _head := _head^.GetNext();
+        delete node;
+    end;
+end;
+

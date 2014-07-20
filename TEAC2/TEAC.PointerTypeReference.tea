@@ -1,0 +1,26 @@
+namespace TEAC;
+uses System, TEAC;
+
+constructor PointerTypeReference(
+    start : ^SharedOfToken;
+    elementType : ^TypeReference);
+inherited(start);
+begin
+    _elementType := elementType;
+end;
+
+destructor PointerTypeReference();
+begin
+    if _elementType <> nil then
+        delete _elementType;
+end;
+
+procedure PointerTypeReference.Accept(visitor : ^ITypeReferenceVisitor);
+begin
+    visitor^.Visit(this);
+end;
+
+function PointerTypeReference.GetElementType() : ^TypeReference;
+begin
+    GetElementType := _elementType;
+end;

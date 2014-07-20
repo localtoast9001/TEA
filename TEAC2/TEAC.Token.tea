@@ -65,6 +65,21 @@ begin
             IsIdentifier := true;
 end;
 
+function Token.IsLiteral(
+    tok : ^Token) : boolean;
+var
+    tokenType : TokenType;
+begin
+    IsLiteral := false;
+    if tok <> nil then
+    begin
+        tokenType := tok^.GetType();
+        IsLiteral := (tokenType = TokenType.LiteralString) or
+            (tokenType = TokenType.LiteralInteger) or
+            (tokenType = TokenType.LiteralDouble);
+    end;
+end;
+
 function Token.CreateIdentifier(
     identifier : ^String;
     path : ^String;
@@ -276,3 +291,60 @@ begin
     end;
 end;
 
+function SharedOfToken.Is(
+    keyword : Keyword) : boolean;
+begin
+    Is := Token.Is(Value(), keyword);    
+end;
+
+function SharedOfToken.IsRelationalOperator(
+    operatorRef : ^RelationalOperator) : boolean;
+begin
+    IsRelationalOperator := true;
+    if Is(Keyword.Equals) then
+        operatorRef^ := RelationalOperator.Equals
+    else if Is(Keyword.LessThan) then
+        operatorRef^ := RelationalOperator.LessThan
+    else if Is(Keyword.LessThanOrEquals) then
+        operatorRef^ := RelationalOperator.LessThanOrEquals
+    else if Is(Keyword.GreaterThan) then
+        operatorRef^ := RelationalOperator.GreaterThan
+    else if Is(Keyword.GreaterThanOrEquals) then
+        operatorRef^ := RelationalOperator.GreaterThanOrEquals
+    else if Is(Keyword.NotEqual) then
+        operatorRef^ := RelationalOperator.NotEqual
+    else
+        IsRelationalOperator := false;
+end;
+
+function SharedOfToken.IsSimpleOperator(
+    operatorRef : ^SimpleOperator) : boolean;
+begin
+    IsSimpleOperator := true;
+    if Is(Keyword.Plus) then
+        operatorRef^ := SimpleOperator.Add 
+    else if Is(Keyword.Minus) then
+        operatorRef^ := SimpleOperator.Subtract
+    else if Is(Keyword.Or) then
+        operatorRef^ := SimpleOperator.Or
+    else
+        IsSimpleOperator := false;
+end;
+
+function SharedOfToken.IsTermOperator(
+    operatorRef : ^TermOperator) : boolean;
+begin
+    IsTermOperator := true;
+    if Is(Keyword.Star) then
+        operatorRef^ := TermOperator.Multiply
+    else if Is(Keyword.Slash) then
+        operatorRef^ := TermOperator.Divide
+    else if Is(Keyword.Div) then
+        operatorRef^ := TermOperator.IntegerDivide
+    else if Is(Keyword.And) then
+        operatorRef^ := TermOperator.And
+    else if Is(Keyword.Mod) then
+        operatorRef^ := TermOperator.Mod
+    else
+        IsTermOperator := false;
+end;

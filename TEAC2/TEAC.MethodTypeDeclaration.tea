@@ -1,0 +1,62 @@
+namespace TEAC;
+uses System, TEAC;
+
+constructor MethodTypeDeclaration(
+    start : ^SharedOfToken; 
+    name : ^String);
+inherited(start, name);
+begin
+    _implicitArgType := nil;
+    _returnType := nil;
+end;
+
+destructor MethodTypeDeclaration();
+begin
+    if _implicitArgType <> nil then
+        delete _implicitArgType;
+    if _returnType <> nil then
+        delete _returnType;
+end;
+
+function MethodTypeDeclaration.GetReturnType() : ^TypeReference;
+begin
+    GetReturnType := _returnType;
+end;
+
+procedure MethodTypeDeclaration.SetReturnType(
+    value : ^TypeReference);
+begin
+    if _returnType <> nil then
+        delete _returnType;
+    _returnType := value;
+end;
+
+function MethodTypeDeclaration.GetImplicitArgType() : ^TypeReference;
+begin
+    GetImplicitArgType := _implicitArgType;
+end;
+
+procedure MethodTypeDeclaration.SetImplicitArgType(
+    value : ^TypeReference);
+begin
+    if _implicitArgType <> nil then
+        delete _implicitArgType;
+    _implicitArgType := value;
+end;
+
+function MethodTypeDeclaration.GetParameters() : ^LinkedListOfParameterDeclaration;
+begin
+    GetParameters := @_parameters;
+end;
+
+function MethodTypeDeclaration.AddParameter(
+    item : ^ParameterDeclaration) : boolean;
+begin
+    AddParameter := _parameters.Add(item);
+end;
+
+procedure MethodTypeDeclaration.Accept(visitor : ^ITypeDeclarationVisitor);
+begin
+    visitor^.Visit(this);
+end;
+

@@ -1,0 +1,41 @@
+namespace TEAC;
+uses System, TEAC;
+
+constructor InterfaceDeclaration(
+    start : ^SharedOfToken; 
+    name : ^String);
+inherited(start, name);
+begin
+end;
+
+destructor InterfaceDeclaration();
+begin
+end;
+
+function InterfaceDeclaration.GetBaseInterfaceType() : ^String;
+begin
+    GetBaseInterfaceType := @_baseInterfaceType;
+end;
+
+procedure InterfaceDeclaration.SetBaseInterfaceType(
+    value : ^String);
+begin
+    _baseInterfaceType.assign(value);
+end;
+
+function InterfaceDeclaration.GetMethods() : ^LinkedListOfMethodDeclaration;
+begin
+    GetMethods := @_methods;
+end;
+
+function InterfaceDeclaration.AddMethod(
+    item : ^MethodDeclaration) : boolean;
+begin
+    AddMethod := _methods.Add(item);
+end;
+
+procedure InterfaceDeclaration.Accept(visitor : ^ITypeDeclarationVisitor);
+begin
+    visitor^.Visit(this);
+end;
+

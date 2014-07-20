@@ -1,0 +1,88 @@
+namespace TEAC;
+uses System, System.IO, TEAC;
+
+constructor LinkedListNodeOfVariableDeclaration(value : ^VariableDeclaration);
+begin
+    _value := value;
+    _next := nil;
+end;
+
+destructor LinkedListNodeOfVariableDeclaration();
+begin
+    if _value <> nil then
+        delete _value;
+end;
+
+function LinkedListNodeOfVariableDeclaration.GetValue() : ^VariableDeclaration;
+begin
+    GetValue := _value;
+end;
+
+function LinkedListNodeOfVariableDeclaration.GetNext() : ^LinkedListNodeOfVariableDeclaration;
+begin
+    GetNext := _next;
+end;
+
+procedure LinkedListNodeOfVariableDeclaration.SetNext(next : ^LinkedListNodeOfVariableDeclaration);
+begin
+    _next := next;
+end;
+
+constructor LinkedListEnumeratorOfVariableDeclaration(head : ^LinkedListNodeOfVariableDeclaration);
+begin
+    _head := head;
+    _current := nil;
+    _started := false;
+end;
+
+constructor LinkedListOfVariableDeclaration();
+begin
+    _head := nil;
+    _tail := nil;
+end;
+
+destructor LinkedListOfVariableDeclaration();
+begin
+    Clear();
+end;
+
+function LinkedListOfVariableDeclaration.Add(item : ^VariableDeclaration) : boolean;
+var
+    node : ^LinkedListNodeOfVariableDeclaration;
+begin
+    node := new LinkedListNodeOfVariableDeclaration(item);
+    if node <> nil then
+    begin
+        Add := true;
+        if _tail <> nil then
+        begin
+            _tail^.SetNext(node);
+            _tail := node;
+        end
+        else
+        begin
+            _head := node;
+            _tail := node;
+        end;
+    end
+    else
+        Add := false;
+end;
+
+function LinkedListOfVariableDeclaration.GetEnumerator() : LinkedListEnumeratorOfVariableDeclaration;
+begin
+    GetEnumerator := LinkedListEnumeratorOfVariableDeclaration(_head);
+end;
+
+procedure LinkedListOfVariableDeclaration.Clear();
+var
+    node : ^LinkedListNodeOfVariableDeclaration;
+begin
+    while _head <> nil do
+    begin
+        node := _head;
+        _head := _head^.GetNext();
+        delete node;
+    end;
+end;
+

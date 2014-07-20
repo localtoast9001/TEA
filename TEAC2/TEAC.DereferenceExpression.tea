@@ -1,0 +1,16 @@
+namespace TEAC;
+uses System, TEAC;
+
+constructor DereferenceExpression(
+    start : ^SharedOfToken;
+    inner : ^ReferenceExpression);
+inherited(start);
+begin
+    _inner := inner;
+end;
+
+destructor DereferenceExpression();
+begin
+    if _inner <> nil then
+        delete _inner;
+end;

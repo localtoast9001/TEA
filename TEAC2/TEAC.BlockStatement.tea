@@ -1,0 +1,21 @@
+namespace TEAC;
+uses System, TEAC;
+
+constructor BlockStatement(start : ^SharedOfToken);
+inherited(start);
+begin
+end;
+
+destructor BlockStatement();
+begin
+end;
+
+function BlockStatement.GetStatements() : ^LinkedListOfStatement;
+begin
+    GetStatements := @_statements;
+end;
+
+function BlockStatement.AddStatement(item : ^Statement) : boolean;
+begin
+    AddStatement := _statements.Add(item);
+end;

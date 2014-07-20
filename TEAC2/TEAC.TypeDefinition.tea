@@ -1,0 +1,200 @@
+namespace TEAC;
+uses System, TEAC;
+
+constructor TypeDefinition();
+begin
+    _size := 0;
+    _arrayElementCount := 0;
+    _innerType := nil;
+    _baseClass := nil;
+    _methodReturnType := nil;
+    _methodImplicitArgType := nil;
+    _isPointer := false;
+    _isArray := false;
+    _isClass := false;
+    _isFloatingPoint := false;
+    _isStaticClass := false;
+    _isAbstractClass := false;
+    _isInterface := false;
+    _isEnum := false;
+    _isMethod := false;
+end;
+
+destructor TypeDefinition();
+begin
+end;
+
+function TypeDefinition.GetFullName() : ^String;
+begin
+    GetFullName := @_fullName;
+end;
+
+procedure TypeDefinition.SetFullName(value : ^String);
+begin
+    _fullName.assign(value);
+end;
+
+function TypeDefinition.GetSize() : integer;
+begin
+    GetSize := _size;
+end;
+
+procedure TypeDefinition.SetSize(value : integer);
+begin
+    _size := value;
+end;
+
+function TypeDefinition.GetIsFloatingPoint() : boolean;
+begin
+    GetIsFloatingPoint := _isFloatingPoint;
+end;
+
+procedure TypeDefinition.SetIsFloatingPoint(value : boolean);
+begin
+    _isFloatingPoint := value;
+end;
+
+function TypeDefinition.GetIsPointer() : boolean;
+begin
+    GetIsPointer := _isPointer;
+end;
+
+procedure TypeDefinition.SetIsPointer(value : boolean);
+begin
+    _isPointer := value;
+end;
+
+function TypeDefinition.GetIsPublic() : boolean;
+begin
+    GetIsPublic := _isPublic;
+end;
+
+procedure TypeDefinition.SetIsPublic(value : boolean);
+begin
+    _isPublic := value;
+end;
+
+function TypeDefinition.GetIsArray() : boolean;
+begin
+    GetIsArray := _isArray;
+end;
+
+procedure TypeDefinition.SetIsArray(value : boolean);
+begin
+    _isArray := value;
+end;
+
+function TypeDefinition.GetIsClass() : boolean;
+begin
+    GetIsClass := _isClass;
+end;
+
+procedure TypeDefinition.SetIsClass(value : boolean);
+begin
+    _isClass := value;
+end;
+
+function TypeDefinition.GetIsMethod() : boolean;
+begin
+    GetIsMethod := _isMethod;
+end;
+
+procedure TypeDefinition.SetIsMethod(value : boolean);
+begin
+    _isMethod := value;
+end;
+
+function TypeDefinition.GetIsStaticClass() : boolean;
+begin
+    GetIsStaticClass := _isStaticClass;
+end;
+
+procedure TypeDefinition.SetIsStaticClass(value : boolean);
+begin
+    _isStaticClass := value;
+end;
+
+function TypeDefinition.GetIsAbstractClass() : boolean;
+begin
+    GetIsAbstractClass := _isAbstractClass;
+end;
+
+procedure TypeDefinition.SetIsAbstractClass(value : boolean);
+begin
+    _isAbstractClass := value;
+end;
+
+function TypeDefinition.GetIsInterface() : boolean;
+begin
+    GetIsInterface := _isInterface;
+end;
+
+procedure TypeDefinition.SetIsInterface(value : boolean);
+begin
+    _isInterface := value;
+end;
+
+function TypeDefinition.GetIsEnum() : boolean;
+begin
+    GetIsEnum := _isEnum;
+end;
+
+procedure TypeDefinition.SetIsEnum(value : boolean);
+begin
+    _isEnum := value;
+end;
+
+function TypeDefinition.GetSpecialMangledName() : ^String;
+begin
+    GetSpecialMangledName := @_specialMangledName;
+end;
+
+procedure TypeDefinition.SetSpecialMangledName(value : ^String);
+begin
+    _specialMangledName.assign(value);
+end;
+
+function TypeDefinition.GetEnumValues() : ^DictionaryOfStringToInteger;
+begin
+    GetEnumValues := @_enumValues;
+end;
+
+procedure TypeDefinition.SetBaseType(value : ^TypeDefinition);
+begin
+    _baseClass := value;
+end;
+
+function TypeDefinition.GetBaseType() : ^TypeDefinition;
+begin
+    GetBaseType := _baseClass;
+end;
+
+procedure TypeDefinition.SetInnerType(value : ^TypeDefinition);
+begin
+    _innerType := value;
+end;
+
+function TypeDefinition.GetInnerType() : ^TypeDefinition;
+begin
+    GetInnerType := _innerType;
+end;
+
+function TypeDefinition.GetArrayElementCount() : integer;
+begin
+    GetArrayElementCount := _arrayElementCount;
+end;
+
+procedure TypeDefinition.SetArrayElementCount(value : integer);
+begin
+    _arrayElementCount := value;
+end;
+
+function TypeDefinition.GetMethods() : ^LinkedListOfMethodInfo;
+begin
+    GetMethods := @_methods;
+end;
+
+function TypeDefinition.AddMethod(item : ^MethodInfo) : boolean;
+begin
+    AddMethod := _methods.Add(item);
+end;

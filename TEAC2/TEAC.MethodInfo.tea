@@ -1,0 +1,98 @@
+namespace TEAC;
+uses TEAC, System;
+
+constructor MethodInfo(owner : ^TypeDefinition);
+begin
+    _type := owner;
+    _returnType := nil;
+    _vTableIndex := 0;
+    _isStatic := false;
+    _isVirtual := false;
+    _isAbstract := false;
+    _isPublic := false;
+    _isProtected := false;
+end;
+
+function MethodInfo.GetName() : ^String;
+begin
+    GetName := @_name;
+end;
+
+procedure MethodInfo.SetName(value : ^String);
+begin
+    _name.assign(value);
+end;
+
+function MethodInfo.GetParameters() : ^LinkedListOfParameterInfo; 
+begin
+    GetParameters := @_parameters;
+end;
+
+function MethodInfo.AddParameter(item : ^ParameterInfo) : boolean;
+begin
+    AddParameter := _parameters.Add(item);
+end;
+
+destructor MethodInfo();
+begin
+end;
+
+function MethodInfo.GetIsStatic() : boolean;
+begin
+    GetIsStatic := _isStatic;
+end;
+
+procedure MethodInfo.SetIsStatic(value : boolean);
+begin
+    _isStatic := value;
+end;
+
+function MethodInfo.GetIsVirtual() : boolean;
+begin
+    GetIsVirtual := _isVirtual;
+end;
+
+procedure MethodInfo.SetIsVirtual(value : boolean);
+begin
+    _isVirtual := value;
+end;
+
+function MethodInfo.GetIsAbstract() : boolean;
+begin
+    GetIsAbstract := _isAbstract;
+end;
+
+procedure MethodInfo.SetIsAbstract(value : boolean);
+begin
+    _isAbstract := value;
+end;
+
+function MethodInfo.GetIsPublic() : boolean;
+begin
+    GetIsPublic := _isPublic;
+end;
+
+procedure MethodInfo.SetIsPublic(value : boolean);
+begin
+    _isPublic := value;
+end;
+
+function MethodInfo.GetIsProtected() : boolean;
+begin
+    GetIsProtected := _isProtected;
+end;
+
+procedure MethodInfo.SetIsProtected(value : boolean);
+begin
+    _isProtected := value;
+end;
+
+function MethodInfo.GetReturnType() : ^TypeDefinition;
+begin
+    GetReturnType := _returnType;
+end;
+
+procedure MethodInfo.SetReturnType(value : ^TypeDefinition);
+begin
+    _returnType := value;
+end;

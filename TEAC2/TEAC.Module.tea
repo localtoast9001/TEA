@@ -1,0 +1,15 @@
+namespace TEAC;
+uses TEAC, System;
+
+constructor Module();
+begin
+end;
+
+destructor Module();
+begin
+end;
+
+function Module.AddMethodImpl(item : ^MethodImpl) : boolean;
+begin
+    AddMethodImpl := _codeSeg.Add(item);
+end;

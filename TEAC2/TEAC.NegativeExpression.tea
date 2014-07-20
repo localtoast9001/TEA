@@ -1,0 +1,16 @@
+namespace TEAC;
+uses TEAC, System;
+
+constructor NegativeExpression(
+    start : ^SharedOfToken; 
+    inner : ^Expression);
+inherited(start);
+begin
+    _inner := inner;
+end;
+
+destructor NegativeExpression();
+begin
+    if _inner <> nil then
+        delete _inner;
+end;

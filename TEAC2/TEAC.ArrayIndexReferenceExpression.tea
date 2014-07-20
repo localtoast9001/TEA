@@ -1,0 +1,20 @@
+namespace TEAC;
+uses TEAC, System;
+
+constructor ArrayIndexReferenceExpression(
+    start : ^SharedOfToken;
+    inner : ^ReferenceExpression;
+    index : ^Expression);
+inherited(start);
+begin
+    _inner := inner;
+    _index := index;
+end;
+
+destructor ArrayIndexReferenceExpression();
+begin
+    if _inner <> nil then
+        delete _inner;
+    if _index <> nil then
+        delete _index;
+end;

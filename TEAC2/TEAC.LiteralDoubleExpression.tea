@@ -1,0 +1,14 @@
+namespace TEAC;
+uses TEAC, System;
+
+constructor LiteralDoubleExpression(
+    start : ^SharedOfToken;
+    value : double);
+inherited(start);
+begin
+    _value := value;
+end;
+
+destructor LiteralDoubleExpression();
+begin
+end;

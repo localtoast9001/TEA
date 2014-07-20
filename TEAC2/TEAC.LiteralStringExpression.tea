@@ -1,0 +1,14 @@
+namespace TEAC;
+uses TEAC, System;
+
+constructor LiteralStringExpression(
+    start : ^SharedOfToken;
+    value : ^String);
+inherited(start);
+begin
+    _value.assign(value);
+end;
+
+destructor LiteralStringExpression();
+begin
+end;

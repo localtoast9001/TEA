@@ -1,0 +1,35 @@
+namespace TEAC;
+uses System, TEAC;
+
+constructor ArrayTypeReference(
+    start : ^SharedOfToken; 
+    elementCount : ^Expression;
+    elementType : ^TypeReference);
+inherited(start);
+begin
+    _elementCount := elementCount;
+    _elementType := elementType;
+end;
+
+destructor ArrayTypeReference();
+begin
+    if _elementCount <> nil then
+        delete _elementCount;
+    if _elementType <> nil then
+        delete _elementType;
+end;
+
+function ArrayTypeReference.GetElementCount() : ^Expression;
+begin
+    GetElementCount := _elementCount;
+end;
+
+function ArrayTypeReference.GetElementType() : ^TypeReference;
+begin
+    GetElementType := _elementType;
+end;
+
+procedure ArrayTypeReference.Accept(visitor : ^ITypeReferenceVisitor);
+begin
+    visitor^.Visit(this);
+end;

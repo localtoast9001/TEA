@@ -1,0 +1,30 @@
+namespace TEAC;
+uses System, TEAC;
+
+constructor AssignmentStatement(
+    start : ^SharedOfToken;
+    storage : ^ReferenceExpression;
+    value : ^Expression);
+inherited(start);
+begin
+    _storage := storage;
+    _value := value;
+end;
+
+destructor AssignmentStatement();
+begin
+    if _storage <> nil then
+        delete _storage;
+    if _value <> nil then
+        delete _value;
+end;
+
+function AssignmentStatement.GetStorage() : ^ReferenceExpression;
+begin
+    GetStorage := _storage;
+end;
+
+function AssignmentStatement.GetValue() : ^Expression;
+begin
+    GetValue := _value;
+end;

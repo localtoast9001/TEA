@@ -1,5 +1,5 @@
 namespace TEAC;
-uses TEAC, System;
+uses TEAC, System, System.Text;
 
 constructor CompilerContext();
 begin
@@ -7,4 +7,575 @@ end;
 
 destructor CompilerContext();
 begin
+end;
+
+procedure CompilerContext.SetNamespace(value : ^String);
+begin
+    _namespace.assign(value);
+end;
+
+function CompilerContext.AddUses(value : ^String) : boolean;
+begin
+    AddUses := _usesList.Add(value);
+end;
+
+function CompilerContext.TryDeclareType(
+    typeName : ^String; 
+    typeRef : ^^TypeDefinition) : boolean;
+var
+    fullName : String;
+    success : boolean;
+    typeDef : ^TypeDefinition = nil;
+begin
+    success := GetFullName(typeName, @_namespace, @fullName);
+    if success then
+        success := not _types.TryGetValue(@fullName, @typeDef);
+    if success then
+    begin
+        typeDef := new TypeDefinition();
+        success := typeDef <> nil;
+        if success then
+        begin
+            typeDef^.SetFullName(@fullName);
+            success := _types.TryAssign(@fullName, typeDef);
+            if not success then
+            begin
+                delete typeDef;
+                typeDef := nil;
+            end;
+        end;
+    end;
+
+    typeRef^ := typeDef;
+    TryDeclareType := success;
+end;
+
+function CompilerContext.TryFindTypeByName(
+    typeName : ^String;
+    typeRef : ^^TypeDefinition) : boolean;
+var
+    fullName : String;
+    nsEnum : LinkedListEnumeratorOfString;
+    found, success : boolean = false;
+begin
+    found := _types.TryGetValue(typeName, typeRef);
+    if not found then
+    begin
+        success := GetFullName(typeName, @_namespace, @fullName);
+        if success then 
+            found := _types.TryGetValue(@fullName, typeRef); 
+        if success and not found then
+        begin
+            nsEnum := _usesList.GetEnumerator();
+            while success and not found do
+            begin
+                success := nsEnum.MoveNext();
+                if success then 
+                begin
+                    success := GetFullName(
+                        typeName, 
+                        nsEnum.GetCurrent(), 
+                        @fullName);
+                    if success then
+                        found := _types.TryGetValue(@fullName, typeRef); 
+                end;
+            end;
+        end;
+    end;
+
+    TryFindTypeByName := found;
+end;
+
+function CompilerContext.TryFindMethodAndType(
+    methodNameRef : ^String;
+    parameterTypes : ^LinkedListOfTypeDefinition;
+    typeRef : ^^TypeDefinition;
+    methodRef : ^^MethodInfo) : boolean;
+var
+    typeName : String;
+    methodName : String;
+    lastDotIndex : integer;
+    methods : ^LinkedListOfMethodInfo;
+    methodEnum : LinkedListEnumeratorOfMethodInfo;
+    testMethod : ^MethodInfo;
+    parameters : ^LinkedListOfParameterInfo;
+    success, found : boolean = false;
+    dot : array of character = '.';
+begin
+    lastDotIndex := methodNameRef^.LastIndexOf(dot[0]);
+    success := lastDotIndex >= 0;
+    if success then
+        success := methodNameRef^.Substring(lastDotIndex + 1, @methodName);
+    if success then
+        success := methodNameRef^.Substring(0, lastDotIndex, @typeName);
+    if success then
+        success := TryFindTypeByName(@typeName, typeRef);
+    if success then
+    begin
+        methods := typeRef^^.GetMethods();
+        methodEnum := methods^.GetEnumerator();
+        while not found and methodEnum.MoveNext() do
+        begin
+            testMethod := methodEnum.GetCurrent();
+            if String.CompareOrdinal(@methodName, testMethod^.GetName()) = 0 then
+            begin
+                parameters := testMethod^.GetParameters();
+                found := MatchParameters(parameterTypes, parameters);
+                if found then
+                    methodRef^ := testMethod;
+            end;
+        end;
+    end;
+    TryFindMethodAndType := success and found;
+end;
+
+function CompilerContext.TryGetPointerType(
+    elementType : ^TypeDefinition;
+    typeRef : ^^TypeDefinition) : boolean;
+var
+    sb : SimpleStringBuilder;
+    fullName : String;
+    success, found : boolean;
+begin
+    success := sb.TryAppend('^');
+    if success then
+        success := sb.TryAppend(elementType^.GetFullName());
+    if success then
+        success := sb.ToString(@fullName);
+    if success then
+    begin
+        found := _types.TryGetValue(@fullName, typeRef);
+        if not found then
+        begin
+            typeRef^ := new TypeDefinition();
+            success := typeRef^ <> nil;
+            if success then
+            begin
+                typeRef^^.SetFullName(@fullName);
+                typeRef^^.SetSize(4);
+                typeRef^^.SetIsPointer(true);
+                typeRef^^.SetInnerType(elementType);
+                success := _types.TryAssign(@fullName, typeRef^);
+                if not success then
+                begin
+                    delete typeRef^;
+                    typeRef^ := nil;
+                end;
+            end;
+        end;
+    end;
+    TryGetPointerType := success;
+end;
+
+function CompilerContext.TryGetArrayType(
+    elementType : ^TypeDefinition;
+    elementCount : integer;
+    typeRef : ^^TypeDefinition) : boolean;
+var
+    sb : SimpleStringBuilder;
+    fullName : String;
+    success, found : boolean;    
+begin
+    success := sb.TryAppend('#');
+    if success then
+        success := DefaultFormatter.TryFormat(elementCount, nil, @sb);
+    if success then
+        success := sb.TryAppend(elementType^.GetFullName());
+    if success then
+        success := sb.ToString(@fullName);
+    if success then
+    begin
+        found := _types.TryGetValue(@fullName, typeRef);
+        if not found then
+        begin
+            typeRef^ := new TypeDefinition();
+            success := typeRef^ <> nil;
+            if success then
+            begin
+                typeRef^^.SetFullName(@fullName);
+                typeRef^^.SetIsArray(true);
+                typeRef^^.SetArrayElementCount(elementCount);
+                typeRef^^.SetInnerType(elementType);
+                if elementCount > 0 then
+                    typeRef^^.SetSize(elementCount * elementType^.GetSize())
+                else
+                    typeRef^^.SetSize(4);
+                success := _types.TryAssign(@fullName, typeRef^);
+                if not success then
+                begin
+                    delete typeRef^;
+                    typeRef^ := nil;
+                end;
+            end;
+        end;
+    end;
+    TryGetArrayType := success;
+end;
+
+function CompilerContext.Initialize() : boolean;
+var
+    success : boolean;
+begin
+    success := InitializeIntType();
+    if success then
+        success := InitializeShortType();
+    if success then
+        success := InitializeLongType();
+    if success then
+        success := InitializeCharType();
+    if success then
+        success := InitializeBoolType();
+    if success then
+        success := InitializeByteType();
+    if success then
+        success := InitializeSingleType();
+    if success then
+        success := InitializeDoubleType();
+    if success then 
+        success := InitializeExtendedType();
+    if success then
+        success := InitializeGenericPointerType();
+    Initialize := success;
+end;
+
+function CompilerContext.InitializeIntType() : boolean;
+var
+    typeName, specialMangledName : String;
+    typeDef : ^TypeDefinition;  
+    success : boolean;
+begin
+    success := typeName.TryAssign('integer');
+    if success then
+        success := specialMangledName.TryAssign('i');
+    if success then
+    begin
+        typeDef := new TypeDefinition();
+        success := typeDef <> nil;
+        if success then
+        begin
+            typeDef^.SetFullName(@typeName);
+            typeDef^.SetSize(4);
+            typeDef^.SetSpecialMangledName(@specialMangledName); 
+            success := _types.TryAssign(
+                typeDef^.GetFullName(),
+                typeDef);
+            if not success then
+                delete typeDef; 
+        end;
+    end;
+
+    InitializeIntType := success;
+end;
+
+function CompilerContext.InitializeShortType() : boolean;
+var
+    typeName, specialMangledName : String;
+    typeDef : ^TypeDefinition;  
+    success : boolean;
+begin
+    success := typeName.TryAssign('short');
+    if success then
+        success := specialMangledName.TryAssign('i2');
+    if success then
+    begin
+        typeDef := new TypeDefinition();
+        success := typeDef <> nil;
+        if success then
+        begin
+            typeDef^.SetFullName(@typeName);
+            typeDef^.SetSize(2);
+            typeDef^.SetSpecialMangledName(@specialMangledName); 
+            success := _types.TryAssign(
+                typeDef^.GetFullName(),
+                typeDef);
+            if not success then
+                delete typeDef; 
+        end;
+    end;
+
+    InitializeShortType := success;
+end;
+
+function CompilerContext.InitializeLongType() : boolean;
+var
+    typeName, specialMangledName : String;
+    typeDef : ^TypeDefinition;  
+    success : boolean;
+begin
+    success := typeName.TryAssign('long');
+    if success then
+        success := specialMangledName.TryAssign('i8');
+    if success then
+    begin
+        typeDef := new TypeDefinition();
+        success := typeDef <> nil;
+        if success then
+        begin
+            typeDef^.SetFullName(@typeName);
+            typeDef^.SetSize(8);
+            typeDef^.SetSpecialMangledName(@specialMangledName); 
+            success := _types.TryAssign(
+                typeDef^.GetFullName(),
+                typeDef);
+            if not success then
+                delete typeDef; 
+        end;
+    end;
+
+    InitializeLongType := success;
+end;
+
+function CompilerContext.InitializeCharType() : boolean; 
+var
+    typeName, specialMangledName : String;
+    typeDef : ^TypeDefinition;  
+    success : boolean;
+begin
+    success := typeName.TryAssign('character');
+    if success then
+        success := specialMangledName.TryAssign('c');
+    if success then
+    begin
+        typeDef := new TypeDefinition();
+        success := typeDef <> nil;
+        if success then
+        begin
+            typeDef^.SetFullName(@typeName);
+            typeDef^.SetSize(2);
+            typeDef^.SetSpecialMangledName(@specialMangledName); 
+            success := _types.TryAssign(
+                typeDef^.GetFullName(),
+                typeDef);
+            if not success then
+                delete typeDef; 
+        end;
+    end;
+
+    InitializeCharType := success;
+end;
+
+function CompilerContext.InitializeBoolType() : boolean; 
+var
+    typeName, specialMangledName : String;
+    typeDef : ^TypeDefinition;  
+    success : boolean;
+begin
+    success := typeName.TryAssign('boolean');
+    if success then
+        success := specialMangledName.TryAssign('f');
+    if success then
+    begin
+        typeDef := new TypeDefinition();
+        success := typeDef <> nil;
+        if success then
+        begin
+            typeDef^.SetFullName(@typeName);
+            typeDef^.SetSize(1);
+            typeDef^.SetSpecialMangledName(@specialMangledName); 
+            success := _types.TryAssign(
+                typeDef^.GetFullName(),
+                typeDef);
+            if not success then
+                delete typeDef; 
+        end;
+    end;
+
+    InitializeBoolType := success;
+end;
+
+function CompilerContext.InitializeByteType() : boolean; 
+var
+    typeName, specialMangledName : String;
+    typeDef : ^TypeDefinition;  
+    success : boolean;
+begin
+    success := typeName.TryAssign('byte');
+    if success then
+        success := specialMangledName.TryAssign('b');
+    if success then
+    begin
+        typeDef := new TypeDefinition();
+        success := typeDef <> nil;
+        if success then
+        begin
+            typeDef^.SetFullName(@typeName);
+            typeDef^.SetSize(1);
+            typeDef^.SetSpecialMangledName(@specialMangledName); 
+            success := _types.TryAssign(
+                typeDef^.GetFullName(),
+                typeDef);
+            if not success then
+                delete typeDef; 
+        end;
+    end;
+
+    InitializeByteType := success;
+end;
+
+function CompilerContext.InitializeSingleType() : boolean; 
+var
+    typeName, specialMangledName : String;
+    typeDef : ^TypeDefinition;  
+    success : boolean;
+begin
+    success := typeName.TryAssign('single');
+    if success then
+        success := specialMangledName.TryAssign('s');
+    if success then
+    begin
+        typeDef := new TypeDefinition();
+        success := typeDef <> nil;
+        if success then
+        begin
+            typeDef^.SetFullName(@typeName);
+            typeDef^.SetSize(4);    
+            typeDef^.SetIsFloatingPoint(true);
+            typeDef^.SetSpecialMangledName(@specialMangledName); 
+            success := _types.TryAssign(
+                typeDef^.GetFullName(),
+                typeDef);
+            if not success then
+                delete typeDef; 
+        end;
+    end;
+
+    InitializeSingleType := success;
+end;
+
+function CompilerContext.InitializeDoubleType() : boolean; 
+var
+    typeName, specialMangledName : String;
+    typeDef : ^TypeDefinition;  
+    success : boolean;
+begin
+    success := typeName.TryAssign('double');
+    if success then
+        success := specialMangledName.TryAssign('d');
+    if success then
+    begin
+        typeDef := new TypeDefinition();
+        success := typeDef <> nil;
+        if success then
+        begin
+            typeDef^.SetFullName(@typeName);
+            typeDef^.SetSize(8);
+            typeDef^.SetIsFloatingPoint(true);
+            typeDef^.SetSpecialMangledName(@specialMangledName); 
+            success := _types.TryAssign(
+                typeDef^.GetFullName(),
+                typeDef);
+            if not success then
+                delete typeDef; 
+        end;
+    end;
+
+    InitializeDoubleType := success;
+end;
+
+function CompilerContext.InitializeExtendedType() : boolean; 
+var
+    typeName, specialMangledName : String;
+    typeDef : ^TypeDefinition;  
+    success : boolean;
+begin
+    success := typeName.TryAssign('extended');
+    if success then
+        success := specialMangledName.TryAssign('e');
+    if success then
+    begin
+        typeDef := new TypeDefinition();
+        success := typeDef <> nil;
+        if success then
+        begin
+            typeDef^.SetFullName(@typeName);
+            typeDef^.SetSize(10);
+            typeDef^.SetIsFloatingPoint(true);
+            typeDef^.SetSpecialMangledName(@specialMangledName); 
+            success := _types.TryAssign(
+                typeDef^.GetFullName(),
+                typeDef);
+            if not success then
+                delete typeDef; 
+        end;
+    end;
+
+    InitializeExtendedType := success;
+end;
+
+function CompilerContext.InitializeGenericPointerType() : boolean; 
+var
+    typeName, specialMangledName : String;
+    typeDef : ^TypeDefinition;  
+    success : boolean;
+begin
+    success := typeName.TryAssign('^');
+    if success then
+        success := specialMangledName.TryAssign('p');
+    if success then
+    begin
+        typeDef := new TypeDefinition();
+        success := typeDef <> nil;
+        if success then
+        begin
+            typeDef^.SetFullName(@typeName);
+            typeDef^.SetSize(4);
+            typeDef^.SetIsPointer(true);
+            typeDef^.SetSpecialMangledName(@specialMangledName); 
+            success := _types.TryAssign(
+                typeDef^.GetFullName(),
+                typeDef);   
+            if not success then
+                delete typeDef; 
+        end;
+    end;
+
+    InitializeGenericPointerType := success;
+end;
+
+function CompilerContext.GetFullName(
+    typeName, ns : ^String;
+    fullName : ^String) : boolean;  
+var
+    sb : SimpleStringBuilder;
+    success : boolean;
+begin
+    success := sb.TryAppend(ns);
+    if success then
+        success := sb.TryAppend('.');
+    if success then
+        success := sb.TryAppend(typeName);
+    if success then
+        success := sb.ToString(fullName);
+    GetFullName := success;
+end;
+
+function CompilerContext.MatchParameters(
+    parameterTypes : ^LinkedListOfTypeDefinition;
+    parameters : ^LinkedListOfParameterInfo) : boolean;  
+var
+    paramEnum : LinkedListEnumeratorOfParameterInfo;
+    typeEnum : LinkedListEnumeratorOfTypeDefinition;
+    currentParam : ^ParameterInfo;
+    currentType, currentParamType : ^TypeDefinition;
+    paramEnumMoveNext, typeEnumMoveNext, typeMatch : boolean;
+begin
+    typeEnum := parameterTypes^.GetEnumerator();
+    paramEnum := parameters^.GetEnumerator();
+    paramEnumMoveNext := paramEnum.MoveNext();
+    typeEnumMoveNext := typeEnum.MoveNext();
+    typeMatch := true;
+    while typeMatch and paramEnumMoveNext and typeEnumMoveNext do
+    begin
+        currentParam := paramEnum.GetCurrent();
+        currentParamType := currentParam^.GetType();
+        currentType := typeEnum.GetCurrent();
+        typeMatch := String.CompareOrdinal(
+            currentType^.GetFullName(), 
+            currentParamType^.GetFullName()) = 0;
+        paramEnumMoveNext := paramEnum.MoveNext();
+        typeEnumMoveNext := typeEnum.MoveNext();
+    end;
+
+    {Each param matches and both enumerations are finished}
+    MatchParameters := typeMatch and not paramEnumMoveNext and not typeEnumMoveNext;
 end;

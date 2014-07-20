@@ -1,0 +1,111 @@
+namespace TEAC;
+uses System, System.IO, TEAC;
+
+constructor LinkedListNodeOfParameterInfo(value : ^ParameterInfo);
+begin
+    _value := value;
+    _next := nil;
+end;
+
+destructor LinkedListNodeOfParameterInfo();
+begin
+    if _value <> nil then
+        delete _value;
+end;
+
+function LinkedListNodeOfParameterInfo.GetValue() : ^ParameterInfo;
+begin
+    GetValue := _value;
+end;
+
+function LinkedListNodeOfParameterInfo.GetNext() : ^LinkedListNodeOfParameterInfo;
+begin
+    GetNext := _next;
+end;
+
+procedure LinkedListNodeOfParameterInfo.SetNext(next : ^LinkedListNodeOfParameterInfo);
+begin
+    _next := next;
+end;
+
+constructor LinkedListEnumeratorOfParameterInfo(head : ^LinkedListNodeOfParameterInfo);
+begin
+    _head := head;
+    _current := nil;
+    _started := false;
+end;
+
+constructor LinkedListOfParameterInfo();
+begin
+    _head := nil;
+    _tail := nil;
+end;
+
+destructor LinkedListOfParameterInfo();
+begin
+    Clear();
+end;
+
+function LinkedListOfParameterInfo.Add(item : ^ParameterInfo) : boolean;
+var
+    node : ^LinkedListNodeOfParameterInfo;
+begin
+    node := new LinkedListNodeOfParameterInfo(item);
+    if node <> nil then
+    begin
+        Add := true;
+        if _tail <> nil then
+        begin
+            _tail^.SetNext(node);
+            _tail := node;
+        end
+        else
+        begin
+            _head := node;
+            _tail := node;
+        end;
+    end
+    else
+        Add := false;
+end;
+
+function LinkedListOfParameterInfo.GetEnumerator() : LinkedListEnumeratorOfParameterInfo;
+begin
+    GetEnumerator := LinkedListEnumeratorOfParameterInfo(_head);
+end;
+
+function LinkedListEnumeratorOfParameterInfo.MoveNext() : boolean;
+begin
+    if not _started then
+    begin
+        _current := _head;
+        _started := true;
+    end
+    else 
+    begin
+        if _current <> nil then
+            _current := _current^.GetNext();
+    end;
+
+    MoveNext := _current <> nil;
+end;
+
+function LinkedListEnumeratorOfParameterInfo.GetCurrent() : ^ParameterInfo;
+begin
+    GetCurrent := nil;
+    if _current <> nil then
+        GetCurrent := _current^.GetValue();
+end;
+
+procedure LinkedListOfParameterInfo.Clear();
+var
+    node : ^LinkedListNodeOfParameterInfo;
+begin
+    while _head <> nil do
+    begin
+        node := _head;
+        _head := _head^.GetNext();
+        delete node;
+    end;
+end;
+

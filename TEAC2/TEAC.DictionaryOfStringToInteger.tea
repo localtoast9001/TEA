@@ -1,0 +1,149 @@
+namespace TEAC;
+uses System, TEAC;
+
+constructor DictionaryOfStringToIntegerNode(
+    key : ^String; 
+    value : integer);
+begin
+    _key.assign(key);
+    _value := value;
+    _next := nil;
+end;
+
+destructor DictionaryOfStringToIntegerNode();
+begin
+end;
+
+function DictionaryOfStringToIntegerNode.Key() : ^String;
+begin
+    Key := @_key;
+end;
+
+function DictionaryOfStringToIntegerNode.Value() : integer;
+begin
+    Value := _value;
+end;
+
+procedure DictionaryOfStringToIntegerNode.SetValue(value : integer);
+begin
+    _value := value;
+end;
+
+function DictionaryOfStringToIntegerNode.Next() : ^DictionaryOfStringToIntegerNode;
+begin
+    Next := _next;
+end;
+
+procedure DictionaryOfStringToIntegerNode.SetNext(value : ^DictionaryOfStringToIntegerNode);
+begin
+    _next := value;
+end;
+
+constructor DictionaryOfStringToInteger();
+var
+    index : integer = 0;
+begin
+    while index < 256 do
+    begin
+        _table[index] := nil;
+        index := index + 1;
+    end;
+end;
+
+destructor DictionaryOfStringToInteger();
+var
+    index : integer = 0;
+    current, next : ^DictionaryOfStringToIntegerNode;
+begin
+    while index < 256 do
+    begin
+        current := _table[index];
+        while current <> nil do
+        begin
+            next := current^.Next();
+            delete current;
+            current := next;
+        end;
+
+        index := index + 1;
+    end;
+end;
+
+function DictionaryOfStringToInteger.TryGetValue(
+    key : ^String; 
+    valueRef : ^integer) : boolean;
+var
+    index : integer = GetHashCode(key) mod 256;
+    current : ^DictionaryOfStringToIntegerNode; 
+    found : boolean = false;
+begin
+    valueRef^ := 0;
+    current := _table[index];
+    while (current <> nil) and not found do
+    begin
+        if String.CompareOrdinal(current^.Key(), key) = 0 then 
+        begin
+            found := true;
+            valueRef^ := current^.Value();
+        end
+        else
+        begin
+            current := current^.Next();
+        end;
+    end;
+
+    TryGetValue := found; 
+end;
+
+function DictionaryOfStringToInteger.TryAssign(
+    key : ^String; 
+    value : integer) : boolean;
+var
+    index : integer = GetHashCode(key) mod 256;
+    current : ^DictionaryOfStringToIntegerNode; 
+    found : boolean = false;
+    success : boolean = true;
+begin
+    current := _table[index];
+    while (current <> nil) and not found do
+    begin
+        if String.CompareOrdinal(current^.Key(), key) = 0 then 
+        begin
+            found := true;
+            current^.SetValue(value);
+        end
+        else
+        begin
+            current := current^.Next();
+        end;
+    end;
+
+    if not found then
+    begin
+        current := new DictionaryOfStringToIntegerNode(
+            key,
+            value);
+        current^.SetNext(_table[index]);
+        _table[index] := current;
+    end;
+
+    TryAssign := success;
+end;
+
+function DictionaryOfStringToInteger.GetHashCode(
+    value : ^String) : integer;
+var
+    code : integer = 0;
+    index : integer = 0;
+    stringVal : array of character = value^.Characters();
+    ch : integer;
+begin
+    ch := Convert.ToInteger(Convert.ToShort(stringVal[index]));
+    while ch <> 0 do
+    begin
+        code := code + ch;
+        index := index + 1;
+        ch := Convert.ToInteger(Convert.ToShort(stringVal[index]));    
+    end;
+    GetHashCode := code;
+end;

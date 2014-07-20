@@ -1,0 +1,17 @@
+namespace TEAC;
+uses System, TEAC;
+
+constructor CallStatement(
+    start : ^SharedOfToken; 
+    callExpression : ^ReferenceExpression);
+inherited(start);
+begin
+    _expression := callExpression;
+end;
+
+destructor CallStatement();
+begin
+    if _expression <> nil then
+        delete _expression;
+end;
+

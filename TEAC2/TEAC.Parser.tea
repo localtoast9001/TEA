@@ -225,7 +225,149 @@ end;
 function Parser.TryParseMethodDefinition(
     reader : ^TokenReader;
     programUnit : ^ProgramUnit) : boolean;
+var
+    method : ^MethodDefinition = nil;
+    returnType : ^TypeReference = nil;
+    tok, start : SharedOfToken;
+    methodName : String;
+    externImpl : String;
+    body : ^BlockStatement = nil;
+    localVars : ^VarBlock = nil;
+    isFunction : boolean = false;
+    success : boolean;
 begin
+    success := reader^.Peek(@tok);
+    start.assign(@tok);
+    if success then 
+    begin
+        if tok.Is(Keyword.Constructor) then
+            success := TryParseConstructorDefinition(reader, @method)
+        else if tok.Is(Keyword.Destructor) then
+            success := TryParseDestructorDefinition(reader, @method)
+        else
+        begin
+            if tok.Is(Keyword.Function) then
+            begin
+                isFunction := true;
+                reader^.Read(@tok);
+            end
+            else
+                success := Expect(reader, Keyword.Procedure);
+
+            if success then
+                success := TryParseFullNameDeclaration(reader, @methodName);
+
+            if success then
+            begin
+                method := new MethodDefinition(@start, @methodName);
+                success := method <> nil;
+            end;
+
+            if success then
+                success := TryParseParameterList(reader, method^.GetParameters());
+            if success and isFunction then
+            begin
+                success := Expect(reader, Keyword.Colon);
+                if success then
+                    success := TryParseTypeReference(reader, @returnType);
+                if success then
+                    method^.SetReturnType(returnType);
+            end;
+
+            if success then
+                success := Expect(reader, Keyword.SemiColon);
+            if success then
+                success := reader^.Peek(@tok);
+            if success then
+            begin
+                if tok.Is(Keyword.Extern) then
+                begin
+                    reader^.Read(@tok);
+                    success := ExpectStringLiteral(reader, @externImpl);
+                    if success then
+                        method^.SetExternImpl(@externImpl);
+                end
+                else
+                begin
+                    if tok.Is(Keyword.Var) then
+                    begin
+                        localVars := new VarBlock(@tok);
+                        success := localVars <> nil;
+                        if success then
+                        begin
+                            method^.SetLocalVariables(localVars);
+                            success := TryParseVarBlock(reader, true, localVars);
+                        end;
+                    end;
+
+                    if success then
+                    begin
+                        success := TryParseBlockStatement(reader, @body);
+                        if success then
+                            method^.SetBody(body);
+                    end;
+                end;
+
+                if success then
+                    success := Expect(reader, Keyword.SemiColon);
+            end;
+        end;
+    end;
+
+    if success then
+        success := programUnit^.AddMethod(method);
+    if not success and (method <> nil) then
+        delete method;
+    TryParseMethodDefinition := success;
+end;
+
+function Parser.TryParseConstructorDefinition(
+    reader : ^TokenReader;
+    methodRef : ^^MethodDefinition) : boolean;
+begin
+end;
+
+function Parser.TryParseDestructorDefinition(
+    reader : ^TokenReader;
+    methodRef : ^^MethodDefinition) : boolean;
+begin
+end;
+
+function Parser.TryParseParameterList(
+    reader : ^TokenReader;
+    parameterList : ^LinkedListOfParameterDeclaration) : boolean;
+var
+    paramDecl : ^ParameterDeclaration = nil;
+    tok : SharedOfToken;
+    success : boolean;
+begin
+    success := Expect(reader, Keyword.LeftParen);
+    if success then
+        success := reader^.Peek(@tok);
+    while success and not tok.Is(Keyword.RightParen) do
+    begin
+        success := TryParseParameterDeclaration(
+            reader,
+            @paramDecl);
+        if success then
+        begin
+            success := parameterList^.Add(paramDecl);
+            if not success then
+                delete paramDecl;
+        end;
+
+        if success then
+            success := reader^.Peek(@tok);
+        if success and tok.Is(Keyword.SemiColon) then
+        begin
+            reader^.Read(@tok);
+            success := reader^.Peek(@tok);
+        end;
+    end; 
+
+    if success then
+        success := Expect(reader, Keyword.RightParen);
+    TryParseParameterList := success;
 end;
 
 function Parser.TryParseFullNameDeclaration(
@@ -235,39 +377,30 @@ var
     tok : SharedOfToken;
     tokVal : ^Token;
     sb : SimpleStringBuilder;
+    identifier : String;
     success, shouldContinue : boolean;
 begin
-    success := reader^.Read(@tok);
+    success := ExpectIdentifier(reader, @identifier);
     if success then
-    begin
-        tokVal := tok.Value();
-        success := false;
-        if tokVal <> nil then
-            if tokVal^.GetType() = TokenType.Identifier then
-                success := sb.TryAppend(tokVal^.GetStringValue());
-    end;
+        success := sb.TryAppend(@identifier);
     shouldContinue := false;
-    success := reader^.Peek(@tok);
     if success then
-        shouldContinue := Token.Is(tok.Value(), Keyword.Dot);
+        success := reader^.Peek(@tok);
+    if success then
+        shouldContinue := tok.Is(Keyword.Dot);
     while success and shouldContinue do
     begin
         reader^.Read(@tok);
         success := sb.TryAppend('.');
         if success then
-            success := reader^.Read(@tok);
+            success := ExpectIdentifier(reader, @identifier);
         if success then
-        begin
-            tokVal := tok.Value();
-            success := false;
-            if tokVal <> nil then
-                if tokVal^.GetType() = TokenType.Identifier then
-                    success := sb.TryAppend(tokVal^.GetStringValue());
-        end;
+            success := sb.TryAppend(@identifier);
         
-        success := reader^.Peek(@tok);
         if success then
-            shouldContinue := Token.Is(tok.Value(), Keyword.Dot);
+            success := reader^.Peek(@tok);
+        if success then
+            shouldContinue := tok.Is(Keyword.Dot);
     end;
 
     if success then
@@ -333,8 +466,11 @@ function Parser.TryParseClassDeclaration(
     typeDeclRef : ^^TypeDeclaration) : boolean;
 var
     typeDecl : ^ClassDeclaration = nil;
+    varBlock : ^VarBlock = nil;
+    methodDecl : ^MethodDeclaration = nil;
     tok : SharedOfToken;
-    baseType : String;
+    tokVal : ^Token;
+    baseType, interfaceName : String;
     isStatic : boolean = false;
     success : boolean;
 begin
@@ -365,16 +501,151 @@ begin
 
     if success then
     begin
+        tokVal := name^.Value();
         typeDecl := new ClassDeclaration(
             name,
-            name^.GetStringValue(),
+            tokVal^.GetStringValue(),
             @baseType,
             isStatic);
         success := typeDecl <> nil;
     end;
 
     if success then
-        typeDeclRef^ := typeDecl;
+        success := reader^.Peek(@tok);
+
+    if success then
+        if Token.Is(tok.Value(), Keyword.Interface) then
+        begin
+            reader^.Read(@tok);
+            success := Expect(reader, Keyword.LeftParen);
+            if success then
+                success := TryParseFullNameDeclaration(reader, @interfaceName);
+
+            if success then
+                success := typeDecl^.AddInterface(@interfaceName);
+
+            if success then
+                success := reader^.Peek(@tok);
+            while success and Token.Is(tok.Value(), Keyword.Comma) do
+            begin
+                reader^.Read(@tok);
+                success := TryParseFullNameDeclaration(reader, @interfaceName);
+                if success then
+                    success := typeDecl^.AddInterface(@interfaceName);
+                if success then
+                    success := reader^.Peek(@tok);
+            end;
+
+            if success then
+                success := Expect(reader, Keyword.RightParen);
+        end;
+
+    if success then
+        success := reader^.Peek(@tok);
+    if success and Token.Is(tok.Value(), Keyword.Public) then
+    begin
+        reader^.Read(@tok);
+        success := reader^.Peek(@tok);
+        while success and (
+            tok.Is(Keyword.Procedure) or
+            tok.Is(Keyword.Function) or
+            tok.Is(Keyword.Static) or
+            tok.Is(Keyword.Virtual) or
+            tok.Is(Keyword.Abstract) or
+            tok.Is(Keyword.Constructor) or
+            tok.Is(Keyword.Destructor)) do
+        begin
+            success := TryParseMethodDeclaration(reader, @methodDecl);
+            if success then
+            begin
+                success := typeDecl^.AddPublicMethod(methodDecl);
+                if not success then
+                    delete methodDecl;
+                if success then
+                    success := Expect(reader, Keyword.SemiColon);
+                if success then
+                    success := reader^.Peek(@tok);
+            end; 
+        end;
+    end;
+
+    if success then
+        success := reader^.Peek(@tok);
+    if success and Token.Is(tok.Value(), Keyword.Protected) then
+    begin
+        reader^.Read(@tok);
+        success := reader^.Peek(@tok);
+        while success and (
+            tok.Is(Keyword.Procedure) or
+            tok.Is(Keyword.Function) or
+            tok.Is(Keyword.Static) or
+            tok.Is(Keyword.Virtual) or
+            tok.Is(Keyword.Abstract) or
+            tok.Is(Keyword.Constructor) or
+            tok.Is(Keyword.Destructor)) do
+        begin
+            success := TryParseMethodDeclaration(reader, @methodDecl);
+            if success then
+            begin
+                success := typeDecl^.AddProtectedMethod(methodDecl);
+                if not success then
+                    delete methodDecl;
+                if success then
+                    success := Expect(reader, Keyword.SemiColon);
+                if success then
+                    success := reader^.Peek(@tok);
+            end; 
+        end;
+    end;
+
+    if success then
+        success := reader^.Peek(@tok);
+    if success and Token.Is(tok.Value(), Keyword.Private) then
+    begin
+        reader^.Read(@tok);
+        success := reader^.Peek(@tok);
+        while success and (
+            tok.Is(Keyword.Procedure) or
+            tok.Is(Keyword.Function) or
+            tok.Is(Keyword.Static) or
+            tok.Is(Keyword.Constructor) or
+            tok.Is(Keyword.Destructor)) do
+        begin
+            success := TryParseMethodDeclaration(reader, @methodDecl);
+            if success then
+            begin
+                success := typeDecl^.AddPrivateMethod(methodDecl);
+                if not success then
+                    delete methodDecl;
+                if success then
+                    success := Expect(reader, Keyword.SemiColon);
+                if success then
+                    success := reader^.Peek(@tok);
+            end; 
+        end;
+    end;
+
+    if success then
+        success := reader^.Peek(@tok);
+    if success and Token.Is(tok.Value(), Keyword.Var) then
+    begin
+        varBlock := new VarBlock(@tok);
+        success := varBlock <> nil;
+        if success then
+        begin
+            success := TryParseVarBlock(reader, false, varBlock);
+            if success then
+                typeDecl^.SetFields(varBlock)
+            else
+                delete varBlock;
+        end;
+    end;
+
+    if success then
+        success := Expect(reader, Keyword.End);
+
+    if success then
+        typeDeclRef^ := typeDecl
     else
         typeDeclRef^ := nil;
     TryParseClassDeclaration := success;
@@ -384,14 +655,1081 @@ function Parser.TryParseInterfaceDeclaration(
     reader : ^TokenReader;
     name : ^SharedOfToken;
     typeDeclRef : ^^TypeDeclaration) : boolean;
+var
+    typeDecl : ^InterfaceDeclaration = nil;
+    tok : SharedOfToken;
+    tokVal : ^Token;
+    baseInterfaceName : String;
+    methodDecl : ^MethodDeclaration = nil;
+    success : boolean;
 begin
+    success := Expect(reader, Keyword.Interface);
+    if success then
+    begin
+        tokVal := name^.Value();
+        typeDecl := new InterfaceDeclaration(
+            name,
+            tokVal^.GetStringValue());
+        success := typeDecl <> nil;
+    end;
+
+    if success then 
+        success := reader^.Peek(@tok);
+    if success and tok.Is(Keyword.LeftParen) then
+    begin
+        reader^.Read(@tok);
+        success := TryParseFullNameDeclaration(
+            reader,
+            @baseInterfaceName);
+        if success then
+            success := Expect(reader, Keyword.RightParen);
+        if success then
+            typeDecl^.SetBaseInterfaceType(@baseInterfaceName);
+    end;
+
+    if success then
+        success := reader^.Peek(@tok);
+    while success and (
+        tok.Is(Keyword.Function) or
+        tok.Is(Keyword.Procedure)) do
+    begin
+        success := TryParseMethodDeclaration(
+            reader, 
+            @methodDecl);
+        if success then
+        begin
+            success := typeDecl^.AddMethod(methodDecl);
+            if not success then
+                delete methodDecl;
+        end;
+
+        if success then
+            success := Expect(reader, Keyword.SemiColon);
+        if success then
+            success := reader^.Peek(@tok);
+    end;
+
+    if success then
+        success := Expect(reader, Keyword.End);
+
+    if (typeDecl <> nil) and not success then
+    begin
+        delete typeDecl;
+        typeDecl := nil;
+    end;
+    
+    typeDeclRef^ := typeDecl;
+    TryParseInterfaceDeclaration := success;
 end;
 
 function Parser.TryParseMethodTypeDeclaration(
     reader : ^TokenReader;
     name : ^SharedOfToken;
     typeDeclRef : ^^TypeDeclaration) : boolean; 
+var
+    typeDecl : ^MethodTypeDeclaration = nil;
+    tok : SharedOfToken;
+    tokVal : ^Token;
+    implicitArgType, returnType : ^TypeReference;
+    success, isFunction : boolean;
 begin
+    tokVal := name^.Value();
+    typeDecl := new MethodTypeDeclaration(
+        name,
+        tokVal^.GetStringValue());
+    success := typeDecl <> nil;
+    
+    isFunction := false;
+    success := reader^.Peek(@tok);
+    if success then
+    begin
+        isFunction := tok.Is(Keyword.Function);
+        reader^.Read(@tok);
+    end;
+
+    if success then
+        success := reader^.Peek(@tok);
+    if success and tok.Is(Keyword.Of) then
+    begin
+        reader^.Read(@tok);
+        success := TryParseTypeReference(reader, @implicitArgType);
+        if success then
+            typeDecl^.SetImplicitArgType(implicitArgType);
+    end;
+
+    if success then
+        success := TryParseParameterList(reader, typeDecl^.GetParameters());
+    if success and isFunction then
+    begin
+        success := Expect(reader, Keyword.Colon);
+        if success then
+            success := TryParseTypeReference(
+                reader, 
+                @returnType);
+        if success then
+            typeDecl^.SetReturnType(returnType);
+    end;
+
+    if not success and typeDecl <> nil then
+    begin
+        delete typeDecl;
+        typeDecl := nil;
+    end;
+
+    typeDeclRef^ := typeDecl;
+    TryParseMethodTypeDeclaration := success;
+end;
+
+function Parser.TryParseMethodDeclaration(
+    reader : ^TokenReader;
+    methodDeclRef : ^^MethodDeclaration) : boolean; 
+var
+    method : ^MethodDeclaration = nil;
+    returnType : ^TypeReference = nil;
+    methodName : String;
+    start, tok : SharedOfToken;
+    success, done, isStatic, isVirtual, isAbstract, isFunction : boolean;
+begin
+    done := false;
+    success := reader^.Peek(@tok);
+    start.assign(@tok);
+    if success then
+    begin
+        if tok.Is(Keyword.Constructor) then
+        begin
+            success := TryParseConstructorDeclaration(reader, @method);
+            done := true;
+        end 
+        else if tok.Is(Keyword.Destructor) then
+        begin
+            success := TryParseDestructorDeclaration(reader, false, @method);
+            done := true;
+        end
+        else
+        begin
+            isStatic := false;
+            isVirtual := false;
+            isAbstract := false;
+            if tok.Is(Keyword.Static) then
+            begin
+                isStatic := true;
+                reader^.Read(@tok);
+                success := reader^.Peek(@tok);
+            end
+            else if tok.Is(Keyword.Abstract) then
+            begin
+                isAbstract := true;
+                reader^.Read(@tok);
+                success := reader^.Peek(@tok);
+            end
+            else if tok.Is(Keyword.Virtual) then
+            begin
+                isVirtual := true;
+                reader^.Read(@tok);
+                success := reader^.Peek(@tok);
+                if success and tok.Is(Keyword.Destructor) then
+                begin
+                    success := TryParseDestructorDeclaration(
+                        reader,
+                        true,
+                        @method);
+                    done := true;
+                end;
+            end;
+
+            isFunction := false;
+            if success and not done then
+            begin
+                if tok.Is(Keyword.Function) then 
+                begin
+                    isFunction := true;
+                    reader^.Read(@tok);
+                end
+                else
+                    success := Expect(reader, Keyword.Procedure);
+
+                if success then
+                    success := ExpectIdentifier(reader, @methodName);
+
+                if success then
+                begin
+                    method := new MethodDeclaration(
+                        @start,
+                        @methodName,
+                        isStatic,
+                        isVirtual,
+                        isAbstract);
+                    success := method <> nil;
+                end;
+
+                if success then
+                    success := TryParseParameterList(reader, method^.GetParameters());
+                if success and isFunction then
+                begin
+                    success := Expect(reader, Keyword.Colon);
+                    if success then
+                        success := TryParseTypeReference(reader, @returnType);
+                    if success then
+                        method^.SetReturnType(returnType);
+                end;
+            end;
+        end;
+    end;
+
+    if not success and (method <> nil) then
+    begin
+        delete method;
+        method := nil;
+    end;
+
+    methodDeclRef^ := method;
+    TryParseMethodDeclaration := success;
+end;
+
+function Parser.TryParseConstructorDeclaration(
+    reader : ^TokenReader;
+    methodDeclRef : ^^MethodDeclaration) : boolean;
+var
+    start, tok : SharedOfToken;
+    method : ^MethodDeclaration = nil;
+    methodName : String;
+    success : boolean;
+begin
+    success := methodName.TryAssign('constructor');
+    if success then
+        success := reader^.Peek(@start);
+    if success then
+        success := Expect(reader, Keyword.Constructor);
+    if success then
+    begin
+        method := new MethodDeclaration(
+            @start,
+            @methodName,
+            false,
+            false,
+            false);
+        success := method <> nil;
+    end;
+
+    if success then
+        success := TryParseParameterList(reader, method^.GetParameters());    
+    if not success and (method <> nil) then
+    begin
+        delete method;
+        method := nil;
+    end;
+
+    methodDeclRef^ := method;
+    TryParseConstructorDeclaration := success;
+end;
+
+function Parser.TryParseDestructorDeclaration(
+    reader : ^TokenReader;
+    isVirtual : boolean;
+    methodDeclRef : ^^MethodDeclaration) : boolean; 
+var
+    method : ^MethodDeclaration = nil;
+    start, tok : SharedOfToken;
+    methodName : String;
+    success : boolean;
+begin
+    success := methodName.TryAssign('destructor');
+    if success then
+        success := reader^.Peek(@start);
+    if success then
+        success := Expect(reader, Keyword.Destructor);
+    if success then
+        success := Expect(reader, Keyword.LeftParen);
+    if success then
+        success := Expect(reader, Keyword.RightParen);
+    if success then
+    begin
+        method := new MethodDeclaration(
+            @start,
+            @methodName,
+            false,
+            isVirtual,
+            false);
+        success := method <> nil;
+    end;
+
+    methodDeclRef^ := method;
+    TryParseDestructorDeclaration := success;
+end;
+
+function Parser.TryParseTypeReference(
+    reader : ^TokenReader;
+    typeRefRef : ^^TypeReference) : boolean;
+var
+    tok, start : SharedOfToken;
+    typeRef, elementType : ^TypeReference = nil;
+    elementCount : ^Expression = nil;
+    typeName : String;
+    success : boolean;
+begin
+    success := reader^.Peek(@start);
+    tok.assign(@start);
+    if success then
+    begin
+        if tok.Is(Keyword.Pointer) then
+        begin
+            reader^.Read(@tok);
+            success := this^.TryParseTypeReference(reader, @elementType);
+            if success then
+            begin
+                typeRef := new PointerTypeReference(@start, elementType);
+                success := typeRef <> nil;
+                if not success then
+                    delete elementType;
+            end;
+        end
+        else if tok.Is(Keyword.Array) then
+        begin
+            reader^.Read(@tok);
+            success := reader^.Peek(@tok);
+            if success and tok.Is(Keyword.LeftBracket) then
+            begin
+                reader^.Read(@tok);
+                success := TryParseExpression(reader, @elementCount);
+                if success then
+                    success := Expect(reader, Keyword.RightBracket);
+            end;
+
+            if success then
+                success := Expect(reader, Keyword.Of);
+            if success then
+                success := this^.TryParseTypeReference(reader, @elementType);
+            if success then
+            begin
+                typeRef := new ArrayTypeReference(
+                    @start,
+                    elementCount,
+                    elementType);
+                success := typeRef <> nil;
+            end;
+
+            if not success then
+            begin
+                if elementType <> nil then
+                    delete elementType;
+                if elementCount <> nil then
+                    delete elementCount;
+            end;
+        end
+        else
+        begin
+            success := TryParseFullNameDeclaration(reader, @typeName);
+            if success then
+            begin
+                typeRef := new NamedTypeReference(@start, @typeName);
+                success := typeRef <> nil;
+            end;
+        end;
+    end;
+    
+    typeRefRef^ := typeRef;
+    TryParseTypeReference := success;
+end;
+
+function Parser.TryParseParameterDeclaration(
+    reader : ^TokenReader;
+    parameterDeclRef : ^^ParameterDeclaration) : boolean;
+var
+    tok, start : SharedOfToken;
+    parameterName : String;
+    parameterDecl : ^ParameterDeclaration = nil;
+    parameterType : ^TypeReference = nil; 
+    success : boolean;
+begin
+    success := reader^.Peek(@start);
+    if success then
+    begin
+        parameterDecl := new ParameterDeclaration(@start);
+        success := parameterDecl <> nil;
+    end;
+
+    if success then
+        success := ExpectIdentifier(reader, @parameterName);
+    if success then
+        success := parameterDecl^.AddName(@parameterName);
+    if success then
+        success := reader^.Peek(@tok);
+    while success and tok.Is(Keyword.Comma) do
+    begin
+        reader^.Read(@tok);
+        success := ExpectIdentifier(reader, @parameterName);
+        if success then
+            success := parameterDecl^.AddName(@parameterName);
+        if success then
+            success := reader^.Peek(@tok);
+    end;
+
+    if success then
+        success := Expect(reader, Keyword.Colon);
+    if success then
+    begin
+        success := TryParseTypeReference(reader, @parameterType);
+        if success then
+            parameterDecl^.SetParameterType(parameterType);
+    end;
+
+    if not success and (parameterDecl <> nil) then
+    begin
+        delete parameterDecl;
+        parameterDecl := nil;
+    end;
+
+    parameterDeclRef^ := parameterDecl;
+    TryParseParameterDeclaration := success;
+end;
+
+function Parser.TryParseExpression(
+    reader : ^TokenReader;
+    exprRef : ^^Expression) : boolean;
+var
+    firstTerm, secondTerm, expr : ^Expression = nil;
+    tok, start : SharedOfToken;
+    tokVal : ^Token = nil;
+    operator : RelationalOperator;
+    success : boolean;
+begin
+    success := reader^.Peek(@start);
+    if success then
+        success := TryParseSimpleExpression(
+            reader,
+            @firstTerm);
+    if success then
+    begin
+        success := reader^.Peek(@tok);
+        if success then
+            if tok.IsRelationalOperator(@operator) then
+            begin
+                reader^.Read(@tok);
+                success := TryParseSimpleExpression(
+                    reader,
+                    @secondTerm);
+                if success then
+                begin
+                    tokVal := tok.Value();
+                    expr := new RelationalExpression(
+                        @start,
+                        firstTerm, 
+                        secondTerm, 
+                        operator);
+                    success := expr <> nil;
+                    if not success then
+                        delete secondTerm;
+                end; 
+            end
+            else
+                expr := firstTerm;
+    end;
+
+    if not success and (expr <> nil) then
+    begin
+        delete expr;
+        expr := nil;
+    end;
+
+    exprRef^ := expr;
+    TryParseExpression := success;
+end;
+
+function Parser.TryParseSimpleExpression(
+    reader : ^TokenReader;
+    exprRef : ^^Expression) : boolean;
+var
+    firstTerm, secondTerm, expr : ^Expression = nil;
+    tok, start : SharedOfToken;
+    tokVal : ^Token = nil;
+    operator : SimpleOperator;
+    success : boolean;
+begin
+    success := reader^.Peek(@start);
+    if success then
+        success := TryParseTermExpression(
+            reader,
+            @firstTerm);
+    if success then
+    begin
+        success := reader^.Peek(@tok);
+        if success then
+            if tok.IsSimpleOperator(@operator) then
+            begin
+                reader^.Read(@tok);
+                success := TryParseTermExpression(
+                    reader,
+                    @secondTerm);
+                if success then
+                begin
+                    tokVal := tok.Value();
+                    expr := new SimpleExpression(
+                        @start,
+                        firstTerm, 
+                        secondTerm, 
+                        operator);
+                    success := expr <> nil;
+                    if not success then
+                        delete secondTerm;
+                end; 
+            end
+            else
+                expr := firstTerm;
+    end;
+
+    if not success and (expr <> nil) then
+    begin
+        delete expr;
+        expr := nil;
+    end;
+
+    exprRef^ := expr;
+    TryParseSimpleExpression := success;
+end;
+
+function Parser.TryParseTermExpression(
+    reader : ^TokenReader;
+    exprRef : ^^Expression) : boolean;
+var
+    firstTerm, secondTerm, expr : ^Expression = nil;
+    tok, start : SharedOfToken;
+    tokVal : ^Token = nil;
+    operator : TermOperator;
+    success : boolean;
+begin
+    success := reader^.Peek(@start);
+    if success then
+        success := TryParseFactorExpression(
+            reader,
+            @firstTerm);
+    if success then
+    begin
+        success := reader^.Peek(@tok);
+        if success then
+            if tok.IsTermOperator(@operator) then
+            begin
+                reader^.Read(@tok);
+                success := TryParseFactorExpression(
+                    reader,
+                    @secondTerm);
+                if success then
+                begin
+                    tokVal := tok.Value();
+                    expr := new TermExpression(
+                        @start,
+                        firstTerm, 
+                        secondTerm, 
+                        operator);
+                    success := expr <> nil;
+                    if not success then
+                        delete secondTerm;
+                end; 
+            end
+            else
+                expr := firstTerm;
+    end;
+
+    if not success and (expr <> nil) then
+    begin
+        delete expr;
+        expr := nil;
+    end;
+
+    exprRef^ := expr;
+    TryParseTermExpression := success;
+end;
+
+function Parser.TryParseFactorExpression(
+    reader : ^TokenReader;
+    exprRef : ^^Expression) : boolean;
+var
+    tok : SharedOfToken;
+    tokVal : ^Token;
+    success : boolean;
+begin
+    success := reader^.Peek(@tok);
+    if success then
+    begin
+        if tok.Is(Keyword.Not) then
+            success := TryParseNotExpression(reader, exprRef)
+        else if tok.Is(Keyword.Minus) then
+            success := TryParseNegativeExpression(reader, exprRef)
+        else if tok.Is(Keyword.New) then
+            success := TryParseNewExpression(reader, exprRef)
+        else if tok.Is(Keyword.Address) then
+            success := TryParseAddressExpression(reader, exprRef)
+        else if tok.Is(Keyword.LeftParen) then
+            success := TryParseParentheticalExpression(reader, exprRef)
+        else if tok.Is(Keyword.Nil) then
+            success := TryParseLiteralNilExpression(reader, exprRef)
+        else if tok.Is(Keyword.True) then
+            success := TryParseLiteralTrueExpression(reader, exprRef)
+        else if tok.Is(Keyword.False) then
+            success := TryParseLiteralFalseExpression(reader, exprRef)
+        else if tok.Is(Keyword.Inherited) then
+            success := TryParseReferenceExpression(reader, exprRef)
+        else
+        begin
+            tokVal := tok.Value();
+            if Token.IsLiteral(tokVal) then
+            begin
+                success := TryParseLiteralExpression(reader, exprRef);
+            end
+            else
+            begin
+                success := TryParseReferenceExpression(reader, exprRef);
+            end;
+        end;
+    end;
+
+    TryParseFactorExpression := success;
+end;
+
+function Parser.TryParseNotExpression(
+    reader : ^TokenReader;
+    exprRef : ^^Expression) : boolean;
+var
+    start : SharedOfToken;
+    expr, inner : ^Expression = nil;
+    success : boolean;
+begin
+    success := reader^.Peek(@start);
+    if success then
+        success := Expect(reader, Keyword.Not);
+    if success then
+        success := TryParseFactorExpression(reader, @inner);
+    if success then
+    begin
+        expr := new NotExpression(@start, inner);
+        success := expr <> nil;
+        if not success then
+            delete inner;
+    end;
+
+    exprRef^ := expr;
+    TryParseNotExpression := success;
+end;
+ 
+function Parser.TryParseNegativeExpression(
+    reader : ^TokenReader;
+    exprRef : ^^Expression) : boolean;
+var
+    start : SharedOfToken;
+    expr, inner : ^Expression = nil;
+    success : boolean;
+begin
+    success := reader^.Peek(@start);
+    if success then
+        success := Expect(reader, Keyword.Minus);
+    if success then
+        success := TryParseFactorExpression(reader, @inner);
+    if success then
+    begin
+        expr := new NegativeExpression(@start, inner);
+        success := expr <> nil;
+        if not success then
+            delete inner;
+    end;
+
+    exprRef^ := expr;
+    TryParseNegativeExpression := success;
+end;
+ 
+function Parser.TryParseParentheticalExpression(
+    reader : ^TokenReader;
+    exprRef : ^^Expression) : boolean; 
+var
+    expr : ^Expression = nil;
+    success : boolean;
+begin
+    success := Expect(reader, Keyword.LeftParen);
+    if success then
+        success := TryParseExpression(reader, @expr);
+    if success then
+        success := Expect(reader, Keyword.RightParen);
+    if not success and (expr <> nil) then
+    begin
+        delete expr;
+        expr := nil;
+    end;
+
+    exprRef^ := expr;
+    TryParseParentheticalExpression := success;
+end;
+
+function Parser.TryParseNewExpression(
+    reader : ^TokenReader;
+    exprRef : ^^Expression) : boolean;
+begin
+end;
+ 
+function Parser.TryParseAddressExpression(
+    reader : ^TokenReader;
+    exprRef : ^^Expression) : boolean; 
+begin
+end;
+
+function Parser.TryParseLiteralNilExpression(
+    reader : ^TokenReader;
+    exprRef : ^^Expression) : boolean; 
+var
+    expr : ^Expression = nil;
+    start : SharedOfToken;
+    success : boolean;
+begin
+    success := reader^.Peek(@start);
+    if success then
+        success := Expect(reader, Keyword.Nil);
+    if success then
+    begin
+        expr := new LiteralNilExpression(@start);
+        success := expr <> nil;
+    end;
+
+    exprRef^ := expr;
+    TryParseLiteralNilExpression := success;
+end;
+
+function Parser.TryParseLiteralTrueExpression(
+    reader : ^TokenReader;
+    exprRef : ^^Expression) : boolean; 
+var
+    expr : ^Expression = nil;
+    start : SharedOfToken;
+    success : boolean;
+begin
+    success := reader^.Peek(@start);
+    if success then
+        success := Expect(reader, Keyword.True);
+    if success then
+    begin
+        expr := new LiteralBooleanExpression(@start, true);
+        success := expr <> nil;
+    end;
+
+    exprRef^ := expr;
+    TryParseLiteralTrueExpression := success;
+end;
+
+function Parser.TryParseLiteralFalseExpression(
+    reader : ^TokenReader;
+    exprRef : ^^Expression) : boolean; 
+var
+    expr : ^Expression = nil;
+    start : SharedOfToken;
+    success : boolean;
+begin
+    success := reader^.Peek(@start);
+    if success then
+        success := Expect(reader, Keyword.False);
+    if success then
+    begin
+        expr := new LiteralBooleanExpression(@start, false);
+        success := expr <> nil;
+    end;
+
+    exprRef^ := expr;
+    TryParseLiteralFalseExpression := success;
+end;
+
+function Parser.TryParseReferenceExpression(
+    reader : ^TokenReader;
+    exprRef : ^^Expression) : boolean; 
+var
+    inner, newInner : ^ReferenceExpression = nil;
+    callExpr : ^CallReferenceExpression = nil;
+    index, arg : ^Expression = nil;
+    tok : SharedOfToken;
+    identifier : String;
+    success, done : boolean;
+begin
+    done := false;
+    success := reader^.Peek(@tok);
+    if success then
+    begin
+        if tok.Is(Keyword.Inherited) then
+        begin
+            inner := new InheritedReferenceExpression(@tok);
+            success := inner <> nil;
+        end
+        else
+        begin
+            success := ExpectIdentifier(reader, @identifier);
+            if success then
+            begin
+                inner := new NamedReferenceExpression(@tok, @identifier);
+                success := inner <> nil;
+            end;
+        end;
+
+        if success then
+            success := reader^.Peek(@tok);
+        while success and not done do
+        begin
+            if tok.Is(Keyword.LeftParen) then
+            begin
+                reader^.Read(@tok);
+                callExpr := new CallReferenceExpression(@tok, inner);
+                success := newInner <> nil;
+                if success then
+                begin
+                    inner := callExpr;
+                    success := reader^.Peek(@tok);
+                    if success and not tok.Is(Keyword.RightParen) then
+                    begin
+                        success := TryParseExpression(reader, @arg);
+                        if success then
+                        begin
+                            success := callExpr^.AddArgument(arg);
+                            if not success then
+                                delete arg;
+                        end;
+
+                        if success then
+                            success := reader^.Peek(@tok);
+                        while success and tok.Is(Keyword.Comma) do
+                        begin
+                            reader^.Read(@tok);
+                            success := TryParseExpression(reader, @arg);
+                            if success then
+                            begin
+                                success := callExpr^.AddArgument(arg);
+                                if not success then
+                                    delete arg;
+                            end;
+
+                            if success then
+                                success := reader^.Peek(@tok);
+                        end;
+                    end;
+
+                    if success then
+                        success := Expect(reader, Keyword.RightParen);
+                end;
+            end
+            else if tok.Is(Keyword.LeftBracket) then
+            begin
+                reader^.Read(@tok);
+                success := TryParseExpression(reader, @index);
+                if success then
+                begin
+                    newInner := new ArrayIndexReferenceExpression(@tok, inner, index);
+                    success := newInner <> nil;
+                end; 
+                if success then
+                begin
+                    inner := newInner;
+                    success := Expect(reader, Keyword.RightBracket);
+                end;
+            end
+            else if tok.Is(Keyword.Dot) then
+            begin
+                reader^.Read(@tok);
+                success := ExpectIdentifier(reader, @identifier);
+                if success then
+                begin
+                    newInner := new MemberReferenceExpression(@tok, inner, @identifier);
+                    success := newInner <> nil;
+                end;
+                if success then
+                    inner := newInner;
+            end
+            else if tok.Is(Keyword.Pointer) then
+            begin
+                reader^.Read(@tok);
+                newInner := new DereferenceExpression(@tok, inner);
+                success := newInner <> nil;
+                if success then
+                    inner := newInner;
+            end
+            else
+                done := true;
+            if success and not done then
+                success := reader^.Peek(@tok);
+        end;
+    end;
+
+    if not success and (inner <> nil) then
+    begin
+        delete inner;
+        inner := nil;
+    end;
+
+    exprRef^ := inner;
+    TryParseReferenceExpression := success;
+end;
+
+function Parser.TryParseLiteralExpression(
+    reader : ^TokenReader;
+    exprRef : ^^Expression) : boolean;
+var
+    start : SharedOfToken;
+    tokVal : ^Token = nil;
+    expr : ^Expression;
+    success : boolean; 
+begin
+    success := reader^.Read(@start);
+    if success then
+    begin
+        tokVal := start.Value();
+        if tokVal <> nil then
+        begin
+            if tokVal^.GetType() = TokenType.LiteralString then
+                expr := new LiteralStringExpression(@start, tokVal^.GetStringValue())
+            else if tokVal^.GetType() = TokenType.LiteralInteger then
+                expr := new LiteralIntExpression(@start, tokVal^.GetIntValue())
+            else if tokVal^.GetType() = TokenType.LiteralDouble then
+                expr := new LiteralDoubleExpression(@start, tokVal^.GetDoubleValue())
+            else
+            begin
+            end;
+
+            if success then
+                success := expr <> nil;
+        end
+        else
+        begin
+            _log^.WriteUnexpectedEndOfFile(
+                reader^.GetPath(),
+                reader^.GetLine(),
+                reader^.GetColumn());
+        end;
+    end;
+
+    exprRef^ := expr;
+    TryParseLiteralExpression := success;
+end;
+
+function Parser.TryParseStatement(
+    reader : ^TokenReader;
+    statementRef : ^^Statement) : boolean;
+var
+    tok, start : SharedOfToken;
+    statement : ^Statement = nil;
+    block : ^BlockStatement = nil;
+    lhs : ^ReferenceExpression = nil;
+    rhs : ^Expression = nil;
+    success : boolean;
+begin
+    success := reader^.Peek(@tok);
+    start.assign(@tok);
+    if success then
+    begin
+        if tok.Is(Keyword.SemiColon) then
+            statement := nil
+        else if tok.Is(Keyword.If) then
+        begin
+        end
+        else if tok.Is(Keyword.While) then
+        begin
+        end
+        else if tok.Is(Keyword.Delete) then
+        begin
+        end
+        else if tok.Is(Keyword.Begin) then
+        begin
+            success := TryParseBlockStatement(reader, @block);
+            if success then
+                statement := block;
+        end
+        else
+        begin
+            success := TryParseReferenceExpression(reader, @lhs);
+            if success then
+            begin
+                success := reader^.Peek(@tok);
+                if success then
+                begin
+                    if tok.Is(Keyword.Assign) then
+                    begin
+                        reader^.Read(@tok);
+                        success := TryParseExpression(reader, @rhs);
+                        if success then
+                        begin
+                            statement := new AssignmentStatement(@start, lhs, rhs);
+                            success := statement <> nil;
+                            if success then
+                            begin
+                                lhs := nil;
+                                rhs := nil;
+                            end;
+                        end;
+                    end
+                    else
+                    begin
+                        statement := new CallStatement(@start, lhs);
+                        success := statement <> nil;
+                        if success then
+                            lhs := nil;
+                    end;
+                end;
+            end;
+        end;
+    end;
+
+    if not success and (statement <> nil) then
+    begin
+        delete statement;
+        statement := nil;
+    end;
+
+    if lhs <> nil then
+        delete lhs;
+    if rhs <> nil then
+        delete rhs;
+
+    statementRef^ := statement;
+    TryParseStatement := success; 
+end;
+
+function Parser.TryParseBlockStatement(
+    reader : ^TokenReader;
+    statementRef : ^^BlockStatement) : boolean; 
+var
+    tok, start : SharedOfToken;
+    statement, innerStatement : ^BlockStatement = nil;
+    success : boolean;
+begin
+    success := reader^.Peek(@start);
+    if success then
+        success := Expect(reader, Keyword.Begin);
+    if success then
+    begin
+        statement := new BlockStatement(@start);
+        success := statement <> nil;
+    end;
+
+    if success then
+        success := reader^.Peek(@tok);
+    while success and not tok.Is(Keyword.End) do
+    begin
+        success := TryParseStatement(reader, @innerStatement);
+        if success then
+        begin
+            if innerStatement <> nil then
+            begin
+                success := statement^.AddStatement(innerStatement);
+                if not success then
+                    delete innerStatement;
+            end;
+        end;
+        if success then
+            success := Expect(reader, Keyword.SemiColon);
+        if success then
+            success := reader^.Peek(@tok);
+    end;
+
+    if success then
+        success := Expect(reader, Keyword.End);
+
+    if not success and (statement <> nil) then
+    begin
+        delete statement;
+        statement := nil;
+    end;
+
+    statementRef^ := statement;
+    TryParseBlockStatement := success;
 end;
 
 function Parser.Expect(
@@ -405,17 +1743,10 @@ begin
     Expect := reader^.Read(@tok);
     if not Expect then
     begin
-        message := Message.Create(
+        _log^.WriteUnexpectedEndOfFile(
             reader^.GetPath(),
             reader^.GetLine(),
-            reader^.GetColumn(),
-            Severity.Error,
-            'Unexpected end of file.');
-        if message <> nil then
-        begin
-            if not _log^.Write(message) then
-                delete message;
-        end;
+            reader^.GetColumn());            
     end
     else
     begin
@@ -489,3 +1820,54 @@ begin
     end;
     ExpectIdentifier := success;
 end;
+
+function Parser.ExpectStringLiteral(
+    reader : ^TokenReader;
+    value : ^String) : boolean;
+var
+    tok : SharedOfToken;
+    tokVal : ^Token;
+    message : ^Message;
+    success : boolean;
+begin
+    success := reader^.Read(@tok);
+    if not success then
+    begin
+        message := Message.Create(
+            reader^.GetPath(),
+            reader^.GetLine(),
+            reader^.GetColumn(),
+            Severity.Error,
+            'Unexpected end of file.');
+        if message <> nil then
+        begin
+            if not _log^.Write(message) then
+                delete message;
+        end;
+    end
+    else
+    begin
+        success := false;
+        tokVal := tok.Value();
+        if tokVal <> nil then
+            if tokVal^.GetType() = TokenType.LiteralString then
+            begin
+                success := true;
+                value^.assign(tokVal^.GetStringValue());
+            end;
+        if not success then
+        begin
+            message := Message.Create(
+                tokVal^.GetPath(),
+                tokVal^.GetLine(),
+                tokVal^.GetColumn(),
+                Severity.Error,
+                'Literal string was expected.');
+            if message <> nil then
+                if not _log^.Write(message) then
+                    delete message;
+        end;
+    end;
+    ExpectIdentifier := success;
+end;
+

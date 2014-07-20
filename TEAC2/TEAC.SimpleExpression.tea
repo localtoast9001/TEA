@@ -1,0 +1,21 @@
+namespace TEAC;
+uses System, TEAC;
+
+constructor SimpleExpression(
+    start : ^SharedOfToken;
+    left, right : ^Expression;
+    operator : SimpleOperator);
+inherited(start);
+begin
+    _left := left;
+    _right := right;
+    _operator := operator;
+end;
+
+destructor SimpleExpression();
+begin
+    if _left <> nil then
+        delete _left;
+    if _right <> nil then
+        delete _right;
+end;

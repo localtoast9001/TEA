@@ -1,0 +1,155 @@
+namespace TEAC;
+uses System, TEAC;
+
+constructor DictionaryOfStringToTypeDefinitionNode(
+    key : ^String; 
+    value : ^TypeDefinition);
+begin
+    _key.assign(key);
+    _value := value;
+    _next := nil;
+end;
+
+destructor DictionaryOfStringToTypeDefinitionNode();
+begin
+    if _value <> nil then
+        delete _value;
+end;
+
+function DictionaryOfStringToTypeDefinitionNode.Key() : ^String;
+begin
+    Key := @_key;
+end;
+
+function DictionaryOfStringToTypeDefinitionNode.Value() : ^TypeDefinition;
+begin
+    Value := _value;
+end;
+
+procedure DictionaryOfStringToTypeDefinitionNode.SetValue(value : ^TypeDefinition);
+begin
+    _value := value;
+end;
+
+function DictionaryOfStringToTypeDefinitionNode.Next() : ^DictionaryOfStringToTypeDefinitionNode;
+begin
+    Next := _next;
+end;
+
+procedure DictionaryOfStringToTypeDefinitionNode.SetNext(value : ^DictionaryOfStringToTypeDefinitionNode);
+begin
+    _next := value;
+end;
+
+constructor DictionaryOfStringToTypeDefinition();
+var
+    index : integer = 0;
+begin
+    while index < 256 do
+    begin
+        _table[index] := nil;
+        index := index + 1;
+    end;
+end;
+
+destructor DictionaryOfStringToTypeDefinition();
+var
+    index : integer = 0;
+    current, next : ^DictionaryOfStringToTypeDefinitionNode;
+begin
+    while index < 256 do
+    begin
+        current := _table[index];
+        while current <> nil do
+        begin
+            next := current^.Next();
+            delete current;
+            current := next;
+        end;
+
+        index := index + 1;
+    end;
+end;
+
+function DictionaryOfStringToTypeDefinition.TryGetValue(
+    key : ^String; 
+    valueRef : ^^TypeDefinition) : boolean;
+var
+    index : integer = GetHashCode(key) mod 256;
+    current : ^DictionaryOfStringToTypeDefinitionNode; 
+    found : boolean = false;
+begin
+    valueRef^ := nil;
+    current := _table[index];
+    while (current <> nil) and not found do
+    begin
+        if String.CompareOrdinal(current^.Key(), key) = 0 then 
+        begin
+            found := true;
+            valueRef^ := current^.Value();
+        end
+        else
+        begin
+            current := current^.Next();
+        end;
+    end;
+
+    TryGetValue := found; 
+end;
+
+function DictionaryOfStringToTypeDefinition.TryAssign(
+    key : ^String; 
+    value : ^TypeDefinition) : boolean;
+var
+    index : integer = GetHashCode(key) mod 256;
+    current, newNode : ^DictionaryOfStringToTypeDefinitionNode; 
+    found : boolean = false;
+    success : boolean = true;
+begin
+    current := _table[index];
+    while (current <> nil) and not found do
+    begin
+        if String.CompareOrdinal(current^.Key(), key) = 0 then 
+        begin
+            found := true;
+            current^.SetValue(value);
+        end
+        else
+        begin
+            current := current^.Next();
+        end;
+    end;
+
+    if not found then
+    begin
+        newNode := new DictionaryOfStringToTypeDefinitionNode(
+            key,
+            value);
+        success := newNode <> nil;
+        if success then
+        begin
+            newNode^.SetNext(_table[index]);
+            _table[index] := newNode;
+        end;
+    end;
+
+    TryAssign := success;
+end;
+
+function DictionaryOfStringToTypeDefinition.GetHashCode(
+    value : ^String) : integer;
+var
+    code : integer = 0;
+    index : integer = 0;
+    stringVal : array of character = value^.Characters();
+    ch : integer;
+begin
+    ch := Convert.ToInteger(Convert.ToShort(stringVal[index]));
+    while ch <> 0 do
+    begin
+        code := code + ch;
+        index := index + 1;
+        ch := Convert.ToInteger(Convert.ToShort(stringVal[index]));    
+    end;
+    GetHashCode := code;
+end;

@@ -1,0 +1,88 @@
+namespace TEAC;
+uses System, System.IO, TEAC;
+
+constructor LinkedListNodeOfFieldInfo(value : ^FieldInfo);
+begin
+    _value := value;
+    _next := nil;
+end;
+
+destructor LinkedListNodeOfFieldInfo();
+begin
+    if _value <> nil then
+        delete _value;
+end;
+
+function LinkedListNodeOfFieldInfo.GetValue() : ^FieldInfo;
+begin
+    GetValue := _value;
+end;
+
+function LinkedListNodeOfFieldInfo.GetNext() : ^LinkedListNodeOfFieldInfo;
+begin
+    GetNext := _next;
+end;
+
+procedure LinkedListNodeOfFieldInfo.SetNext(next : ^LinkedListNodeOfFieldInfo);
+begin
+    _next := next;
+end;
+
+constructor LinkedListEnumeratorOfFieldInfo(head : ^LinkedListNodeOfFieldInfo);
+begin
+    _head := head;
+    _current := nil;
+    _started := false;
+end;
+
+constructor LinkedListOfFieldInfo();
+begin
+    _head := nil;
+    _tail := nil;
+end;
+
+destructor LinkedListOfFieldInfo();
+begin
+    Clear();
+end;
+
+function LinkedListOfFieldInfo.Add(item : ^FieldInfo) : boolean;
+var
+    node : ^LinkedListNodeOfFieldInfo;
+begin
+    node := new LinkedListNodeOfFieldInfo(item);
+    if node <> nil then
+    begin
+        Add := true;
+        if _tail <> nil then
+        begin
+            _tail^.SetNext(node);
+            _tail := node;
+        end
+        else
+        begin
+            _head := node;
+            _tail := node;
+        end;
+    end
+    else
+        Add := false;
+end;
+
+function LinkedListOfFieldInfo.GetEnumerator() : LinkedListEnumeratorOfFieldInfo;
+begin
+    GetEnumerator := LinkedListEnumeratorOfFieldInfo(_head);
+end;
+
+procedure LinkedListOfFieldInfo.Clear();
+var
+    node : ^LinkedListNodeOfFieldInfo;
+begin
+    while _head <> nil do
+    begin
+        node := _head;
+        _head := _head^.GetNext();
+        delete node;
+    end;
+end;
+

@@ -1,0 +1,111 @@
+namespace TEAC;
+uses System, System.IO, TEAC;
+
+constructor LinkedListNodeOfParameterDeclaration(value : ^ParameterDeclaration);
+begin
+    _value := value;
+    _next := nil;
+end;
+
+destructor LinkedListNodeOfParameterDeclaration();
+begin
+    if _value <> nil then
+        delete _value;
+end;
+
+function LinkedListNodeOfParameterDeclaration.GetValue() : ^ParameterDeclaration;
+begin
+    GetValue := _value;
+end;
+
+function LinkedListNodeOfParameterDeclaration.GetNext() : ^LinkedListNodeOfParameterDeclaration;
+begin
+    GetNext := _next;
+end;
+
+procedure LinkedListNodeOfParameterDeclaration.SetNext(next : ^LinkedListNodeOfParameterDeclaration);
+begin
+    _next := next;
+end;
+
+constructor LinkedListEnumeratorOfParameterDeclaration(head : ^LinkedListNodeOfParameterDeclaration);
+begin
+    _head := head;
+    _current := nil;
+    _started := false;
+end;
+
+function LinkedListEnumeratorOfParameterDeclaration.MoveNext() : boolean;
+begin
+    if not _started then
+    begin
+        _current := _head;
+        _started := true;
+    end
+    else 
+    begin
+        if _current <> nil then
+            _current := _current^.GetNext();
+    end;
+
+    MoveNext := _current <> nil;
+end;
+
+function LinkedListEnumeratorOfParameterDeclaration.GetCurrent() : ^ParameterDeclaration;
+begin
+    GetCurrent := nil;
+    if _current <> nil then
+        GetCurrent := _current^.GetValue();
+end;
+
+constructor LinkedListOfParameterDeclaration();
+begin
+    _head := nil;
+    _tail := nil;
+end;
+
+destructor LinkedListOfParameterDeclaration();
+begin
+    Clear();
+end;
+
+function LinkedListOfParameterDeclaration.Add(item : ^ParameterDeclaration) : boolean;
+var
+    node : ^LinkedListNodeOfParameterDeclaration;
+begin
+    node := new LinkedListNodeOfParameterDeclaration(item);
+    if node <> nil then
+    begin
+        Add := true;
+        if _tail <> nil then
+        begin
+            _tail^.SetNext(node);
+            _tail := node;
+        end
+        else
+        begin
+            _head := node;
+            _tail := node;
+        end;
+    end
+    else
+        Add := false;
+end;
+
+function LinkedListOfParameterDeclaration.GetEnumerator() : LinkedListEnumeratorOfParameterDeclaration;
+begin
+    GetEnumerator := LinkedListEnumeratorOfParameterDeclaration(_head);
+end;
+
+procedure LinkedListOfParameterDeclaration.Clear();
+var
+    node : ^LinkedListNodeOfParameterDeclaration;
+begin
+    while _head <> nil do
+    begin
+        node := _head;
+        _head := _head^.GetNext();
+        delete node;
+    end;
+end;
+

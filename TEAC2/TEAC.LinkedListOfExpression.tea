@@ -1,0 +1,88 @@
+namespace TEAC;
+uses System, System.IO, TEAC;
+
+constructor LinkedListNodeOfExpression(value : ^Expression);
+begin
+    _value := value;
+    _next := nil;
+end;
+
+destructor LinkedListNodeOfExpression();
+begin
+    if _value <> nil then
+        delete _value;
+end;
+
+function LinkedListNodeOfExpression.GetValue() : ^Expression;
+begin
+    GetValue := _value;
+end;
+
+function LinkedListNodeOfExpression.GetNext() : ^LinkedListNodeOfExpression;
+begin
+    GetNext := _next;
+end;
+
+procedure LinkedListNodeOfExpression.SetNext(next : ^LinkedListNodeOfExpression);
+begin
+    _next := next;
+end;
+
+constructor LinkedListEnumeratorOfExpression(head : ^LinkedListNodeOfExpression);
+begin
+    _head := head;
+    _current := nil;
+    _started := false;
+end;
+
+constructor LinkedListOfExpression();
+begin
+    _head := nil;
+    _tail := nil;
+end;
+
+destructor LinkedListOfExpression();
+begin
+    Clear();
+end;
+
+function LinkedListOfExpression.Add(item : ^Expression) : boolean;
+var
+    node : ^LinkedListNodeOfExpression;
+begin
+    node := new LinkedListNodeOfExpression(item);
+    if node <> nil then
+    begin
+        Add := true;
+        if _tail <> nil then
+        begin
+            _tail^.SetNext(node);
+            _tail := node;
+        end
+        else
+        begin
+            _head := node;
+            _tail := node;
+        end;
+    end
+    else
+        Add := false;
+end;
+
+function LinkedListOfExpression.GetEnumerator() : LinkedListEnumeratorOfExpression;
+begin
+    GetEnumerator := LinkedListEnumeratorOfExpression(_head);
+end;
+
+procedure LinkedListOfExpression.Clear();
+var
+    node : ^LinkedListNodeOfExpression;
+begin
+    while _head <> nil do
+    begin
+        node := _head;
+        _head := _head^.GetNext();
+        delete node;
+    end;
+end;
+

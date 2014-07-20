@@ -1,0 +1,16 @@
+namespace TEAC;
+uses System, TEAC;
+
+constructor VarBlock(start : ^SharedOfToken);
+inherited(start);
+begin
+end;
+
+destructor VarBlock();
+begin
+end;
+
+function VarBlock.GetVariables() : ^LinkedListOfVariableDeclaration;
+begin
+    GetVariables := @_variables;
+end;

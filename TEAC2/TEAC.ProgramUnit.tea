@@ -18,9 +18,19 @@ begin
     _namespace.assign(value);
 end;
 
+function ProgramUnit.GetNamespace() : ^String;
+begin
+    GetNamespace := @_namespace;
+end;
+
 function ProgramUnit.AddUses(item : ^String) : boolean;
 begin
     AddUses := _usesReferences.Add(item);
+end;
+
+function ProgramUnit.GetUses() : ^LinkedListOfString;
+begin
+    GetUses := @_usesReferences;
 end;
 
 procedure ProgramUnit.SetGlobalVars(varBlock : ^VarBlock);
@@ -43,4 +53,14 @@ end;
 function ProgramUnit.GetTypes() : ^LinkedListOfTypeDeclaration;
 begin
     GetTypes := @_typeList;
+end;
+
+function ProgramUnit.AddMethod(item : ^MethodDefinition) : boolean;
+begin
+    AddMethod := _methods.Add(item);
+end;
+
+function ProgramUnit.GetMethods() : ^LinkedListOfMethodDeclaration;
+begin
+    GetMethods := @_methods;
 end;

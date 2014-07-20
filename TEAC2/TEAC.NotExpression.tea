@@ -1,0 +1,16 @@
+namespace TEAC;
+uses TEAC, System;
+
+constructor NotExpression(
+    start : ^SharedOfToken; 
+    inner : ^Expression);
+inherited(start);
+begin
+    _inner := inner;
+end;
+
+destructor NotExpression();
+begin
+    if _inner <> nil then
+        delete _inner;
+end;

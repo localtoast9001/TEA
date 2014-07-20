@@ -1,0 +1,24 @@
+namespace TEAC;
+uses System, TEAC;
+
+constructor NamedTypeReference(
+    start : ^SharedOfToken; 
+    typeName : ^String);
+inherited(start);
+begin
+    _typeName.assign(typeName);
+end;
+
+destructor NamedTypeReference();
+begin
+end;
+
+function NamedTypeReference.GetTypeName() : ^String;
+begin
+    GetTypeName := @_typeName;
+end;
+
+procedure NamedTypeReference.Accept(visitor : ^ITypeReferenceVisitor);
+begin
+    visitor^.Visit(this);
+end;

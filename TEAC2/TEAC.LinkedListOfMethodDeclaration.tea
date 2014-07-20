@@ -1,41 +1,41 @@
 namespace TEAC;
 uses System, System.IO, TEAC;
 
-constructor LinkedListNodeOfMethodDefinition(value : ^MethodDefinition);
+constructor LinkedListNodeOfMethodDeclaration(value : ^MethodDeclaration);
 begin
     _value := value;
     _next := nil;
 end;
 
-destructor LinkedListNodeOfMethodDefinition();
+destructor LinkedListNodeOfMethodDeclaration();
 begin
     if _value <> nil then
         delete _value;
 end;
 
-function LinkedListNodeOfMethodDefinition.GetValue() : ^MethodDefinition;
+function LinkedListNodeOfMethodDeclaration.GetValue() : ^MethodDeclaration;
 begin
     GetValue := _value;
 end;
 
-function LinkedListNodeOfMethodDefinition.GetNext() : ^LinkedListNodeOfMethodDefinition;
+function LinkedListNodeOfMethodDeclaration.GetNext() : ^LinkedListNodeOfMethodDeclaration;
 begin
     GetNext := _next;
 end;
 
-procedure LinkedListNodeOfMethodDefinition.SetNext(next : ^LinkedListNodeOfMethodDefinition);
+procedure LinkedListNodeOfMethodDeclaration.SetNext(next : ^LinkedListNodeOfMethodDeclaration);
 begin
     _next := next;
 end;
 
-constructor LinkedListEnumeratorOfMethodDefinition(head : ^LinkedListNodeOfMethodDefinition);
+constructor LinkedListEnumeratorOfMethodDeclaration(head : ^LinkedListNodeOfMethodDeclaration);
 begin
     _head := head;
     _current := nil;
     _started := false;
 end;
 
-function LinkedListEnumeratorOfMethodDefinition.MoveNext() : boolean;
+function LinkedListEnumeratorOfMethodDeclaration.MoveNext() : boolean;
 begin
     if not _started then
     begin
@@ -51,29 +51,29 @@ begin
     MoveNext := _current <> nil;
 end;
 
-function LinkedListEnumeratorOfMethodDefinition.GetCurrent() : ^MethodDefinition;
+function LinkedListEnumeratorOfMethodDeclaration.GetCurrent() : ^MethodDeclaration;
 begin
     GetCurrent := nil;
     if _current <> nil then
         GetCurrent := _current^.GetValue();
 end;
 
-constructor LinkedListOfMethodDefinition();
+constructor LinkedListOfMethodDeclaration();
 begin
     _head := nil;
     _tail := nil;
 end;
 
-destructor LinkedListOfMethodDefinition();
+destructor LinkedListOfMethodDeclaration();
 begin
     Clear();
 end;
 
-function LinkedListOfMethodDefinition.Add(item : ^MethodDefinition) : boolean;
+function LinkedListOfMethodDeclaration.Add(item : ^MethodDeclaration) : boolean;
 var
-    node : ^LinkedListNodeOfMethodDefinition;
+    node : ^LinkedListNodeOfMethodDeclaration;
 begin
-    node := new LinkedListNodeOfMethodDefinition(item);
+    node := new LinkedListNodeOfMethodDeclaration(item);
     if node <> nil then
     begin
         Add := true;
@@ -92,14 +92,14 @@ begin
         Add := false;
 end;
 
-function LinkedListOfMethodDefinition.GetEnumerator() : LinkedListEnumeratorOfMethodDefinition;
+function LinkedListOfMethodDeclaration.GetEnumerator() : LinkedListEnumeratorOfMethodDeclaration;
 begin
-    GetEnumerator := LinkedListEnumeratorOfMethodDefinition(_head);
+    GetEnumerator := LinkedListEnumeratorOfMethodDeclaration(_head);
 end;
 
-procedure LinkedListOfMethodDefinition.Clear();
+procedure LinkedListOfMethodDeclaration.Clear();
 var
-    node : ^LinkedListNodeOfMethodDefinition;
+    node : ^LinkedListNodeOfMethodDeclaration;
 begin
     while _head <> nil do
     begin

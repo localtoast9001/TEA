@@ -1,39 +1,41 @@
 namespace TEAC;
 uses System, System.IO, TEAC;
 
-constructor LinkedListNodeOfString(value : ^String);
+constructor LinkedListNodeOfMethodInfo(value : ^MethodInfo);
 begin
-    _value.assign(value);
+    _value := value;
     _next := nil;
 end;
 
-destructor LinkedListNodeOfString();
+destructor LinkedListNodeOfMethodInfo();
 begin
+    if _value <> nil then
+        delete _value;
 end;
 
-function LinkedListNodeOfString.GetValue() : ^String;
+function LinkedListNodeOfMethodInfo.GetValue() : ^MethodInfo;
 begin
-    GetValue := @_value;
+    GetValue := _value;
 end;
 
-function LinkedListNodeOfString.GetNext() : ^LinkedListNodeOfString;
+function LinkedListNodeOfMethodInfo.GetNext() : ^LinkedListNodeOfMethodInfo;
 begin
     GetNext := _next;
 end;
 
-procedure LinkedListNodeOfString.SetNext(next : ^LinkedListNodeOfString);
+procedure LinkedListNodeOfMethodInfo.SetNext(next : ^LinkedListNodeOfMethodInfo);
 begin
     _next := next;
 end;
 
-constructor LinkedListEnumeratorOfString(head : ^LinkedListNodeOfString);
+constructor LinkedListEnumeratorOfMethodInfo(head : ^LinkedListNodeOfMethodInfo);
 begin
     _head := head;
     _current := nil;
     _started := false;
 end;
 
-function LinkedListEnumeratorOfString.MoveNext() : boolean;
+function LinkedListEnumeratorOfMethodInfo.MoveNext() : boolean;
 begin
     if not _started then
     begin
@@ -49,29 +51,29 @@ begin
     MoveNext := _current <> nil;
 end;
 
-function LinkedListEnumeratorOfString.GetCurrent() : ^String;
+function LinkedListEnumeratorOfMethodInfo.GetCurrent() : ^MethodInfo;
 begin
     GetCurrent := nil;
     if _current <> nil then
         GetCurrent := _current^.GetValue();
 end;
 
-constructor LinkedListOfString();
+constructor LinkedListOfMethodInfo();
 begin
     _head := nil;
     _tail := nil;
 end;
 
-destructor LinkedListOfString();
+destructor LinkedListOfMethodInfo();
 begin
     Clear();
 end;
 
-function LinkedListOfString.Add(item : ^String) : boolean;
+function LinkedListOfMethodInfo.Add(item : ^MethodInfo) : boolean;
 var
-    node : ^LinkedListNodeOfString;
+    node : ^LinkedListNodeOfMethodInfo;
 begin
-    node := new LinkedListNodeOfString(item);
+    node := new LinkedListNodeOfMethodInfo(item);
     if node <> nil then
     begin
         Add := true;
@@ -90,14 +92,14 @@ begin
         Add := false;
 end;
 
-function LinkedListOfString.GetEnumerator() : LinkedListEnumeratorOfString;
+function LinkedListOfMethodInfo.GetEnumerator() : LinkedListEnumeratorOfMethodInfo;
 begin
-    GetEnumerator := LinkedListEnumeratorOfString(_head);
+    GetEnumerator := LinkedListEnumeratorOfMethodInfo(_head);
 end;
 
-procedure LinkedListOfString.Clear();
+procedure LinkedListOfMethodInfo.Clear();
 var
-    node : ^LinkedListNodeOfString;
+    node : ^LinkedListNodeOfMethodInfo;
 begin
     while _head <> nil do
     begin
@@ -106,3 +108,4 @@ begin
         delete node;
     end;
 end;
+

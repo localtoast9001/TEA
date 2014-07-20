@@ -1,0 +1,37 @@
+namespace TEAC;
+uses System, TEAC;
+
+constructor ParameterDeclaration(
+    start : ^SharedOfToken);
+inherited(start);
+begin
+    _parameterType := nil;
+end;
+
+destructor ParameterDeclaration();
+begin
+    if _parameterType <> nil then
+        delete _parameterType;
+end;
+
+function ParameterDeclaration.GetParameterType() : ^TypeReference;
+begin
+    GetParameterType := _parameterType;
+end;
+
+function ParameterDeclaration.GetParameterNames() : ^LinkedListOfString;
+begin
+    GetParameterNames := @_parameterNames;
+end;
+
+function ParameterDeclaration.AddName(item : ^String) : boolean;
+begin
+    AddName := _parameterNames.Add(item);
+end;
+
+procedure ParameterDeclaration.SetParameterType(value : ^TypeReference);
+begin
+    if _parameterType <> nil then
+        delete _parameterType;
+    _parameterType := value;
+end;

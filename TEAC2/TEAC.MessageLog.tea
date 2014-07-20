@@ -49,6 +49,28 @@ begin
     end;
 end;
 
+procedure MessageLog.WriteUnexpectedEndOfFile(
+    path : ^String;
+    line, column : integer);
+var
+    message : ^Message = nil;
+    success : boolean;
+begin
+    message := Message.Create(
+        path,
+        line,
+        column,
+        Severity.Error,
+        'Unexpected end of file.');
+    success := message <> nil;
+    if success then
+    begin
+        success := Write(message);
+        if not success then
+            delete message;
+    end;
+end;
+
 function MessageLog.GetEnumerator() : MessageLogEnumerator;
 begin
     GetEnumerator := MessageLogEnumerator(_head);
