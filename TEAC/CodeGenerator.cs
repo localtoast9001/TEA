@@ -402,6 +402,22 @@ namespace TEAC
                                 if (!fieldInfo.IsStatic)
                                 {
                                     fieldInfo.Offset = size;
+                                    if (fieldType.Size == 0)
+                                    {
+                                        string message = string.Format(
+                                            System.Globalization.CultureInfo.InvariantCulture,
+                                            "The Type [{0}] for field [{1}] must be defined before it can be used as a field.",
+                                            fieldInfo.Type.FullName,
+                                            identifier);
+                                        this.log.Write(new Message(
+                                            field.Start.Path,
+                                            field.Start.Line,
+                                            field.Start.Column,
+                                            Severity.Error,
+                                            message));
+                                        failed = true;
+                                    }
+
                                     size += fieldType.Size;
                                 }
 
