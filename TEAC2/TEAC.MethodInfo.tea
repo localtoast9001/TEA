@@ -1,5 +1,5 @@
 namespace TEAC;
-uses TEAC, System;
+uses TEAC, System, System.Text;
 
 constructor MethodInfo(owner : ^TypeDefinition);
 begin
@@ -95,4 +95,101 @@ end;
 procedure MethodInfo.SetReturnType(value : ^TypeDefinition);
 begin
     _returnType := value;
+end;
+
+function MethodInfo.GetMangledName(value : ^String) : boolean;
+var
+    sb : SimpleStringBuilder;
+    currentParam : ^ParameterInfo;
+    currentParamType : ^TypeDefinition;
+    paramEnum : LinkedListEnumeratorOfParameterInfo;
+    typeMangledName : String;
+    success, noArgs : boolean;
+begin
+    {Start / Qualified Name}
+    success := sb.TryAppend('?');
+    if success then
+        success := sb.TryAppend(@_name);
+    if success then
+        success := sb.TryAppend('@');
+    if success then
+        success := _type^.GetMangledQualifiedName(@typeMangledName);
+    if success then
+        success := sb.TryAppend(@typeMangledName);
+    if success then
+        success := sb.TryAppend('@');
+
+    {Class Protection level}
+    if success then
+    begin
+        if _isPublic then
+        begin
+            if _isStatic then
+                success := sb.TryAppend('S')
+            else if _isVirtual or _isAbstract then
+                success := sb.TryAppend('UA')
+            else
+                success := sb.TryAppend('QA');
+        end 
+        else if _isProtected then
+        begin
+            if _isStatic then
+                success := sb.TryAppend('K')
+            else if _isVirtual or _isAbstract then
+                success := sb.TryAppend('MA')
+            else
+                success := sb.TryAppend('IA');
+        end
+        else
+        begin
+            if _isStatic then
+                success := sb.TryAppend('C')
+            else
+                success := sb.TryAppend('AA');
+        end;
+    end;
+
+    {Calling convention}
+    if success then
+        success := sb.TryAppend('A'); {TODO: compute exported}
+
+    {Return Type}
+    if success then
+    begin
+        if _returnType <> nil then
+        begin
+            success := _returnType^.GetMangledName(@typeMangledName);
+            if success then
+                success := sb.TryAppend(@typeMangledName);
+        end 
+        else
+            success := sb.TryAppend('@');
+    end;
+
+    {Arguments}
+    noArgs := true;
+    paramEnum := _parameters.GetEnumerator();
+    while success and paramEnum.MoveNext() do
+    begin
+        noArgs := false;
+        currentParam := paramEnum.GetCurrent();
+        currentParamType := currentParam^.GetType();
+        success := currentParamType^.GetMangledName(@typeMangledName);
+        if success then
+            success := sb.TryAppend(@typeMangledName);
+    end;
+    
+    if success and noArgs then
+        success := sb.TryAppend('X')
+    else 
+        success := sb.TryAppend('@');
+
+    {Exceptions}
+    if success then
+        success := sb.TryAppend('Z'); {NOTE: never does throw()}
+
+    {Produce result}
+    if success then
+        success := sb.ToString(value);
+    GetMangledName := success;
 end;

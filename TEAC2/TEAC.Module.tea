@@ -13,3 +13,8 @@ function Module.AddMethodImpl(item : ^MethodImpl) : boolean;
 begin
     AddMethodImpl := _codeSeg.Add(item);
 end;
+
+function Module.GetMethods() : ^LinkedListOfMethodImpl;
+begin
+    GetMethods := @_codeSeg;
+end;

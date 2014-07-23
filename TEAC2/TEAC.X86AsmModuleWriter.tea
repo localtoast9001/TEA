@@ -32,5 +32,44 @@ end;
 
 procedure X86AsmModuleWriter.Write(module : ^Module);
 begin
-    _inner^.Write('.model flat,C');
+    _inner^.WriteLine('.model flat,C');
+    _inner^.WriteLine();
+    _inner^.WriteLine('.code');
+    _inner^.WriteLine();
+    WriteCodeSeg(module);
+    _inner^.WriteLine();
+    _inner^.WriteLine('END');
 end;
+
+procedure X86AsmModuleWriter.WriteCodeSeg(module : ^Module);
+var
+    methodList : ^LinkedListOfMethodImpl;
+    methodEnum : LinkedListEnumeratorOfMethodImpl;
+begin
+    methodList := module^.GetMethods();
+    methodEnum := methodList^.GetEnumerator();
+    while methodEnum.MoveNext() do
+    begin
+        WriteMethodImpl(module, methodEnum.GetCurrent());
+    end;
+end;
+
+procedure X86AsmModuleWriter.WriteMethodImpl(
+    module : ^Module; 
+    methodImpl : ^MethodImpl);
+var
+    methodInfo : ^MethodInfo;
+    mangledName : String;
+begin
+    methodInfo := methodImpl^.GetMethodInfo();
+    if methodInfo^.GetMangledName(@mangledName) then
+    begin
+        _inner^.Write(@mangledName);
+        _inner^.Write(' PROC C');
+        if methodInfo^.GetIsProtected() or methodInfo^.GetIsPublic() then
+            _inner^.Write(' EXPORT');
+        _inner^.WriteLine();
+        _inner^.WriteLine('ENDP');
+    end;
+end;
+

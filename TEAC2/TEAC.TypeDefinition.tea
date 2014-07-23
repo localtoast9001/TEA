@@ -1,5 +1,5 @@
 namespace TEAC;
-uses System, TEAC;
+uses System, TEAC, System.Text;
 
 constructor TypeDefinition();
 begin
@@ -197,4 +197,89 @@ end;
 function TypeDefinition.AddMethod(item : ^MethodInfo) : boolean;
 begin
     AddMethod := _methods.Add(item);
+end;
+
+function TypeDefinition.GetMangledName(value : ^String) : boolean;
+var
+    sb : SimpleStringBuilder;
+    innerName : String;
+    success : boolean;
+begin
+    if _specialMangledName.Length() > 0 then
+    begin
+        value^.assign(@_specialMangledName);
+        GetMangledName := true;
+    end
+    else
+    begin
+        if _isClass or _isStaticClass or _isAbstractClass or _isInterface then
+        begin
+            success := GetMangledQualifiedName(@innerName);
+            if success then
+                success := sb.TryAppend('V');
+            if success then
+                success := sb.TryAppend(@innerName);
+            if success then
+                success := sb.ToString(value);
+            GetMangledName := success;
+        end
+        else if _isPointer then
+        begin
+            success := _innerType^.GetMangledName(@innerName);
+            if success then
+                success := sb.TryAppend('PA');
+            if success then
+                success := sb.TryAppend(@innerName);
+            if success then
+                success := sb.ToString(value);
+            GetMangledName := success;
+        end
+        else if _isArray then
+        begin
+            success := _innerType^.GetMangledName(@innerName);
+            if success then
+                success := sb.TryAppend('QA');
+            if success then
+                success := sb.TryAppend(@innerName);
+            if success then
+                success := sb.ToString(value);
+            GetMangledName := success;
+        end;
+    end;
+end;
+
+function TypeDefinition.GetMangledQualifiedName(value : ^String) : boolean;
+var
+    sb : SimpleStringBuilder;
+    index : integer;
+    remainingName, temp : String;
+    namePart : String;
+    dot : array of character = '.';
+    success : boolean = true; 
+begin
+    remainingName.assign(@_fullName);
+    index := remainingName.LastIndexOf(dot[0]);
+    while success and (index >= 0) do
+    begin
+        temp.assign(@remainingName);
+        success := remainingName.Substring(index + 1, @namePart);
+        if success then
+            success := sb.TryAppend(@namePart);
+        if success then
+            success := sb.TryAppend('@');
+        if success then
+            success := temp.Substring(0, index, @remainingName);
+        if success then
+            index := remainingName.LastIndexOf(dot[0]);
+    end;
+    if success then
+    begin
+        success := sb.TryAppend(@remainingName);
+        if success then
+            success := sb.TryAppend('@');
+        if success then
+            success := sb.ToString(value);
+    end;
+
+    GetMangledQualifiedName := success;
 end;

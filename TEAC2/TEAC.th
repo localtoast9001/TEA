@@ -1137,6 +1137,7 @@ type
             procedure SetIsPublic(value : boolean);
             function GetIsProtected() : boolean;
             procedure SetIsProtected(value : boolean);
+            function GetMangledName(value : ^String) : boolean;
         var
             _parameters : LinkedListOfParameterInfo;
             _name : String;
@@ -1214,6 +1215,8 @@ type
             procedure SetArrayElementCount(value : integer);
             function GetMethods() : ^LinkedListOfMethodInfo;
             function AddMethod(item : ^MethodInfo) : boolean;
+            function GetMangledName(value : ^String) : boolean;
+            function GetMangledQualifiedName(value : ^String) : boolean;
         var
             _enumValues : DictionaryOfStringToInteger;
             _fullName : String;
@@ -1477,6 +1480,8 @@ type
     LinkedListEnumeratorOfMethodImpl = class
         public
             constructor(head : ^LinkedListNodeOfMethodImpl);
+            function MoveNext() : boolean;
+            function GetCurrent() : ^MethodImpl;
         var
             _head, _current : ^LinkedListNodeOfMethodImpl;
             _started : boolean;
@@ -1524,6 +1529,7 @@ type
             constructor();
             destructor();
             function AddMethodImpl(item : ^MethodImpl) : boolean;
+            function GetMethods() : ^LinkedListOfMethodImpl;
         var
             _codeSeg : LinkedListOfMethodImpl;
     end;
@@ -1531,6 +1537,8 @@ type
         public 
             constructor(module : ^Module; method : ^MethodInfo);
             destructor();
+            function GetMethodInfo() : ^MethodInfo;
+            function GetStatements() : ^LinkedListOfOpStatement;
         var
             _module : ^Module;
             _method : ^MethodInfo;
@@ -1594,6 +1602,11 @@ type
             destructor();
             function Open(path : ^String; log : ^MessageLog) : boolean;
             procedure Write(module : ^Module);
+        private
+            procedure WriteCodeSeg(module : ^Module);
+            procedure WriteMethodImpl(
+                module : ^Module; 
+                methodImpl : ^MethodImpl);
         var
             _log : ^MessageLog;
             _inner : ^TextWriter; 

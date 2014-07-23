@@ -10,3 +10,8 @@ end;
 destructor MethodImpl();
 begin
 end;
+
+function MethodImpl.GetMethodInfo() : ^MethodInfo;
+begin
+    GetMethodInfo := _method;
+end;

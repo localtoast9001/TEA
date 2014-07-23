@@ -152,6 +152,10 @@ type
             virtual function Write(value : character) : boolean;
             virtual function Write(value : ^String) : boolean;
             virtual function Write(value : array of character) : boolean;
+            virtual function WriteLine() : boolean;
+            virtual function WriteLine(value : character) : boolean;
+            virtual function WriteLine(value : ^String) : boolean;
+            virtual function WriteLine(value : array of character) : boolean;
             abstract function Write(
                 buffer : array of character;
                 index, count : integer) : boolean;

@@ -35,6 +35,29 @@ begin
     _started := false;
 end;
 
+function LinkedListEnumeratorOfMethodImpl.MoveNext() : boolean;
+begin
+    if not _started then
+    begin
+        _current := _head;
+        _started := true;
+    end
+    else 
+    begin
+        if _current <> nil then
+            _current := _current^.GetNext();
+    end;
+
+    MoveNext := _current <> nil;
+end;
+
+function LinkedListEnumeratorOfMethodImpl.GetCurrent() : ^MethodImpl;
+begin
+    GetCurrent := nil;
+    if _current <> nil then
+        GetCurrent := _current^.GetValue();
+end;
+
 constructor LinkedListOfMethodImpl();
 begin
     _head := nil;

@@ -34,3 +34,32 @@ begin
         len := len + 1;
     Write := this^.Write(value, 0, len); 
 end;
+
+function TextWriter.WriteLine() : boolean;
+begin
+    WriteLine := this^.Write(#13#10);
+end;
+
+function TextWriter.WriteLine(value : character) : boolean;
+begin
+    if this^.Write(value) then
+        WriteLine := this^.WriteLine()
+    else
+        WriteLine := false;
+end;
+
+function TextWriter.WriteLine(value : ^String) : boolean;
+begin
+    if this^.Write(value) then
+        WriteLine := this^.WriteLine()
+    else
+        WriteLine := false;
+end;
+
+function TextWriter.WriteLine(value : array of character) : boolean;
+begin
+    if this^.Write(value) then
+        WriteLine := this^.WriteLine()
+    else
+        WriteLine := false;
+end;
