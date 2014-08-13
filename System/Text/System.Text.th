@@ -21,6 +21,7 @@ type
             function TryAssign(source : ^String) : boolean;
             function ToString(value : ^String) : boolean;
             function GetBuffer() : array of character;
+            function Length() : integer;
         private
             function GrowBuffer(newSize : integer) : boolean;
             static function GetLength(source : array of character) : integer;

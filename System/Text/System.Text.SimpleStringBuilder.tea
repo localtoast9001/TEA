@@ -109,6 +109,11 @@ begin
     GetBuffer := _buffer;
 end;
 
+function SimpleStringBuilder.Length() : integer;
+begin
+    Length := GetLength(_buffer);
+end;
+
 function SimpleStringBuilder.GrowBuffer(newSize : integer) : boolean;
 var
     chunkedSize : integer = _size;

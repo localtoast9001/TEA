@@ -26,6 +26,15 @@ begin
     Write := this^.Write(value^.Characters(), 0, value^.Length());
 end;
 
+function TextWriter.Write(value : integer) : boolean;
+var
+    sb : SimpleStringBuilder;
+begin
+    Write := DefaultFormatter.TryFormat(value, nil, @sb);
+    if Write then
+        Write := this^.Write(sb.GetBuffer(), 0, sb.Length());
+end;
+
 function TextWriter.Write(value : array of character) : boolean;
 var
     len : integer = 0;
@@ -63,3 +72,13 @@ begin
     else
         WriteLine := false;
 end;
+
+function TextWriter.WriteLine(value : integer) : boolean;
+var
+    sb : SimpleStringBuilder;
+begin
+    WriteLine := DefaultFormatter.TryFormat(value, nil, @sb);
+    if WriteLine then
+        WriteLine := this^.WriteLine(sb.GetBuffer());
+end;
+
