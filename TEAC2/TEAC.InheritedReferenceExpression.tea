@@ -10,3 +10,10 @@ end;
 destructor InheritedReferenceExpression();
 begin
 end;
+
+procedure InheritedReferenceExpression.Accept(
+    visitor : ^IExpressionVisitor);
+begin
+    visitor^.Visit(this);
+end;
+

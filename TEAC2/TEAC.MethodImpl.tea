@@ -15,3 +15,13 @@ function MethodImpl.GetMethodInfo() : ^MethodInfo;
 begin
     GetMethodInfo := _method;
 end;
+
+function MethodImpl.GetScope() : ^Scope;
+begin
+    GetScope := @_scope;
+end;
+
+function MethodImpl.GetStatements() : ^LinkedListOfOpStatement;
+begin
+    GetStatements := @_statements;
+end;

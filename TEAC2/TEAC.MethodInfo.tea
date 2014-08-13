@@ -97,6 +97,11 @@ begin
     _returnType := value;
 end;
 
+function MethodInfo.GetOwnerType() : ^TypeDefinition;
+begin
+    GetOwnerType := _type;
+end;
+
 function MethodInfo.GetMangledName(value : ^String) : boolean;
 var
     sb : SimpleStringBuilder;

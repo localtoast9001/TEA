@@ -19,6 +19,11 @@ begin
         delete _value;
 end;
 
+procedure AssignmentStatement.Accept(visitor : ^IStatementVisitor);
+begin
+    visitor^.Visit(this);
+end;
+
 function AssignmentStatement.GetStorage() : ^ReferenceExpression;
 begin
     GetStorage := _storage;

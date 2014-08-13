@@ -12,3 +12,8 @@ end;
 destructor LiteralBooleanExpression();
 begin
 end;
+
+procedure LiteralBooleanExpression.Accept(visitor : ^IExpressionVisitor);
+begin
+    visitor^.Visit(this);
+end;

@@ -1,0 +1,35 @@
+namespace TEAC;
+uses System, TEAC;
+
+constructor WhileStatement(
+    start : ^SharedOfToken;
+    condition : ^Expression;
+    bodyStatement : ^Statement);
+inherited(start);
+begin
+    _condition := condition;
+    _bodyStatement := bodyStatement;
+end;
+
+destructor WhileStatement();
+begin
+    if _condition <> nil then
+        delete _condition;
+    if _bodyStatement <> nil then
+        delete _bodyStatement;
+end;
+
+procedure WhileStatement.Accept(visitor : ^IStatementVisitor);
+begin
+    visitor^.Visit(this);
+end;
+
+function WhileStatement.GetCondition() : ^Expression;
+begin
+    GetCondition := _condition;
+end;
+
+function WhileStatement.GetBodyStatement() : ^Statement;
+begin
+    GetBodyStatement := _bodyStatement;
+end;

@@ -18,3 +18,10 @@ begin
     if _index <> nil then
         delete _index;
 end;
+
+procedure ArrayIndexReferenceExpression.Accept(
+    visitor : ^IExpressionVisitor);
+begin
+    visitor^.Visit(this);
+end;
+

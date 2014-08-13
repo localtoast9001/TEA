@@ -1470,7 +1470,7 @@ begin
             begin
                 reader^.Read(@tok);
                 callExpr := new CallReferenceExpression(@tok, inner);
-                success := newInner <> nil;
+                success := callExpr <> nil;
                 if success then
                 begin
                     inner := callExpr;

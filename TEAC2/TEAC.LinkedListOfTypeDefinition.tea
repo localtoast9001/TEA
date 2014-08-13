@@ -62,6 +62,7 @@ constructor LinkedListOfTypeDefinition();
 begin
     _head := nil;
     _tail := nil;
+    _count := 0;
 end;
 
 destructor LinkedListOfTypeDefinition();
@@ -87,6 +88,7 @@ begin
             _head := node;
             _tail := node;
         end;
+        _count := _count + 1;
     end
     else
         Add := false;
@@ -109,3 +111,7 @@ begin
     end;
 end;
 
+function LinkedListOfTypeDefinition.GetCount() : integer;
+begin
+    GetCount := _count;
+end;

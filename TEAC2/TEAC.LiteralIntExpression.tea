@@ -12,3 +12,14 @@ end;
 destructor LiteralIntExpression();
 begin
 end;
+
+procedure LiteralIntExpression.Accept(visitor : ^IExpressionVisitor);
+begin
+    visitor^.Visit(this);
+end;
+
+function LiteralIntExpression.GetValue() : integer;
+begin
+    GetValue := _value;
+end;
+

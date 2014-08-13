@@ -1,6 +1,68 @@
 namespace TEAC;
 uses System, TEAC;
 
+constructor OpStatement();
+begin
+    _opCode := OpCode.Nop;
+    _size := 0;
+    _argOrLocalIndex := 0;
+    _intValue := 0;
+end;
+
 destructor OpStatement();
 begin
 end;
+
+function OpStatement.GetLabel() : ^String;
+begin
+    GetLabel := @_label;
+end;
+
+function OpStatement.GetOpCode() : OpCode;
+begin
+    GetOpCode := _opCode;
+end;
+
+function OpStatement.GetSize() : integer;
+begin
+    GetSize := _size;
+end;
+
+function OpStatement.GetArgOrLocalIndex() : integer;
+begin
+    GetArgOrLocalIndex := _argOrLocalIndex;
+end;
+
+function OpStatement.GetTargetSymbol() : ^String;
+begin
+    GetTargetSymbol := @_targetSymbol;
+end;
+
+function OpStatement.GetIntValue() : integer;
+begin
+    GetIntValue := _intValue;
+end;
+
+procedure OpStatement.SetLabel(value : ^String);
+begin
+    _label.assign(value);
+end;
+
+procedure OpStatement.AssignLoadInt(value : integer);
+begin
+    _opCode := OpCode.LoadInt;
+    _intValue := value;
+end;
+
+procedure OpStatement.AssignStoreLocal(index : integer);
+begin
+    _opCode := OpCode.StoreLocal;
+    _argOrLocalIndex := index;
+end;
+
+procedure OpStatement.AssignStoreArg(index : integer);
+begin
+    _opCode := OpCode.StoreArg;
+    _argOrLocalIndex := index;
+end;
+

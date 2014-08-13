@@ -15,6 +15,11 @@ begin
         delete _inner;
 end;
 
+procedure CallReferenceExpression.Accept(visitor : ^IExpressionVisitor);
+begin
+    visitor^.Visit(this);
+end;
+
 function CallReferenceExpression.AddArgument(
     item : ^Expression) : boolean;
 begin

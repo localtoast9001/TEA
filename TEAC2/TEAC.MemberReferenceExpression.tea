@@ -16,3 +16,9 @@ begin
     if _inner <> nil then
         delete _inner;
 end;
+
+procedure MemberReferenceExpression.Accept(visitor : ^IExpressionVisitor);
+begin
+    visitor^.Visit(this);
+end;
+

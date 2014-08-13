@@ -212,6 +212,56 @@ begin
     TryGetArrayType := success;
 end;
 
+function CompilerContext.BeginScope(
+    methodInfo : ^MethodInfo;
+    scope : ^Scope) : boolean;
+var
+    methodParams : ^LinkedListOfParameterInfo = methodInfo^.GetParameters();
+    paramEnum : LinkedListEnumeratorOfParameterInfo;
+    currentParam : ^ParameterInfo;
+    returnType : ^TypeDefinition;
+    thisType : ^TypeDefinition;
+    thisString : String;
+    success : boolean = true;
+begin
+    paramEnum := methodParams^.GetEnumerator();
+    while success and paramEnum.MoveNext() do
+    begin
+        currentParam := paramEnum.GetCurrent();
+        success := scope^.DefineParameter(
+            currentParam^.GetName(),
+            currentParam^.GetType());
+    end;
+
+    if success and not methodInfo^.GetIsStatic() then
+    begin
+        success := thisString.TryAssign('this');
+        if success then
+            success := TryGetPointerType(
+                methodInfo^.GetOwnerType(), 
+                @thisType);
+        if success then
+            success := scope^.DefineParameter(
+                @thisString,
+                thisType);
+    end;
+
+    returnType := methodInfo^.GetReturnType();
+    if success and (returnType <> nil) then
+    begin
+        if returnType^.GetIsClass() then
+        begin
+        end;
+        
+        if success then
+            success := scope^.DefineLocalVariable(
+                methodInfo^.GetName(),
+                returnType);
+    end;
+
+    BeginScope := success;
+end;
+
 function CompilerContext.Initialize() : boolean;
 var
     success : boolean;

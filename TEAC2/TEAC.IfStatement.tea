@@ -1,0 +1,44 @@
+namespace TEAC;
+uses TEAC, System;
+
+constructor IfStatement(
+    start : ^SharedOfToken;
+    condition : ^Expression;
+    trueStatement : ^Statement;
+    falseStatement : ^Statement);
+inherited(start);
+begin
+    _condition := condition;
+    _trueStatement := trueStatement;
+    _falseStatement := falseStatement;
+end;
+
+destructor IfStatement();
+begin
+    if _condition <> nil then
+        delete _condition;
+    if _trueStatement <> nil then
+        delete _trueStatement;
+    if _falseStatement <> nil then
+        delete _falseStatement;
+end;
+
+procedure IfStatement.Accept(visitor : ^IStatementVisitor);
+begin
+    visitor^.Visit(this);
+end;
+
+function IfStatement.GetCondition() : ^Expression;
+begin
+    GetCondition := _condition;
+end;
+
+function IfStatement.GetTrueStatement() : ^Statement;
+begin
+    GetTrueStatement := _trueStatement;
+end;
+
+function IfStatement.GetFalseStatement() : ^Statement;
+begin
+    GetFalseStatement := _falseStatement;
+end;

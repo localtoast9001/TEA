@@ -37,6 +37,64 @@ type
             _log : ^MessageLog;
             _result : ^TypeDefinition;
     end;
+    StatementVisitor = class interface(IStatementVisitor)
+        public
+            constructor(
+                context : ^CompilerContext;
+                generator : ^CodeGenerator;
+                methodImpl : ^MethodImpl;
+                log : ^MessageLog);
+            virtual procedure Visit(statement : ^WhileStatement);
+            virtual procedure Visit(statement : ^IfStatement);
+            virtual procedure Visit(statement : ^DeleteStatement);
+            virtual procedure Visit(statement : ^CallStatement);
+            virtual procedure Visit(statement : ^AssignmentStatement);
+            virtual procedure Visit(statement : ^BlockStatement);
+        var
+            _context : ^CompilerContext;
+            _generator : ^CodeGenerator;
+            _methodImpl : ^MethodImpl;
+            _log : ^MessageLog;
+    end;
+    ReferenceType = (Namespace, Type, TypeMember, ArgumentOrLocal);        
+    ExpressionVisitor = class interface(IExpressionVisitor)
+        public
+            constructor(
+                context : ^CompilerContext;
+                generator : ^CodeGenerator;
+                methodImpl : ^MethodImpl;
+                log : ^MessageLog);
+            virtual procedure Visit(expr : ^TermExpression);
+            virtual procedure Visit(expr : ^SimpleExpression);
+            virtual procedure Visit(expr : ^RelationalExpression);
+            virtual procedure Visit(expr : ^NotExpression);
+            virtual procedure Visit(expr : ^NewExpression);
+            virtual procedure Visit(expr : ^NegativeExpression);
+            virtual procedure Visit(expr : ^LiteralDoubleExpression);
+            virtual procedure Visit(expr : ^LiteralIntExpression);
+            virtual procedure Visit(expr : ^LiteralStringExpression);
+            virtual procedure Visit(expr : ^LiteralBooleanExpression);
+            virtual procedure Visit(expr : ^LiteralNilExpression);
+            virtual procedure Visit(expr : ^AddressExpression);
+            virtual procedure Visit(expr : ^DereferenceExpression);
+            virtual procedure Visit(expr : ^ArrayIndexReferenceExpression);
+            virtual procedure Visit(expr : ^CallReferenceExpression);
+            virtual procedure Visit(expr : ^MemberReferenceExpression);
+            virtual procedure Visit(expr : ^InheritedReferenceExpression);
+            virtual procedure Visit(expr : ^NamedReferenceExpression);
+            function GetCurrentReferenceType() : ReferenceType;
+            function GetCurrentLocalOrArgIndex() : integer;
+        var
+            _context : ^CompilerContext;
+            _generator : ^CodeGenerator;
+            _methodImpl : ^MethodImpl;
+            _log : ^MessageLog;
+            _currentReferenceType : ReferenceType;
+            _currentNamespaceRef : String;
+            _currentTypeRef : ^TypeDefinition;
+            _currentMemberRef : String;
+            _currentLocalOrArgIndex : integer;
+    end;
 
 constructor TypeCreationVisitor(
     context : ^CompilerContext;
@@ -137,6 +195,53 @@ begin
             _failed := true;
         end;
     end; 
+
+    methodList := classDecl^.GetProtectedMethods();
+    methodEnum := methodList^.GetEnumerator();
+    while methodEnum.MoveNext() do 
+    begin
+        if _generator^.TryCreateMethod(
+            _context,
+            _target,
+            methodEnum.GetCurrent(),
+            @methodInfo) then
+        begin
+            methodInfo^.SetIsProtected(true);
+            if not _target^.AddMethod(methodInfo) then
+            begin
+                delete methodInfo;
+                methodInfo := nil;
+                _failed := true;
+            end;
+        end 
+        else
+        begin
+            _failed := true;
+        end;
+    end; 
+
+    methodList := classDecl^.GetPrivateMethods();
+    methodEnum := methodList^.GetEnumerator();
+    while methodEnum.MoveNext() do 
+    begin
+        if _generator^.TryCreateMethod(
+            _context,
+            _target,
+            methodEnum.GetCurrent(),
+            @methodInfo) then
+        begin
+            if not _target^.AddMethod(methodInfo) then
+            begin
+                delete methodInfo;
+                methodInfo := nil;
+                _failed := true;
+            end;
+        end 
+        else
+        begin
+            _failed := true;
+        end;
+    end; 
 end;
 
 procedure TypeCreationVisitor.Visit(methodTypeDecl : ^MethodTypeDeclaration);
@@ -206,6 +311,204 @@ begin
     begin
         _context^.TryGetPointerType(elementType, @_result);
     end;
+end;
+
+constructor StatementVisitor(
+    context : ^CompilerContext;
+    generator : ^CodeGenerator;
+    methodImpl : ^MethodImpl;
+    log : ^MessageLog);
+begin
+    _context := context;
+    _generator := generator;
+    _methodImpl := methodImpl;
+    _log := log;
+end;
+
+procedure StatementVisitor.Visit(statement : ^WhileStatement);
+begin
+end;
+
+procedure StatementVisitor.Visit(statement : ^IfStatement);
+begin
+end;
+
+procedure StatementVisitor.Visit(statement : ^DeleteStatement);
+begin
+end;
+
+procedure StatementVisitor.Visit(statement : ^CallStatement);
+var
+    exprVisitor : ExpressionVisitor; 
+    callExpr : ^Expression;
+begin
+end;
+
+procedure StatementVisitor.Visit(statement : ^AssignmentStatement);
+var
+    exprVisitor : ExpressionVisitor;
+    storageVisitor : ExpressionVisitor;
+    storage : ^ReferenceExpression;
+    valueExpr : ^Expression;
+    argOrLocalIndex : integer;
+    assignStatement : ^OpStatement;
+    methodStatements: ^LinkedListOfOpStatement;
+begin
+    exprVisitor := ExpressionVisitor(
+        _context,
+        _generator,
+        _methodImpl,
+        _log);
+    storageVisitor := ExpressionVisitor(
+        _context,
+        _generator,
+        _methodImpl,
+        _log);
+    storage := statement^.GetStorage();
+    valueExpr := statement^.GetValue();
+    valueExpr^.Accept(@exprVisitor);
+    storage^.Accept(@storageVisitor);
+    if storageVisitor.GetCurrentReferenceType() = ReferenceType.ArgumentOrLocal then
+    begin
+        argOrLocalIndex := storageVisitor.GetCurrentLocalOrArgIndex();
+        assignStatement := new OpStatement();
+        if argOrLocalIndex >= 0 then
+            assignStatement^.AssignStoreArg(argOrLocalIndex)
+        else
+            assignStatement^.AssignStoreLocal(-argOrLocalIndex - 1);
+        methodStatements := _methodImpl^.GetStatements();
+        methodStatements^.Add(assignStatement);        
+    end;
+end;
+
+procedure StatementVisitor.Visit(statement : ^BlockStatement);
+var
+    statementList : ^LinkedListOfStatement;
+    statementEnum : LinkedListEnumeratorOfStatement;
+    innerStatement : ^Statement;
+begin
+    statementList := statement^.GetStatements();
+    statementEnum := statementList^.GetEnumerator();
+    while statementEnum.MoveNext() do
+    begin
+        innerStatement := statementEnum.GetCurrent();
+        innerStatement^.Accept(this);
+    end;
+end;
+
+constructor ExpressionVisitor(
+    context : ^CompilerContext;
+    generator : ^CodeGenerator;
+    methodImpl : ^MethodImpl;
+    log : ^MessageLog);
+begin
+    _context := context;
+    _generator := generator;
+    _methodImpl := methodImpl;
+    _log := log;
+end;
+
+procedure ExpressionVisitor.Visit(expr : ^TermExpression);
+begin
+end;
+
+procedure ExpressionVisitor.Visit(expr : ^SimpleExpression);
+begin
+end;
+
+procedure ExpressionVisitor.Visit(expr : ^RelationalExpression);
+begin
+end;
+
+procedure ExpressionVisitor.Visit(expr : ^NotExpression);
+begin
+end;
+
+procedure ExpressionVisitor.Visit(expr : ^NewExpression);
+begin
+end;
+
+procedure ExpressionVisitor.Visit(expr : ^NegativeExpression);
+begin
+end;
+
+procedure ExpressionVisitor.Visit(expr : ^LiteralDoubleExpression);
+begin
+end;
+
+procedure ExpressionVisitor.Visit(expr : ^LiteralIntExpression);
+var
+    methodStatements: ^LinkedListOfOpStatement;
+    loadStatement : ^OpStatement;
+begin
+    loadStatement := new OpStatement();
+    if loadStatement <> nil then
+    begin
+        loadStatement^.AssignLoadInt(expr^.GetValue());
+        methodStatements := _methodImpl^.GetStatements();
+        methodStatements^.Add(loadStatement);
+    end;
+end;
+
+procedure ExpressionVisitor.Visit(expr : ^LiteralStringExpression);
+begin
+end;
+
+procedure ExpressionVisitor.Visit(expr : ^LiteralBooleanExpression);
+begin
+end;
+
+procedure ExpressionVisitor.Visit(expr : ^LiteralNilExpression);
+begin
+end;
+
+procedure ExpressionVisitor.Visit(expr : ^AddressExpression);
+begin
+end;
+
+procedure ExpressionVisitor.Visit(expr : ^DereferenceExpression);
+begin
+end;
+
+procedure ExpressionVisitor.Visit(expr : ^ArrayIndexReferenceExpression);
+begin
+end;
+
+procedure ExpressionVisitor.Visit(expr : ^CallReferenceExpression);
+begin
+end;
+
+procedure ExpressionVisitor.Visit(expr : ^MemberReferenceExpression);
+begin
+end;
+
+procedure ExpressionVisitor.Visit(expr : ^InheritedReferenceExpression);
+begin
+end;
+
+procedure ExpressionVisitor.Visit(expr : ^NamedReferenceExpression);
+var
+    localOrArgIndex : integer;
+    scope : ^Scope;
+begin
+    scope := _methodImpl^.GetScope();
+    if scope^.TryGetSymbolIndexByName(
+        expr^.GetName(),
+        @localOrArgIndex) then
+    begin
+        _currentReferenceType := ReferenceType.ArgumentOrLocal;
+        _currentLocalOrArgIndex := localOrArgIndex; 
+    end;
+end;
+
+function ExpressionVisitor.GetCurrentReferenceType() : ReferenceType;
+begin
+    GetCurrentReferenceType := _currentReferenceType;
+end;
+
+function ExpressionVisitor.GetCurrentLocalOrArgIndex() : integer;
+begin
+    GetCurrentLocalOrArgIndex := _currentLocalOrArgIndex;
 end;
 
 constructor CodeGenerator(log : ^MessageLog);
@@ -407,6 +710,7 @@ var
     paramDecl : ^ParameterDeclaration;
     paramType : ^TypeDefinition;
     methodOwnerType : ^TypeDefinition = nil;
+    statementVisitor : StatementVisitor;
     success : boolean = true;
 begin
     sourceParameters := methodDef^.GetParameters();
@@ -447,6 +751,16 @@ begin
     end;
 
     if success then
+        success := context^.BeginScope(methodInfo, methodImpl^.GetScope());
+
+    if success then
+        success := DefineLocalVariables(context, methodImpl, methodDef);
+
+    statementVisitor := StatementVisitor(context, this, methodImpl, _log); 
+    if success then
+        statementVisitor.Visit(methodDef^.GetBody());
+
+    if success then
         success := module^.AddMethodImpl(methodImpl);
 
     if not success and (methodImpl <> nil) then
@@ -455,6 +769,50 @@ begin
     end;
 
     TryImplementMethod := success;
+end;
+
+function CodeGenerator.DefineLocalVariables(
+    context : ^CompilerContext;
+    methodImpl : ^MethodImpl; 
+    methodDef : ^MethodDefinition) : boolean;
+var
+    localVars : ^VarBlock = nil;
+    varDecl : ^VariableDeclaration = nil;
+    varTypeRef : ^TypeReference = nil;
+    varType : ^TypeDefinition = nil;
+    scope : ^Scope = methodImpl^.GetScope();
+    localVarList : ^LinkedListOfVariableDeclaration;
+    localVarEnum : LinkedListEnumeratorOfVariableDeclaration;
+    varNameList : ^LinkedListOfString;
+    varNameEnum : LinkedListEnumeratorOfString;
+    success : boolean = true;
+begin
+    localVars := methodDef^.GetLocalVariables();
+    if localVars <> nil then
+    begin
+        localVarList := localVars^.GetVariables();
+        localVarEnum := localVarList^.GetEnumerator();
+        while success and localVarEnum.MoveNext() do
+        begin
+            varDecl := localVarEnum.GetCurrent();
+            success := TryResolveTypeReference(
+                context,
+                varDecl^.GetVariableType(),
+                @varType);
+            if success then
+            begin
+                varNameList := varDecl^.GetVariableNames();
+                varNameEnum := varNameList^.GetEnumerator();
+                while success and varNameEnum.MoveNext() do
+                begin
+                    success := scope^.DefineLocalVariable(
+                        varNameEnum.GetCurrent(),
+                        varType);
+                end;
+            end;
+        end;
+    end;
+    DefineLocalVariables := success;
 end;
 
 function CodeGenerator.TryResolveTypeReference(

@@ -1,0 +1,35 @@
+namespace TEAC;
+uses System, TEAC;
+
+constructor VariableDeclaration(
+    start : ^SharedOfToken;
+    variableType : ^TypeReference;
+    initExpression : ^Expression);
+inherited(start);
+begin
+    _variableType := variableType;
+    _initExpression := initExpression;
+end;
+
+destructor VariableDeclaration();
+begin
+    if _variableType <> nil then
+        delete _variableType;
+    if _initExpression <> nil then
+        delete _initExpression;
+end;
+
+function VariableDeclaration.GetVariableType() : ^TypeReference;
+begin
+    GetVariableType := _variableType;
+end;
+
+function VariableDeclaration.GetInitExpression() : ^Expression;
+begin
+    GetInitExpression := _initExpression;
+end;
+
+function VariableDeclaration.GetVariableNames() : ^LinkedListOfString;
+begin
+    GetVariableNames := @_variableNames;
+end;

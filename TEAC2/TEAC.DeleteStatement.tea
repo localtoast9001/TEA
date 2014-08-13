@@ -1,0 +1,22 @@
+namespace TEAC;
+uses System, TEAC;
+
+constructor DeleteStatement(
+    start : ^SharedOfToken;
+    value : ^Expression);
+inherited(start);
+begin
+    _value := value;
+end;
+
+destructor DeleteStatement();
+begin
+    if _value <> nil then
+        delete _value;
+end;
+
+procedure DeleteStatement.Accept(visitor : ^IStatementVisitor);
+begin
+    visitor^.Visit(this);
+end;
+

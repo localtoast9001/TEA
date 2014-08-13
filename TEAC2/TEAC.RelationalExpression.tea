@@ -20,3 +20,7 @@ begin
         delete _right;
 end;
 
+procedure RelationalExpression.Accept(visitor : ^IExpressionVisitor);
+begin
+    visitor^.Visit(this);
+end;

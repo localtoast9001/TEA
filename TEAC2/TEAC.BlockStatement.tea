@@ -10,6 +10,11 @@ destructor BlockStatement();
 begin
 end;
 
+procedure BlockStatement.Accept(visitor : ^IStatementVisitor);
+begin
+    visitor^.Visit(this);
+end;
+
 function BlockStatement.GetStatements() : ^LinkedListOfStatement;
 begin
     GetStatements := @_statements;

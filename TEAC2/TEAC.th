@@ -353,6 +353,9 @@ type
             _start : SharedOfToken;
     end;
     Expression = class(ParseNode)
+        public
+            virtual destructor();
+            abstract procedure Accept(visitor : ^IExpressionVisitor);
         protected
             constructor(start : ^SharedOfToken);
     end;
@@ -396,6 +399,8 @@ type
                 start : ^SharedOfToken; 
                 name : ^String);
             virtual destructor();
+            virtual procedure Accept(visitor : ^IExpressionVisitor);
+            function GetName() : ^String;
         var
             _name : String;
     end;
@@ -403,6 +408,7 @@ type
         public
             constructor(start : ^SharedOfToken);
             virtual destructor();
+            virtual procedure Accept(visitor : ^IExpressionVisitor);
     end;
     MemberReferenceExpression = class(ReferenceExpression)
         public
@@ -411,6 +417,7 @@ type
                 inner : ^ReferenceExpression;
                 name : ^String);
             virtual destructor();
+            virtual procedure Accept(visitor : ^IExpressionVisitor);
         var
             _name : String;
             _inner : ^ReferenceExpression;
@@ -421,6 +428,7 @@ type
                 start : ^SharedOfToken;
                 inner : ^ReferenceExpression);
             virtual destructor();
+            virtual procedure Accept(visitor : ^IExpressionVisitor);
             function AddArgument(item : ^Expression) : boolean;
         var
             _inner : ^ReferenceExpression;
@@ -433,6 +441,7 @@ type
                 inner : ^ReferenceExpression;
                 index : ^Expression);
             virtual destructor();
+            virtual procedure Accept(visitor : ^IExpressionVisitor);
         var
             _inner : ^ReferenceExpression;
             _index : ^Expression;
@@ -443,6 +452,7 @@ type
                 start : ^SharedOfToken; 
                 inner : ^ReferenceExpression);
             virtual destructor();
+            virtual procedure Accept(visitor : ^IExpressionVisitor);
         var
             _inner : ^ReferenceExpression;
     end;
@@ -451,6 +461,8 @@ type
             constructor(
                 start : ^SharedOfToken; 
                 inner : ^ReferenceExpression);
+            virtual destructor();
+            virtual procedure Accept(visitor : ^IExpressionVisitor);
             function GetInner() : ^ReferenceExpression;
         var
             _inner : ^ReferenceExpression;
@@ -459,6 +471,7 @@ type
         public
             constructor(start : ^SharedOfToken);
             virtual destructor();
+            virtual procedure Accept(visitor : ^IExpressionVisitor);
     end;
     LiteralBooleanExpression = class(Expression)
         public 
@@ -466,6 +479,7 @@ type
                 start : ^SharedOfToken;
                 value : boolean);
             virtual destructor();
+            virtual procedure Accept(visitor : ^IExpressionVisitor);
         var
             _value : boolean;
     end;
@@ -475,6 +489,7 @@ type
                 start : ^SharedOfToken;
                 value : ^String);
             virtual destructor();
+            virtual procedure Accept(visitor : ^IExpressionVisitor);
         var
             _value : String;
     end;
@@ -484,6 +499,8 @@ type
                 start : ^SharedOfToken;
                 value : integer);
             virtual destructor();
+            virtual procedure Accept(visitor : ^IExpressionVisitor);
+            function GetValue() : integer;
         var
             _value : integer;
     end;
@@ -493,6 +510,7 @@ type
                 start : ^SharedOfToken;
                 value : double);
             virtual destructor();
+            virtual procedure Accept(visitor : ^IExpressionVisitor);
         var
             _value : double;
     end;
@@ -500,6 +518,7 @@ type
         public
             constructor(start : ^SharedOfToken; inner : ^Expression);
             virtual destructor();
+            virtual procedure Accept(visitor : ^IExpressionVisitor);
             function GetInner() : ^Expression;
         var
             _inner : ^Expression;
@@ -510,6 +529,7 @@ type
         public
             constructor(start : ^SharedOfToken; inner : ^Expression);
             virtual destructor();
+            virtual procedure Accept(visitor : ^IExpressionVisitor);
             function GetInner() : ^Expression;
         var
             _inner : ^Expression;
@@ -521,6 +541,7 @@ type
                 left, right : ^Expression;
                 operator : RelationalOperator);
             virtual destructor();
+            virtual procedure Accept(visitor : ^IExpressionVisitor);
         var
             _left, _right : ^Expression;
             _operator : RelationalOperator;
@@ -532,6 +553,7 @@ type
                 left, right : ^Expression;
                 operator : SimpleOperator);
             virtual destructor();
+            virtual procedure Accept(visitor : ^IExpressionVisitor);
         var
             _left, _right : ^Expression;
             _operator : SimpleOperator;
@@ -543,13 +565,35 @@ type
                 left, right : ^Expression;
                 operator : TermOperator);
             virtual destructor();
+            virtual procedure Accept(visitor : ^IExpressionVisitor);
         var
             _left, _right : ^Expression;
             _operator : TermOperator;
     end;
+    IExpressionVisitor = interface
+        procedure Visit(expr : ^TermExpression);
+        procedure Visit(expr : ^SimpleExpression);
+        procedure Visit(expr : ^RelationalExpression);
+        procedure Visit(expr : ^NotExpression);
+        procedure Visit(expr : ^NewExpression);
+        procedure Visit(expr : ^NegativeExpression);
+        procedure Visit(expr : ^LiteralDoubleExpression);
+        procedure Visit(expr : ^LiteralIntExpression);
+        procedure Visit(expr : ^LiteralStringExpression);
+        procedure Visit(expr : ^LiteralBooleanExpression);
+        procedure Visit(expr : ^LiteralNilExpression);
+        procedure Visit(expr : ^AddressExpression);
+        procedure Visit(expr : ^DereferenceExpression);
+        procedure Visit(expr : ^ArrayIndexReferenceExpression);
+        procedure Visit(expr : ^CallReferenceExpression);
+        procedure Visit(expr : ^MemberReferenceExpression);
+        procedure Visit(expr : ^InheritedReferenceExpression);
+        procedure Visit(expr : ^NamedReferenceExpression);
+    end;
     Statement = class(ParseNode)
         public
             virtual destructor();
+            abstract procedure Accept(visitor : ^IStatementVisitor);
         protected
             constructor(start : ^SharedOfToken);
     end;
@@ -567,6 +611,8 @@ type
     LinkedListEnumeratorOfStatement = class
         public
             constructor(head : ^LinkedListNodeOfStatement);
+            function MoveNext() : boolean;
+            function GetCurrent() : ^Statement;
         var
             _head, _current : ^LinkedListNodeOfStatement;
             _started : boolean;
@@ -585,6 +631,7 @@ type
         public
             constructor(start : ^SharedOfToken);
             virtual destructor();
+            virtual procedure Accept(visitor : ^IStatementVisitor);
             function GetStatements() : ^LinkedListOfStatement;
             function AddStatement(item : ^Statement) : boolean;
         var
@@ -597,6 +644,7 @@ type
                 storage : ^ReferenceExpression;
                 value : ^Expression);
             virtual destructor();
+            virtual procedure Accept(visitor : ^IStatementVisitor);
             function GetStorage() : ^ReferenceExpression;
             function GetValue() : ^Expression;
         var
@@ -609,6 +657,8 @@ type
                 start : ^SharedOfToken; 
                 callExpression : ^ReferenceExpression);
             virtual destructor();
+            virtual procedure Accept(visitor : ^IStatementVisitor);
+            function GetCallExpression() : ^ReferenceExpression;
         var
             _expression : ^ReferenceExpression;
     end;
@@ -618,6 +668,7 @@ type
                 start : ^SharedOfToken;
                 value : ^Expression);
             virtual destructor();
+            virtual procedure Accept(visitor : ^IStatementVisitor);
             function GetValue() : ^Expression; 
         var
             _value : ^Expression;
@@ -630,6 +681,7 @@ type
                 trueStatement : ^Statement;
                 falseStatement : ^Statement);
             virtual destructor();
+            virtual procedure Accept(visitor : ^IStatementVisitor);
             function GetCondition() : ^Expression;
             function GetTrueStatement() : ^Statement;
             function GetFalseStatement() : ^Statement;
@@ -645,11 +697,20 @@ type
                 condition : ^Expression;
                 bodyStatement : ^Statement);
             virtual destructor();
+            virtual procedure Accept(visitor : ^IStatementVisitor);
             function GetCondition() : ^Expression;
             function GetBodyStatement() : ^Statement;
         var
             _condition : ^Expression;
             _bodyStatement : ^Statement;
+    end;
+    IStatementVisitor = interface
+        procedure Visit(statement : ^WhileStatement);
+        procedure Visit(statement : ^IfStatement);
+        procedure Visit(statement : ^DeleteStatement);
+        procedure Visit(statement : ^CallStatement);
+        procedure Visit(statement : ^AssignmentStatement);
+        procedure Visit(statement : ^BlockStatement);
     end;
     TypeDeclaration = class(ParseNode)
         public 
@@ -732,8 +793,9 @@ type
                 start : ^SharedOfToken;
                 variableType : ^TypeReference;
                 initExpression : ^Expression);
+            virtual destructor();
             function GetVariableType() : ^TypeReference;
-            function GetInitExpression() : ^TypeReference;
+            function GetInitExpression() : ^Expression;
             function GetVariableNames() : ^LinkedListOfString;
         var
             _variableNames : LinkedListOfString;
@@ -754,6 +816,8 @@ type
     LinkedListEnumeratorOfVariableDeclaration = class
         public
             constructor(head : ^LinkedListNodeOfVariableDeclaration);
+            function MoveNext() : boolean;
+            function GetCurrent() : ^VariableDeclaration;
         var
             _head, _current : ^LinkedListNodeOfVariableDeclaration;
             _started : boolean;
@@ -1138,6 +1202,7 @@ type
             function GetIsProtected() : boolean;
             procedure SetIsProtected(value : boolean);
             function GetMangledName(value : ^String) : boolean;
+            function GetOwnerType() : ^TypeDefinition;
         var
             _parameters : LinkedListOfParameterInfo;
             _name : String;
@@ -1285,10 +1350,37 @@ type
             function Add(item : ^TypeDefinition) : boolean;
             function GetEnumerator() : LinkedListEnumeratorOfTypeDefinition;
             procedure Clear();
+            function GetCount() : integer;
         var
             _head, _tail : ^LinkedListNodeOfTypeDefinition;
+            _count : integer;
     end;
+    Scope = class
+        public
+            constructor();
+            destructor();
 
+            function DefineParameter(
+                paramName : ^String;
+                paramType : ^TypeDefinition) : boolean;
+            function DefineLocalVariable(
+                varName : ^String;
+                varType : ^TypeDefinition) : boolean;
+            function GetParameterNames() : ^LinkedListOfString;
+            function GetParameterNameByIndex(index : integer) : ^String;
+            function GetLocalVariableNames() : ^LinkedListOfString;
+            function GetLocalVariableNameByIndex(index : integer) : ^String;
+            function GetSymbolTypeByIndex(index : integer) : ^TypeDefinition;
+            function TryGetSymbolIndexByName(
+                name : ^String; 
+                index : ^integer) : boolean; 
+        var
+            _symbols : DictionaryOfStringToInteger;
+            _parameters : LinkedListOfTypeDefinition;
+            _paramNames : LinkedListOfString;
+            _localVars : LinkedListOfTypeDefinition;
+            _localVarNames : LinkedListOfString;
+    end;
     CompilerContext = class
         public
             constructor();
@@ -1314,6 +1406,9 @@ type
                 elementType : ^TypeDefinition;
                 elementCount : integer;
                 typeRef : ^^TypeDefinition) : boolean;
+            function BeginScope(
+                methodInfo : ^MethodInfo;
+                scope : ^Scope) : boolean;
         private
             function InitializeIntType() : boolean;
             function InitializeShortType() : boolean;
@@ -1510,6 +1605,8 @@ type
     LinkedListEnumeratorOfOpStatement = class
         public
             constructor(head : ^LinkedListNodeOfOpStatement);
+            function MoveNext() : boolean;
+            function GetCurrent() : ^OpStatement;
         var
             _head, _current : ^LinkedListNodeOfOpStatement;
             _started : boolean;
@@ -1538,11 +1635,13 @@ type
             constructor(module : ^Module; method : ^MethodInfo);
             destructor();
             function GetMethodInfo() : ^MethodInfo;
+            function GetScope() : ^Scope;
             function GetStatements() : ^LinkedListOfOpStatement;
         var
             _module : ^Module;
             _method : ^MethodInfo;
-            _statments : LinkedListOfOpStatement;
+            _scope : Scope;
+            _statements : LinkedListOfOpStatement;
     end;
     OpCode = (
         Nop,
@@ -1559,16 +1658,31 @@ type
         StoreLocal,
         LoadLocalRef,
         Push,
-        Pop
+        Pop,
+        LoadInt
     );
     OpStatement = class
         public
+            constructor();
             destructor();
+
+            function GetLabel() : ^String;
+            function GetOpCode() : OpCode;
+            function GetSize() : integer;
+            function GetArgOrLocalIndex() : integer;
+            function GetTargetSymbol() : ^String;
+            function GetIntValue() : integer;
+            procedure SetLabel(value : ^String);
+            procedure AssignLoadInt(value : integer);
+            procedure AssignStoreLocal(index : integer);
+            procedure AssignStoreArg(index : integer);
         var
             _label : String;
             _opCode : OpCode;
             _size : integer;
             _argOrLocalIndex : integer;
+            _targetSymbol : String;
+            _intValue : integer;
     end;
     CodeGenerator = class
         public
@@ -1592,7 +1706,11 @@ type
             function TryResolveTypeReference(
                 context : ^CompilerContext;
                 typeRef : ^TypeReference;
-                typeDefRef : ^^TypeDefinition) : boolean; 
+                typeDefRef : ^^TypeDefinition) : boolean;
+            function DefineLocalVariables(
+                context : ^CompilerContext;
+                methodImpl : ^MethodImpl; 
+                methodDef : ^MethodDefinition) : boolean;
         var
             _log : ^MessageLog;
     end;
@@ -1607,6 +1725,10 @@ type
             procedure WriteMethodImpl(
                 module : ^Module; 
                 methodImpl : ^MethodImpl);
+            procedure WriteStatement(
+                module : ^Module;
+                methodImpl : ^MethodImpl;
+                statement : ^OpStatement);
         var
             _log : ^MessageLog;
             _inner : ^TextWriter; 

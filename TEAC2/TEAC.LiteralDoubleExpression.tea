@@ -12,3 +12,8 @@ end;
 destructor LiteralDoubleExpression();
 begin
 end;
+
+procedure LiteralDoubleExpression.Accept(visitor : ^IExpressionVisitor);
+begin
+    visitor^.Visit(this);
+end;

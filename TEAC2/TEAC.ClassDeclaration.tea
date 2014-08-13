@@ -37,6 +37,16 @@ begin
     GetPublicMethods := @_publicMethods;
 end;
 
+function ClassDeclaration.GetProtectedMethods() : ^LinkedListOfMethodDeclaration;
+begin
+    GetProtectedMethods := @_protectedMethods;
+end;
+
+function ClassDeclaration.GetPrivateMethods() : ^LinkedListOfMethodDeclaration;
+begin
+    GetPrivateMethods := @_privateMethods;
+end;
+
 function ClassDeclaration.AddProtectedMethod(
     item : ^MethodDeclaration) : boolean;
 begin

@@ -19,3 +19,8 @@ begin
     if _right <> nil then
         delete _right;
 end;
+
+procedure SimpleExpression.Accept(visitor : ^IExpressionVisitor);
+begin
+    visitor^.Visit(this);
+end;

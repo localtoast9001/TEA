@@ -15,3 +15,8 @@ begin
         delete _expression;
 end;
 
+procedure CallStatement.Accept(visitor : ^IStatementVisitor);
+begin
+    visitor^.Visit(this);
+end;
+

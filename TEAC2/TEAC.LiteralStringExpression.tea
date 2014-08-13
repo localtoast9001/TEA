@@ -12,3 +12,8 @@ end;
 destructor LiteralStringExpression();
 begin
 end;
+
+procedure LiteralStringExpression.Accept(visitor : ^IExpressionVisitor);
+begin
+    visitor^.Visit(this);
+end;

@@ -14,3 +14,9 @@ begin
     if _inner <> nil then
         delete _inner;
 end;
+
+procedure DereferenceExpression.Accept(visitor : ^IExpressionVisitor);
+begin
+    visitor^.Visit(this);
+end;
+

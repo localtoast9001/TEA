@@ -59,17 +59,114 @@ procedure X86AsmModuleWriter.WriteMethodImpl(
     methodImpl : ^MethodImpl);
 var
     methodInfo : ^MethodInfo;
+    scope : ^Scope;
     mangledName : String;
+    paramNames : ^LinkedListOfString;
+    paramEnum : LinkedListEnumeratorOfString;
+    paramName : String;
+    paramType : ^TypeDefinition;
+    paramTypeName : String;
+    localNames : ^LinkedListOfString;
+    localEnum : LinkedListEnumeratorOfString;
+    localName : String;
+    localType : ^TypeDefinition;
+    localTypeName : String;
+    index : integer = 0;
+    paramOffset : integer = 8;
+    localOffset : integer = -4;
+    statementList : ^LinkedListOfOpStatement;
+    statementEnum : LinkedListEnumeratorOfOpStatement;
 begin
     methodInfo := methodImpl^.GetMethodInfo();
     if methodInfo^.GetMangledName(@mangledName) then
     begin
+        scope := methodImpl^.GetScope();
+        paramNames := scope^.GetParameterNames();
+        paramEnum := paramNames^.GetEnumerator();
+        while paramEnum.MoveNext() do
+        begin
+            paramName.assign(paramEnum.GetCurrent());
+            paramType := scope^.GetSymbolTypeByIndex(index);
+            _inner^.Write('_');
+            _inner^.Write(@paramName);
+            _inner^.Write('$=');
+            _inner^.Write(paramOffset);
+            paramTypeName.assign(paramType^.GetFullName());
+            _inner^.Write('    ; ');
+            _inner^.Write(@paramTypeName);
+            _inner^.WriteLine();
+            index := index + 1;
+            paramOffset := paramOffset + ((paramType^.GetSize() + 3) div 4) * 4;
+        end;
+
+        index := -1;
+        localNames := scope^.GetLocalVariableNames();
+        localEnum := localNames^.GetEnumerator();
+        while localEnum.MoveNext() do
+        begin
+            localName.assign(localEnum.GetCurrent());
+            localType := scope^.GetSymbolTypeByIndex(index);
+            _inner^.Write('_');
+            _inner^.Write(@localName);
+            _inner^.Write('$=');
+            _inner^.Write(localOffset);
+            localTypeName.assign(localType^.GetFullName());
+            _inner^.Write('    ; ');
+            _inner^.Write(@localTypeName);
+            _inner^.WriteLine();
+            index := index - 1;
+            localOffset := localOffset - ((localType^.GetSize() + 3) div 4) * 4;
+        end;
+
         _inner^.Write(@mangledName);
         _inner^.Write(' PROC C');
         if methodInfo^.GetIsProtected() or methodInfo^.GetIsPublic() then
             _inner^.Write(' EXPORT');
         _inner^.WriteLine();
-        _inner^.WriteLine('ENDP');
+        _inner^.WriteLine('        push ebp');
+        _inner^.WriteLine('        mov ebp,esp');
+        statementList := methodImpl^.GetStatements();
+        statementEnum := statementList^.GetEnumerator();
+        while statementEnum.MoveNext() do
+        begin
+            WriteStatement(module, methodImpl, statementEnum.GetCurrent());
+        end;
+
+        _inner^.WriteLine('        mov esp,ebp');
+        _inner^.WriteLine('        pop ebp');
+        _inner^.WriteLine('        ret');
+        _inner^.Write(@mangledName);
+        _inner^.WriteLine(' ENDP');
     end;
 end;
 
+procedure X86AsmModuleWriter.WriteStatement(
+    module : ^Module;
+    methodImpl : ^MethodImpl;
+    statement : ^OpStatement);
+var
+    opCode : OpCode;
+    symbol : String;
+    scope : ^Scope;
+begin
+    scope := methodImpl^.GetScope();
+    opCode := statement^.GetOpCode();
+    if opCode = OpCode.LoadInt then
+    begin
+        if statement^.GetIntValue() = 0 then
+            _inner^.WriteLine('        xor eax,eax')
+        else
+        begin
+            _inner^.Write('        mov eax,');
+            _inner^.WriteLine(statement^.GetIntValue());
+        end;    
+    end
+    else if opCode = OpCode.StoreLocal then
+    begin
+        symbol.assign(scope^.GetLocalVariableNameByIndex(
+            statement^.GetArgOrLocalIndex()));
+        _inner^.Write('        mov _');
+        _inner^.Write(@symbol);
+        _inner^.WriteLine('$[ebp],eax');
+    end;
+end;

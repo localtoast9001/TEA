@@ -13,3 +13,12 @@ destructor NamedReferenceExpression();
 begin
 end;
 
+procedure NamedReferenceExpression.Accept(visitor : ^IExpressionVisitor);
+begin
+    visitor^.Visit(this);
+end;
+
+function NamedReferenceExpression.GetName() : ^String;
+begin
+    GetName := @_name;
+end;

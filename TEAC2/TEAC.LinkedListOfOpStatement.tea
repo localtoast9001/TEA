@@ -35,6 +35,29 @@ begin
     _started := false;
 end;
 
+function LinkedListEnumeratorOfOpStatement.MoveNext() : boolean;
+begin
+    if not _started then
+    begin
+        _current := _head;
+        _started := true;
+    end
+    else 
+    begin
+        if _current <> nil then
+            _current := _current^.GetNext();
+    end;
+
+    MoveNext := _current <> nil;
+end;
+
+function LinkedListEnumeratorOfOpStatement.GetCurrent() : ^OpStatement;
+begin
+    GetCurrent := nil;
+    if _current <> nil then
+        GetCurrent := _current^.GetValue();
+end;
+
 constructor LinkedListOfOpStatement();
 begin
     _head := nil;

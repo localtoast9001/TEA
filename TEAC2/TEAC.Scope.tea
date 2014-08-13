@@ -1,0 +1,133 @@
+namespace TEAC;
+uses System, TEAC;
+
+constructor Scope();
+begin
+end;
+
+destructor Scope();
+begin
+end;
+
+function Scope.DefineParameter(
+    paramName : ^String;
+    paramType : ^TypeDefinition) : boolean;
+var
+    index : integer;
+    success : boolean = true;
+begin
+    if _symbols.TryGetValue(paramName, @index) then
+        success := false
+    else
+    begin
+        index := _parameters.GetCount();
+        success := _parameters.Add(paramType);
+        if success then
+            success := _paramNames.Add(paramName);
+        if success then
+            success := _symbols.TryAssign(paramName, index);
+    end;
+
+    DefineParameter := success;
+end;
+
+function Scope.DefineLocalVariable(
+    varName : ^String;
+    varType : ^TypeDefinition) : boolean; 
+var
+    index : integer;
+    success : boolean = true;
+begin
+    if _symbols.TryGetValue(varName, @index) then
+        success := false
+    else
+    begin
+        index := _localVars.GetCount() + 1;
+        success := _localVars.Add(varType);
+        if success then
+            success := _localVarNames.Add(varName);
+        if success then
+            success := _symbols.TryAssign(varName, -index);
+    end;
+
+    DefineLocalVariable := success;
+end;
+
+function Scope.GetParameterNames() : ^LinkedListOfString;
+begin
+    GetParameterNames := @_paramNames;
+end;
+
+function Scope.GetLocalVariableNames() : ^LinkedListOfString;
+begin
+    GetLocalVariableNames := @_localVarNames;
+end;
+
+function Scope.GetSymbolTypeByIndex(index : integer) : ^TypeDefinition; 
+var
+    currentIndex : integer = 0;
+    paramEnum : LinkedListEnumeratorOfTypeDefinition;
+    localEnum : LinkedListEnumeratorOfTypeDefinition;
+begin
+    GetSymbolTypeByIndex := nil;
+    if index >= 0 then
+    begin
+        paramEnum := _parameters.GetEnumerator();
+        while paramEnum.MoveNext() do
+        begin
+            if currentIndex = index then
+                GetSymbolTypeByIndex := paramEnum.GetCurrent();
+            currentIndex := currentIndex + 1;
+        end;
+    end
+    else
+    begin
+        currentIndex := -1;
+        localEnum := _localVars.GetEnumerator();
+        while localEnum.MoveNext() do
+        begin
+            if currentIndex = index then
+                GetSymbolTypeByIndex := localEnum.GetCurrent();
+            currentIndex := currentIndex - 1;
+        end;
+    end;
+end;
+
+function Scope.TryGetSymbolIndexByName(
+    name : ^String; 
+    index : ^integer) : boolean; 
+begin
+    TryGetSymbolIndexByName := _symbols.TryGetValue(name, index);
+end;
+
+function Scope.GetParameterNameByIndex(index : integer) : ^String;
+var
+    currentIndex : integer = 0;
+    paramEnum : LinkedListEnumeratorOfString;
+    value : ^String = nil;
+begin
+    paramEnum := _paramNames.GetEnumerator();
+    while (currentIndex <= index) and paramEnum.MoveNext() do
+    begin
+        if currentIndex = index then
+            value := paramEnum.GetCurrent();
+        currentIndex := currentIndex + 1; 
+    end;
+    GetParameterNameByIndex := value;
+end;
+
+function Scope.GetLocalVariableNameByIndex(index : integer) : ^String;
+var
+    currentIndex : integer = 0;
+    localEnum : LinkedListEnumeratorOfString;
+    value : ^String = nil;
+begin
+    localEnum := _localVarNames.GetEnumerator();
+    while (currentIndex <= index) and localEnum.MoveNext() do
+    begin
+        if currentIndex = index then
+            value := localEnum.GetCurrent();
+        currentIndex := currentIndex + 1; 
+    end;
+    GetLocalVariableNameByIndex := value;
+end;

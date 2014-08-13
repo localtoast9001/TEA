@@ -9,3 +9,8 @@ end;
 destructor LiteralNilExpression();
 begin
 end;
+
+procedure LiteralNilExpression.Accept(visitor : ^IExpressionVisitor);
+begin
+    visitor^.Visit(this);
+end;

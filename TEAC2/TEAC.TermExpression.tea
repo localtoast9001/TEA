@@ -20,3 +20,7 @@ begin
         delete _right;
 end;
 
+procedure TermExpression.Accept(visitor : ^IExpressionVisitor);
+begin
+    visitor^.Visit(this);
+end;
