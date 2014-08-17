@@ -1,8 +1,9 @@
 namespace TEAC;
-uses TEAC, System;
+uses TEAC, System, System.Text;
 
 constructor Module();
 begin
+    _literalStringIndex := 0;
 end;
 
 destructor Module();
@@ -17,4 +18,50 @@ end;
 function Module.GetMethods() : ^LinkedListOfMethodImpl;
 begin
     GetMethods := @_codeSeg;
+end;
+
+function Module.GetData() : ^LinkedListOfDataEntry;
+begin
+    GetData := @_dataSeg;
+end;
+
+function Module.TryDefineStringLiteral(
+    value : ^String;
+    symbol : ^String) : boolean;
+var
+    sb : SimpleStringBuilder;
+    valueChars : array of character = value^.Characters();
+    len : integer = value^.Length() + 1;
+    index : integer = 0;
+    dataEntry : ^DataEntry;
+    success : boolean;
+    first : boolean = true;
+begin
+    success := sb.TryAppend('$String_');
+    if success then
+        success := DefaultFormatter.TryFormat(_literalStringIndex, nil, @sb);
+    if success then
+        success := sb.ToString(symbol);
+    if success then
+    begin
+        _literalStringIndex := _literalStringIndex + 1;
+        while success and (index < len) do
+        begin
+            dataEntry := new DataEntry();
+            success := dataEntry <> nil;
+            if success then
+            begin
+                if first then
+                begin
+                    dataEntry^.SetLabel(symbol);
+                    first := false;
+                end;
+
+                dataEntry^.AssignDW(Convert.ToShort(valueChars[index]));
+                success := _dataSeg.Add(dataEntry);
+            end;
+            index := index + 1;
+        end;
+    end;
+    TryDefineStringLiteral := success;
 end;

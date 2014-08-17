@@ -297,6 +297,11 @@ begin
     Is := Token.Is(Value(), keyword);    
 end;
 
+function SharedOfToken.IsIdentifier() : boolean;
+begin
+    IsIdentifier := Token.IsIdentifier(Value());
+end;
+
 function SharedOfToken.IsRelationalOperator(
     operatorRef : ^RelationalOperator) : boolean;
 begin

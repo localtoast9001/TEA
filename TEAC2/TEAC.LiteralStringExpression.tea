@@ -17,3 +17,8 @@ procedure LiteralStringExpression.Accept(visitor : ^IExpressionVisitor);
 begin
     visitor^.Visit(this);
 end;
+
+function LiteralStringExpression.GetValue() : ^String;
+begin
+    GetValue := @_value;
+end;

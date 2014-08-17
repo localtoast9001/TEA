@@ -4,8 +4,19 @@ uses TEAC, System;
 constructor Expression(start : ^SharedOfToken);
 inherited(start);
 begin
+    _resultType := nil;
 end;
 
 destructor Expression();
 begin
+end;
+
+function Expression.GetResultType() : ^TypeDefinition;
+begin
+    GetResultType := _resultType;
+end;
+
+procedure Expression.SetResultType(value : ^TypeDefinition);
+begin
+    _resultType := value;
 end;

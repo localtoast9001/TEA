@@ -1,0 +1,111 @@
+namespace TEAC;
+uses System, System.IO, TEAC;
+
+constructor LinkedListNodeOfDataEntry(value : ^DataEntry);
+begin
+    _value := value;
+    _next := nil;
+end;
+
+destructor LinkedListNodeOfDataEntry();
+begin
+    if _value <> nil then
+        delete _value;
+end;
+
+function LinkedListNodeOfDataEntry.GetValue() : ^DataEntry;
+begin
+    GetValue := _value;
+end;
+
+function LinkedListNodeOfDataEntry.GetNext() : ^LinkedListNodeOfDataEntry;
+begin
+    GetNext := _next;
+end;
+
+procedure LinkedListNodeOfDataEntry.SetNext(next : ^LinkedListNodeOfDataEntry);
+begin
+    _next := next;
+end;
+
+constructor LinkedListEnumeratorOfDataEntry(head : ^LinkedListNodeOfDataEntry);
+begin
+    _head := head;
+    _current := nil;
+    _started := false;
+end;
+
+function LinkedListEnumeratorOfDataEntry.MoveNext() : boolean;
+begin
+    if not _started then
+    begin
+        _current := _head;
+        _started := true;
+    end
+    else 
+    begin
+        if _current <> nil then
+            _current := _current^.GetNext();
+    end;
+
+    MoveNext := _current <> nil;
+end;
+
+function LinkedListEnumeratorOfDataEntry.GetCurrent() : ^DataEntry;
+begin
+    GetCurrent := nil;
+    if _current <> nil then
+        GetCurrent := _current^.GetValue();
+end;
+
+constructor LinkedListOfDataEntry();
+begin
+    _head := nil;
+    _tail := nil;
+end;
+
+destructor LinkedListOfDataEntry();
+begin
+    Clear();
+end;
+
+function LinkedListOfDataEntry.Add(item : ^DataEntry) : boolean;
+var
+    node : ^LinkedListNodeOfDataEntry;
+begin
+    node := new LinkedListNodeOfDataEntry(item);
+    if node <> nil then
+    begin
+        Add := true;
+        if _tail <> nil then
+        begin
+            _tail^.SetNext(node);
+            _tail := node;
+        end
+        else
+        begin
+            _head := node;
+            _tail := node;
+        end;
+    end
+    else
+        Add := false;
+end;
+
+function LinkedListOfDataEntry.GetEnumerator() : LinkedListEnumeratorOfDataEntry;
+begin
+    GetEnumerator := LinkedListEnumeratorOfDataEntry(_head);
+end;
+
+procedure LinkedListOfDataEntry.Clear();
+var
+    node : ^LinkedListNodeOfDataEntry;
+begin
+    while _head <> nil do
+    begin
+        node := _head;
+        _head := _head^.GetNext();
+        delete node;
+    end;
+end;
+

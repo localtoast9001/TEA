@@ -1,0 +1,62 @@
+namespace TEAC;
+uses System, TEAC;
+
+constructor DataEntry();
+begin
+    _code := DataCode.DB;
+    _value := 0;
+end;
+
+destructor DataEntry();
+begin
+end;
+
+function DataEntry.GetCode() : DataCode;
+begin
+    GetCode := _code;
+end;
+
+function DataEntry.GetLabel() : ^String;
+begin
+    GetLabel := @_label;
+end;
+
+function DataEntry.GetValue() : integer;
+begin
+    GetValue := _value;
+end;
+
+function DataEntry.GetSymbol() : ^String;
+begin
+    GetSymbol := @_symbol;
+end;
+
+procedure DataEntry.SetLabel(value : ^String);
+begin
+    _label.assign(value);
+end;
+
+procedure DataEntry.AssignDB(value : byte);
+begin
+    _code := DataCode.DB;
+    _value := Convert.ToInteger(Convert.ToShort(value));
+end;
+
+procedure DataEntry.AssignDW(value : short);
+begin
+    _code := DataCode.DW;
+    _value := Convert.ToInteger(value);
+end;
+
+procedure DataEntry.AssignDD(value : integer);
+begin
+    _code := DataCode.DD;
+    _value := value;
+end;
+
+procedure DataEntry.AssignDP(value : ^String);
+begin
+    _code := DataCode.DP;
+    _symbol.assign(value);
+end;
+

@@ -48,21 +48,37 @@ begin
     _label.assign(value);
 end;
 
-procedure OpStatement.AssignLoadInt(value : integer);
+procedure OpStatement.AssignLoadInt(value : integer; size : integer);
 begin
     _opCode := OpCode.LoadInt;
     _intValue := value;
+    _size := size;
 end;
 
-procedure OpStatement.AssignStoreLocal(index : integer);
+procedure OpStatement.AssignStoreLocal(index : integer; size : integer);
 begin
     _opCode := OpCode.StoreLocal;
     _argOrLocalIndex := index;
+    _size := size;
 end;
 
-procedure OpStatement.AssignStoreArg(index : integer);
+procedure OpStatement.AssignStoreArg(index : integer; size : integer);
 begin
     _opCode := OpCode.StoreArg;
     _argOrLocalIndex := index;
+    _size := size;
+end;
+
+procedure OpStatement.AssignNeg(size : integer);
+begin
+    _opCode := OpCode.Neg;
+    _size := size;
+end;
+
+procedure OpStatement.AssignLoadStaticRef(targetSymbol : ^String);
+begin
+    _opCode := OpCode.LoadStaticRef;
+    _size := 4;
+    _targetSymbol.assign(targetSymbol);
 end;
 

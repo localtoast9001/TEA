@@ -14,3 +14,8 @@ function VarBlock.GetVariables() : ^LinkedListOfVariableDeclaration;
 begin
     GetVariables := @_variables;
 end;
+
+function VarBlock.Add(item : ^VariableDeclaration) : boolean;
+begin
+    Add := _variables.Add(item);
+end;

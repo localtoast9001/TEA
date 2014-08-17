@@ -56,7 +56,42 @@ type
             _methodImpl : ^MethodImpl;
             _log : ^MessageLog;
     end;
-    ReferenceType = (Namespace, Type, TypeMember, ArgumentOrLocal);        
+    ReferenceType = (Namespace, Type, TypeMember, ArgumentOrLocal);
+    SyntaxAnalyzerExpressionVisitor = class interface(IExpressionVisitor)
+        public
+            constructor(
+                context : ^CompilerContext;
+                generator : ^CodeGenerator;
+                methodImpl : ^MethodImpl;
+                log : ^MessageLog);
+            virtual procedure Visit(expr : ^TermExpression);
+            virtual procedure Visit(expr : ^SimpleExpression);
+            virtual procedure Visit(expr : ^RelationalExpression);
+            virtual procedure Visit(expr : ^NotExpression);
+            virtual procedure Visit(expr : ^NewExpression);
+            virtual procedure Visit(expr : ^NegativeExpression);
+            virtual procedure Visit(expr : ^LiteralDoubleExpression);
+            virtual procedure Visit(expr : ^LiteralIntExpression);
+            virtual procedure Visit(expr : ^LiteralStringExpression);
+            virtual procedure Visit(expr : ^LiteralBooleanExpression);
+            virtual procedure Visit(expr : ^LiteralNilExpression);
+            virtual procedure Visit(expr : ^AddressExpression);
+            virtual procedure Visit(expr : ^DereferenceExpression);
+            virtual procedure Visit(expr : ^ArrayIndexReferenceExpression);
+            virtual procedure Visit(expr : ^CallReferenceExpression);
+            virtual procedure Visit(expr : ^MemberReferenceExpression);
+            virtual procedure Visit(expr : ^InheritedReferenceExpression);
+            virtual procedure Visit(expr : ^NamedReferenceExpression);
+            procedure SetImposedType(value : ^TypeDefinition);
+            function IsFailed() : boolean;
+        var
+            _imposedType : ^TypeDefinition;
+            _context : ^CompilerContext;
+            _generator : ^CodeGenerator;
+            _methodImpl : ^MethodImpl;
+            _log : ^MessageLog;
+            _failed : boolean;
+    end;    
     ExpressionVisitor = class interface(IExpressionVisitor)
         public
             constructor(
@@ -347,13 +382,26 @@ end;
 procedure StatementVisitor.Visit(statement : ^AssignmentStatement);
 var
     exprVisitor : ExpressionVisitor;
+    valueSyntaxVisitor : SyntaxAnalyzerExpressionVisitor;
     storageVisitor : ExpressionVisitor;
+    storageSyntaxVisitor : SyntaxAnalyzerExpressionVisitor;
     storage : ^ReferenceExpression;
+    storageType : ^TypeDefinition;
     valueExpr : ^Expression;
     argOrLocalIndex : integer;
     assignStatement : ^OpStatement;
     methodStatements: ^LinkedListOfOpStatement;
 begin
+    valueSyntaxVisitor := SyntaxAnalyzerExpressionVisitor(
+        _context,
+        _generator,
+        _methodImpl,
+        _log);
+    storageSyntaxVisitor := SyntaxAnalyzerExpressionVisitor(
+        _context,
+        _generator,
+        _methodImpl,
+        _log);
     exprVisitor := ExpressionVisitor(
         _context,
         _generator,
@@ -366,16 +414,28 @@ begin
         _log);
     storage := statement^.GetStorage();
     valueExpr := statement^.GetValue();
+    
+    {Apply type constraints and check references before code gen.}
+    storage^.Accept(@storageSyntaxVisitor);
+    valueSyntaxVisitor.SetImposedType(storage^.GetResultType());
+    valueExpr^.Accept(@valueSyntaxVisitor);
+
+    {Revisit to generator the code.}
     valueExpr^.Accept(@exprVisitor);
     storage^.Accept(@storageVisitor);
     if storageVisitor.GetCurrentReferenceType() = ReferenceType.ArgumentOrLocal then
     begin
         argOrLocalIndex := storageVisitor.GetCurrentLocalOrArgIndex();
+        storageType := storage^.GetResultType();
         assignStatement := new OpStatement();
         if argOrLocalIndex >= 0 then
-            assignStatement^.AssignStoreArg(argOrLocalIndex)
+            assignStatement^.AssignStoreArg(
+                argOrLocalIndex, 
+                storageType^.GetSize())
         else
-            assignStatement^.AssignStoreLocal(-argOrLocalIndex - 1);
+            assignStatement^.AssignStoreLocal(
+                -argOrLocalIndex - 1, 
+                storageType^.GetSize());
         methodStatements := _methodImpl^.GetStatements();
         methodStatements^.Add(assignStatement);        
     end;
@@ -394,6 +454,209 @@ begin
         innerStatement := statementEnum.GetCurrent();
         innerStatement^.Accept(this);
     end;
+end;
+
+constructor SyntaxAnalyzerExpressionVisitor(
+    context : ^CompilerContext;
+    generator : ^CodeGenerator;
+    methodImpl : ^MethodImpl;
+    log : ^MessageLog);
+begin
+    _context := context;
+    _generator := generator;
+    _methodImpl := methodImpl;
+    _log := log;
+    _imposedType := nil;
+    _failed := false;
+end;
+
+procedure SyntaxAnalyzerExpressionVisitor.Visit(expr : ^TermExpression);
+begin
+end;
+
+procedure SyntaxAnalyzerExpressionVisitor.Visit(expr : ^SimpleExpression);
+begin
+end;
+
+procedure SyntaxAnalyzerExpressionVisitor.Visit(expr : ^RelationalExpression);
+begin
+end;
+
+procedure SyntaxAnalyzerExpressionVisitor.Visit(expr : ^NotExpression);
+begin
+end;
+
+procedure SyntaxAnalyzerExpressionVisitor.Visit(expr : ^NewExpression);
+begin
+end;
+
+procedure SyntaxAnalyzerExpressionVisitor.Visit(
+    expr : ^NegativeExpression);
+var
+    inner : ^Expression = expr^.GetInner();
+begin
+    inner^.Accept(this);
+    expr^.SetResultType(inner^.GetResultType());
+end;
+
+procedure SyntaxAnalyzerExpressionVisitor.Visit(
+    expr : ^LiteralDoubleExpression);
+begin
+end;
+
+procedure SyntaxAnalyzerExpressionVisitor.Visit(
+    expr : ^LiteralIntExpression);
+var
+    imposedTypeFullName : ^String;
+    intTypeName : String;
+    i4Type : ^TypeDefinition;
+    resultSet : boolean = false;
+begin
+    intTypeName.TryAssign('integer');
+    if _imposedType <> nil then
+    begin
+        imposedTypeFullName := _imposedType^.GetFullName();
+        if 
+            (String.CompareOrdinal(imposedTypeFullName, 'integer') = 0) or
+            (String.CompareOrdinal(imposedTypeFullName, 'short') = 0) or
+            (String.CompareOrdinal(imposedTypeFullName, 'long') = 0) or
+            (String.CompareOrdinal(imposedTypeFullName, 'character') = 0) then
+            begin
+                expr^.SetResultType(_imposedType);
+                resultSet := true;
+            end;
+    end;
+    if not resultSet then
+    begin
+        if _context^.TryFindTypeByName(@intTypeName, @i4Type) then
+            expr^.SetResultType(i4Type);
+    end;
+end;
+
+procedure SyntaxAnalyzerExpressionVisitor.Visit(
+    expr : ^LiteralStringExpression);
+var
+    exprType : ^TypeDefinition;
+    exprVal : ^String;
+    charArrayTypeName : String;
+    done : boolean = false;
+begin
+    exprVal := expr^.GetValue();
+    if exprVal^.Length() = 1 then
+    begin
+        if _imposedType <> nil then
+            if String.CompareOrdinal(
+                _imposedType^.GetFullName(), 
+                'character') = 0 then
+            begin
+                expr^.SetResultType(_imposedType);
+                done := true;
+            end;
+    end;
+    if not done then
+    begin
+        charArrayTypeName.TryAssign('#0character');
+        if _context^.TryFindTypeByName(@charArrayTypeName, @exprType) then
+            expr^.SetResultType(exprType)
+        else
+            _failed := true;
+    end;
+end;
+
+procedure SyntaxAnalyzerExpressionVisitor.Visit(
+    expr : ^LiteralBooleanExpression);
+var
+    exprType : ^TypeDefinition = nil;
+    boolTypeName : String;
+begin
+    boolTypeName.TryAssign('boolean');
+    if _context^.TryFindTypeByName(@boolTypeName, @exprType) then
+        expr^.SetResultType(exprType)
+    else
+        _failed := true;
+end;
+
+procedure SyntaxAnalyzerExpressionVisitor.Visit(
+    expr : ^LiteralNilExpression);
+var
+    exprType : ^TypeDefinition = nil;
+    genPointerTypeName : String;
+begin
+    if _imposedType <> nil then
+    begin
+        if _imposedType^.GetIsPointer() then
+            expr^.SetResultType(_imposedType)
+        else if _imposedType^.GetIsArray() and (_imposedType^.GetArrayElementCount() = 0) then
+            expr^.SetResultType(_imposedType)
+        else
+            _failed := true;
+    end
+    else
+    begin
+        genPointerTypeName.TryAssign('^');
+        if _context^.TryFindTypeByName(@genPointerTypeName, @exprType) then
+            expr^.SetResultType(exprType)
+        else
+            _failed := true;
+    end;
+end;
+
+procedure SyntaxAnalyzerExpressionVisitor.Visit(
+    expr : ^AddressExpression);
+begin
+end;
+
+procedure SyntaxAnalyzerExpressionVisitor.Visit(
+    expr : ^DereferenceExpression);
+begin
+end;
+
+procedure SyntaxAnalyzerExpressionVisitor.Visit(
+    expr : ^ArrayIndexReferenceExpression);
+begin
+end;
+
+procedure SyntaxAnalyzerExpressionVisitor.Visit(
+    expr : ^CallReferenceExpression);
+begin
+end;
+
+procedure SyntaxAnalyzerExpressionVisitor.Visit(
+    expr : ^MemberReferenceExpression);
+begin
+end;
+
+procedure SyntaxAnalyzerExpressionVisitor.Visit(
+    expr : ^InheritedReferenceExpression);
+begin
+end;
+
+procedure SyntaxAnalyzerExpressionVisitor.Visit(
+    expr : ^NamedReferenceExpression);
+var
+    localOrArgIndex : integer;
+    scope : ^Scope;
+    varType : ^TypeDefinition;
+begin
+    scope := _methodImpl^.GetScope();
+    if scope^.TryGetSymbolIndexByName(
+        expr^.GetName(),
+        @localOrArgIndex) then
+    begin
+        varType := scope^.GetSymbolTypeByIndex(localOrArgIndex);
+        expr^.SetResultType(varType);
+    end;
+end;
+
+procedure SyntaxAnalyzerExpressionVisitor.SetImposedType(
+    value : ^TypeDefinition);
+begin
+    _imposedType := value;
+end;
+
+function SyntaxAnalyzerExpressionVisitor.IsFailed() : boolean;
+begin
+    IsFailed := _failed;
 end;
 
 constructor ExpressionVisitor(
@@ -429,7 +692,20 @@ begin
 end;
 
 procedure ExpressionVisitor.Visit(expr : ^NegativeExpression);
+var
+    methodStatements: ^LinkedListOfOpStatement = 
+        _methodImpl^.GetStatements();
+    inner : ^Expression = expr^.GetInner();
+    statement : ^OpStatement;
+    resultType : ^TypeDefinition = expr^.GetResultType();
 begin
+    inner^.Accept(this);
+    statement := new OpStatement();
+    if statement <> nil then
+    begin
+        statement^.AssignNeg(resultType^.GetSize());
+        methodStatements^.Add(statement);
+    end;
 end;
 
 procedure ExpressionVisitor.Visit(expr : ^LiteralDoubleExpression);
@@ -440,18 +716,51 @@ procedure ExpressionVisitor.Visit(expr : ^LiteralIntExpression);
 var
     methodStatements: ^LinkedListOfOpStatement;
     loadStatement : ^OpStatement;
+    intType : ^TypeDefinition;
 begin
+    intType := expr^.GetResultType();
     loadStatement := new OpStatement();
     if loadStatement <> nil then
     begin
-        loadStatement^.AssignLoadInt(expr^.GetValue());
+        loadStatement^.AssignLoadInt(
+            expr^.GetValue(),
+            intType^.GetSize());
         methodStatements := _methodImpl^.GetStatements();
         methodStatements^.Add(loadStatement);
     end;
 end;
 
 procedure ExpressionVisitor.Visit(expr : ^LiteralStringExpression);
+var
+    statements : ^LinkedListOfOpStatement = _methodImpl^.GetStatements();
+    resultType : ^TypeDefinition = expr^.GetResultType();
+    loadIntStatement : ^OpStatement;
+    loadStaticRefStatement : ^OpStatement;
+    stringLabel : String;
+    stringVal : String;
+    stringChars : array of character;
+    module : ^Module = _methodImpl^.GetModule();
 begin
+    stringVal.assign(expr^.GetValue());
+    stringChars := stringVal.Characters();
+    if String.CompareOrdinal(resultType^.GetFullName(), 'character') = 0 then
+    begin
+        loadIntStatement := new OpStatement();
+        loadIntStatement^.AssignLoadInt(
+            Convert.ToInteger(Convert.ToShort(stringChars[0])),
+            resultType^.GetSize());
+        statements^.Add(loadIntStatement);
+    end
+    else
+    begin
+        if module^.TryDefineStringLiteral(@stringVal, @stringLabel) then
+        begin
+            loadStaticRefStatement := new OpStatement();
+            loadStaticRefStatement^.AssignLoadStaticRef(
+                @stringLabel);
+            statements^.Add(loadStaticRefStatement);
+        end;
+    end;
 end;
 
 procedure ExpressionVisitor.Visit(expr : ^LiteralBooleanExpression);

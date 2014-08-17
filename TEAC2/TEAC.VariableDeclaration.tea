@@ -2,13 +2,11 @@ namespace TEAC;
 uses System, TEAC;
 
 constructor VariableDeclaration(
-    start : ^SharedOfToken;
-    variableType : ^TypeReference;
-    initExpression : ^Expression);
+    start : ^SharedOfToken);
 inherited(start);
 begin
-    _variableType := variableType;
-    _initExpression := initExpression;
+    _variableType := nil;
+    _initExpression := nil;
 end;
 
 destructor VariableDeclaration();
@@ -17,6 +15,25 @@ begin
         delete _variableType;
     if _initExpression <> nil then
         delete _initExpression;
+end;
+
+procedure VariableDeclaration.SetVariableType(value : ^TypeReference);
+begin
+    if _variableType <> nil then
+        delete _variableType;
+    _variableType := value;
+end;
+
+procedure VariableDeclaration.SetInitExpression(value : ^Expression);
+begin
+    if _initExpression <> nil then
+        delete _initExpression;
+    _initExpression := value;
+end;
+
+function VariableDeclaration.AddVariableName(item : ^String) : boolean;
+begin
+    AddVariableName := _variableNames.Add(item);
 end;
 
 function VariableDeclaration.GetVariableType() : ^TypeReference;

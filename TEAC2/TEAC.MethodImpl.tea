@@ -21,6 +21,11 @@ begin
     GetScope := @_scope;
 end;
 
+function MethodImpl.GetModule() : ^Module;
+begin
+    GetModule := _module;
+end;
+
 function MethodImpl.GetStatements() : ^LinkedListOfOpStatement;
 begin
     GetStatements := @_statements;

@@ -302,6 +302,7 @@ type
             function TryAssign(value : ^Token) : boolean;
             function Value() : ^Token;
             function Is(keyword : Keyword) : boolean;
+            function IsIdentifier() : boolean;
             function IsRelationalOperator(
                 operatorRef : ^RelationalOperator) : boolean;
             function IsSimpleOperator(
@@ -356,8 +357,12 @@ type
         public
             virtual destructor();
             abstract procedure Accept(visitor : ^IExpressionVisitor);
+            function GetResultType() : ^TypeDefinition;
+            procedure SetResultType(value : ^TypeDefinition);
         protected
             constructor(start : ^SharedOfToken);
+        var
+            _resultType : ^TypeDefinition;
     end;
     LinkedListNodeOfExpression = class
         public
@@ -490,6 +495,7 @@ type
                 value : ^String);
             virtual destructor();
             virtual procedure Accept(visitor : ^IExpressionVisitor);
+            function GetValue() : ^String;
         var
             _value : String;
     end;
@@ -790,10 +796,11 @@ type
     VariableDeclaration = class(ParseNode)
         public
             constructor(
-                start : ^SharedOfToken;
-                variableType : ^TypeReference;
-                initExpression : ^Expression);
+                start : ^SharedOfToken);
             virtual destructor();
+            procedure SetVariableType(value : ^TypeReference);
+            procedure SetInitExpression(value : ^Expression);
+            function AddVariableName(item : ^String) : boolean;
             function GetVariableType() : ^TypeReference;
             function GetInitExpression() : ^Expression;
             function GetVariableNames() : ^LinkedListOfString;
@@ -837,6 +844,7 @@ type
             constructor(start : ^SharedOfToken);
             virtual destructor();
             function GetVariables() : ^LinkedListOfVariableDeclaration;
+            function Add(item : ^VariableDeclaration) : boolean;
         var
             _variables : LinkedListOfVariableDeclaration;
     end;
@@ -1466,6 +1474,10 @@ type
                 reader : ^TokenReader;
                 allowInitializers : boolean;
                 varBlock : ^VarBlock) : boolean;
+            function TryParseVariableDeclaration(
+                reader : ^TokenReader;
+                allowInitializers : boolean;
+                varDeclRef : ^^VariableDeclaration) : boolean;
             function TryParseEnumDeclaration(
                 reader : ^TokenReader;
                 name : ^SharedOfToken;
@@ -1621,13 +1633,49 @@ type
         var
             _head, _tail : ^LinkedListNodeOfOpStatement;
     end;
+    LinkedListNodeOfDataEntry = class
+        public
+            constructor(value : ^DataEntry);
+            destructor();
+            function GetValue() : ^DataEntry;
+            function GetNext() : ^LinkedListNodeOfDataEntry;
+            procedure SetNext(next : ^LinkedListNodeOfDataEntry);
+        var
+            _value : ^DataEntry;
+            _next : ^LinkedListNodeOfDataEntry;
+    end;
+    LinkedListEnumeratorOfDataEntry = class
+        public
+            constructor(head : ^LinkedListNodeOfDataEntry);
+            function MoveNext() : boolean;
+            function GetCurrent() : ^DataEntry;
+        var
+            _head, _current : ^LinkedListNodeOfDataEntry;
+            _started : boolean;
+    end;
+    LinkedListOfDataEntry = class
+        public
+            constructor();
+            destructor();
+            function Add(item : ^DataEntry) : boolean;
+            function GetEnumerator() : LinkedListEnumeratorOfDataEntry;
+            procedure Clear();
+        var
+            _head, _tail : ^LinkedListNodeOfDataEntry;
+    end;
     Module = class
         public
             constructor();
             destructor();
             function AddMethodImpl(item : ^MethodImpl) : boolean;
             function GetMethods() : ^LinkedListOfMethodImpl;
+            function GetData() : ^LinkedListOfDataEntry;
+            function TryDefineStringLiteral(
+                value : ^String;
+                symbol : ^String) : boolean;
         var
+            _literalStringIndex : integer;
+            _dataSeg : LinkedListOfDataEntry;
             _codeSeg : LinkedListOfMethodImpl;
     end;
     MethodImpl = class
@@ -1636,6 +1684,7 @@ type
             destructor();
             function GetMethodInfo() : ^MethodInfo;
             function GetScope() : ^Scope;
+            function GetModule() : ^Module;
             function GetStatements() : ^LinkedListOfOpStatement;
         var
             _module : ^Module;
@@ -1650,6 +1699,8 @@ type
         Sub,
         Mul,
         Div,
+        Neg,
+        Not,
         Jump,
         LoadArg,
         StoreArg,
@@ -1657,10 +1708,35 @@ type
         LoadLocal,
         StoreLocal,
         LoadLocalRef,
+        LoadField,
+        StoreField,
+        LoadFieldRef,
         Push,
         Pop,
-        LoadInt
+        LoadInt,
+        LoadStatic,
+        LoadStaticRef
     );
+    DataCode = (DB, DW, DD, DP);
+    DataEntry = class
+        public
+            constructor();
+            destructor();
+            function GetCode() : DataCode;
+            function GetLabel() : ^String;
+            function GetValue() : integer;
+            function GetSymbol() : ^String;
+            procedure SetLabel(value : ^String);
+            procedure AssignDB(value : byte);
+            procedure AssignDW(value : short);
+            procedure AssignDD(value : integer);
+            procedure AssignDP(value : ^String);
+        var
+            _label : String;
+            _code : DataCode;
+            _symbol : String;
+            _value : integer;
+    end;
     OpStatement = class
         public
             constructor();
@@ -1673,9 +1749,11 @@ type
             function GetTargetSymbol() : ^String;
             function GetIntValue() : integer;
             procedure SetLabel(value : ^String);
-            procedure AssignLoadInt(value : integer);
-            procedure AssignStoreLocal(index : integer);
-            procedure AssignStoreArg(index : integer);
+            procedure AssignLoadInt(value : integer; size : integer);
+            procedure AssignStoreLocal(index : integer; size : integer);
+            procedure AssignStoreArg(index : integer; size : integer);
+            procedure AssignNeg(size : integer);
+            procedure AssignLoadStaticRef(targetSymbol : ^String);
         var
             _label : String;
             _opCode : OpCode;
@@ -1721,6 +1799,7 @@ type
             function Open(path : ^String; log : ^MessageLog) : boolean;
             procedure Write(module : ^Module);
         private
+            procedure WriteDataSeg(module : ^Module);
             procedure WriteCodeSeg(module : ^Module);
             procedure WriteMethodImpl(
                 module : ^Module; 
@@ -1729,6 +1808,22 @@ type
                 module : ^Module;
                 methodImpl : ^MethodImpl;
                 statement : ^OpStatement);
+            procedure WriteLoadIntStatement(
+                module : ^Module;
+                methodImpl : ^MethodImpl;
+                statement : ^OpStatement);
+            procedure WriteStoreLocalStatement(
+                module : ^Module;
+                methodImpl : ^MethodImpl;
+                statement : ^OpStatement);
+            procedure WriteNegStatement(
+                module : ^Module;
+                methodImpl : ^MethodImpl;
+                statement : ^OpStatement);
+            procedure WriteLoadStaticRefStatement(
+                module : ^Module;
+                methodImpl : ^MethodImpl;
+                statement : ^OpStatement);                
         var
             _log : ^MessageLog;
             _inner : ^TextWriter; 

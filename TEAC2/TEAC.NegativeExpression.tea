@@ -19,3 +19,8 @@ procedure NegativeExpression.Accept(visitor : ^IExpressionVisitor);
 begin
     visitor^.Visit(this);
 end;
+
+function NegativeExpression.GetInner() : ^Expression;
+begin
+    GetInner := _inner;
+end;

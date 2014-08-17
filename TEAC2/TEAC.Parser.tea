@@ -412,7 +412,103 @@ function Parser.TryParseVarBlock(
     reader : ^TokenReader;
     allowInitializers : boolean;
     varBlock : ^VarBlock) : boolean;
+var
+    tok : SharedOfToken;
+    varDecl : ^VariableDeclaration = nil;
+    success : boolean;
 begin
+    success := Expect(reader, Keyword.Var);
+    if success then
+    begin
+        success := reader^.Peek(@tok);
+        while success and tok.IsIdentifier() do
+        begin
+            success := TryParseVariableDeclaration(
+                reader,
+                allowInitializers,
+                @varDecl);
+            if success then
+            begin
+                success := varBlock^.Add(varDecl);
+                if not success then
+                    delete varDecl;
+            end;
+            if success then
+                success := Expect(reader, Keyword.SemiColon);
+            if success then
+                success := reader^.Peek(@tok);
+        end;
+    end;
+    TryParseVarBlock := success;
+end;
+
+function Parser.TryParseVariableDeclaration(
+    reader : ^TokenReader;
+    allowInitializers : boolean;
+    varDeclRef : ^^VariableDeclaration) : boolean;
+var
+    start, tok : SharedOfToken;
+    tokVal : ^Token;
+    varDecl : ^VariableDeclaration = nil;
+    typeRef : ^TypeReference = nil;
+    initExpr : ^Expression = nil;
+    varName : String;
+    varNames : LinkedListOfString;
+    success : boolean;
+begin
+    success := reader^.Peek(@tok);
+    start.assign(@tok);
+    if success then
+    begin
+        varDecl := new VariableDeclaration(@start);
+        success := varDecl <> nil;
+    end;
+
+    if success then
+        success := ExpectIdentifier(reader, @varName);
+    if success then
+        success := varDecl^.AddVariableName(@varName);
+    if success then
+        success := reader^.Peek(@tok);
+    while success and tok.Is(Keyword.Comma) do
+    begin
+        reader^.Read(@tok);
+        success := ExpectIdentifier(reader, @varName);
+        if success then
+            success := varDecl^.AddVariableName(@varName);
+        if success then
+            success := reader^.Peek(@tok);
+    end;
+
+    if success then
+        success := Expect(reader, Keyword.Colon);
+    if success then
+        success := TryParseTypeReference(reader, @typeRef);
+    if success then
+        varDecl^.SetVariableType(typeRef);
+    if success and allowInitializers then
+    begin
+        success := reader^.Peek(@tok);
+        if success then
+        begin
+            if tok.Is(Keyword.Equals) then
+            begin
+                reader^.Read(@tok);
+                success := TryParseExpression(reader, @initExpr);
+                if success then
+                    varDecl^.SetInitExpression(initExpr);
+            end;
+        end;
+    end;
+
+    if (varDecl <> nil) and not success then
+    begin
+        delete varDecl;
+        varDecl := nil;
+    end;
+
+    varDeclRef^ := varDecl;
+    TryParseVariableDeclaration := success;
 end;
 
 function Parser.TryParseEnumDeclaration(
