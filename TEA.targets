@@ -24,7 +24,7 @@
         <Exec 
             Command="$(TeacToolPath) $(Includes) /Fa$(IntermediateOutputPath)%(Compile.filename).asm %(Compile.fullpath)" />
         <Exec
-            Command="ml /c /Fo $(IntermediateOutputPath)%(Compile.filename).obj $(IntermediateOutputPath)%(Compile.filename).asm"/>
+            Command="ml /c /Cp /Cx /Zi /Fo $(IntermediateOutputPath)%(Compile.filename).obj $(IntermediateOutputPath)%(Compile.filename).asm"/>
             
     </Target>
     <Target 
