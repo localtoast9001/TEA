@@ -56,7 +56,6 @@ type
             _methodImpl : ^MethodImpl;
             _log : ^MessageLog;
     end;
-    ReferenceType = (Namespace, Type, TypeMember, ArgumentOrLocal);
     SyntaxAnalyzerExpressionVisitor = class interface(IExpressionVisitor)
         public
             constructor(
@@ -117,18 +116,14 @@ type
             virtual procedure Visit(expr : ^MemberReferenceExpression);
             virtual procedure Visit(expr : ^InheritedReferenceExpression);
             virtual procedure Visit(expr : ^NamedReferenceExpression);
-            function GetCurrentReferenceType() : ReferenceType;
-            function GetCurrentLocalOrArgIndex() : integer;
+            function GetCurrentResolvedReference() : ^ResolvedReference;
+            procedure GenerateLoadValue(expr : ^Expression);
         var
             _context : ^CompilerContext;
             _generator : ^CodeGenerator;
             _methodImpl : ^MethodImpl;
             _log : ^MessageLog;
-            _currentReferenceType : ReferenceType;
-            _currentNamespaceRef : String;
-            _currentTypeRef : ^TypeDefinition;
-            _currentMemberRef : String;
-            _currentLocalOrArgIndex : integer;
+            _currentResolvedReference : ^ResolvedReference;
     end;
 
 constructor TypeCreationVisitor(
@@ -187,7 +182,19 @@ var
     methodList : ^LinkedListOfMethodDeclaration = nil;
     methodInfo : ^MethodInfo = nil;
     methodEnum : LinkedListEnumeratorOfMethodDeclaration;
+    fieldBlock : ^VarBlock = nil;
+    fieldList : ^LinkedListOfVariableDeclaration = nil;
+    fieldEnum : LinkedListEnumeratorOfVariableDeclaration;
+    fieldInfo : ^FieldInfo = nil;
+    sourceField : ^VariableDeclaration = nil;
+    sourceFieldType : ^TypeDefinition;
+    sourceFieldTypeRef : ^TypeReference;
+    offset : integer = 0;
+    typeResolver : TypeResolverVisitor;
+    fieldNameList : ^LinkedListOfString;
+    fieldNameEnum : LinkedListEnumeratorOfString;
 begin
+    typeResolver := TypeResolverVisitor(_context, _generator, _log);
     _target^.SetIsClass(true);
     _target^.SetIsStaticClass(classDecl^.GetIsStatic());
     _target^.SetIsAbstractClass(classDecl^.GetIsAbstract());
@@ -276,7 +283,43 @@ begin
         begin
             _failed := true;
         end;
-    end; 
+    end;
+
+    fieldBlock := classDecl^.GetFields();
+    fieldList := fieldBlock^.GetVariables();
+    fieldEnum := fieldList^.GetEnumerator();
+    while fieldEnum.MoveNext() do 
+    begin
+        sourceField := fieldEnum.GetCurrent();
+        sourceFieldTypeRef := sourceField^.GetVariableType();
+        sourceFieldTypeRef^.Accept(@typeResolver);
+        sourceFieldType := typeResolver.GetResult();
+        if sourceFieldType <> nil then
+        begin
+            fieldNameList := sourceField^.GetVariableNames();
+            fieldNameEnum := fieldNameList^.GetEnumerator();
+            while fieldNameEnum.MoveNext() do
+            begin
+                fieldInfo := new FieldInfo();
+                if fieldInfo <> nil then
+                begin
+                    fieldInfo^.SetName(fieldNameEnum.GetCurrent());
+                    fieldInfo^.SetType(sourceFieldType);
+                    fieldInfo^.SetOffset(offset);
+                    offset := offset + sourceFieldType^.GetSize();
+                    if not _target^.AddField(fieldInfo) then
+                    begin
+                        _failed := true;
+                        delete fieldInfo;
+                    end;
+                end
+                else
+                    _failed := true;
+            end;
+        end
+        else
+            _failed := true;
+    end;
 end;
 
 procedure TypeCreationVisitor.Visit(methodTypeDecl : ^MethodTypeDeclaration);
@@ -388,9 +431,11 @@ var
     storage : ^ReferenceExpression;
     storageType : ^TypeDefinition;
     valueExpr : ^Expression;
+    storageResolvedRef : ^ResolvedReference;
     argOrLocalIndex : integer;
     assignStatement : ^OpStatement;
-    methodStatements: ^LinkedListOfOpStatement;
+    methodStatements: ^LinkedListOfOpStatement = _methodImpl^.GetStatements();
+    fieldRef : ^FieldInfo;
 begin
     valueSyntaxVisitor := SyntaxAnalyzerExpressionVisitor(
         _context,
@@ -422,11 +467,13 @@ begin
 
     {Revisit to generator the code.}
     valueExpr^.Accept(@exprVisitor);
+    exprVisitor.GenerateLoadValue(valueExpr);
     storage^.Accept(@storageVisitor);
-    if storageVisitor.GetCurrentReferenceType() = ReferenceType.ArgumentOrLocal then
+    storageResolvedRef := storageVisitor.GetCurrentResolvedReference();
+    storageType := storage^.GetResultType();
+    if storageResolvedRef^.GetReferenceType() = ReferenceType.ArgumentOrLocal then
     begin
-        argOrLocalIndex := storageVisitor.GetCurrentLocalOrArgIndex();
-        storageType := storage^.GetResultType();
+        argOrLocalIndex := storageResolvedRef^.GetLocalOrArgIndex();
         assignStatement := new OpStatement();
         if argOrLocalIndex >= 0 then
             assignStatement^.AssignStoreArg(
@@ -436,8 +483,20 @@ begin
             assignStatement^.AssignStoreLocal(
                 -argOrLocalIndex - 1, 
                 storageType^.GetSize());
-        methodStatements := _methodImpl^.GetStatements();
         methodStatements^.Add(assignStatement);        
+    end
+    else if storageResolvedRef^.GetReferenceType() = ReferenceType.TypeMember then
+    begin
+        fieldRef := storageResolvedRef^.GetFieldInfo();
+        if fieldRef <> nil then
+        begin
+            assignStatement := new OpStatement();
+            if assignStatement <> nil then
+            begin
+                assignStatement^.AssignStoreField(fieldRef^.GetOffset(), storageType^.GetSize());
+                methodStatements^.Add(assignStatement);
+            end;
+        end;
     end;
 end;
 
@@ -479,11 +538,29 @@ begin
 end;
 
 procedure SyntaxAnalyzerExpressionVisitor.Visit(expr : ^RelationalExpression);
+var
+    boolType : ^TypeDefinition = nil;
+    boolTypeName : String;
+    left : ^Expression = expr^.GetLeft();
+    right : ^Expression = expr^.GetRight();
+    leftVisit : SyntaxAnalyzerExpressionVisitor;
+    rightVisit : SyntaxAnalyzerExpressionVisitor;
 begin
+    leftVisit := SyntaxAnalyzerExpressionVisitor(_context, _generator, _methodImpl, _log);
+    rightVisit := SyntaxAnalyzerExpressionVisitor(_context, _generator, _methodImpl, _log);
+    left^.Accept(@leftVisit);
+    right^.Accept(@rightVisit);
+    boolTypeName.TryAssign('boolean');
+    if _context^.TryFindTypeByName(@boolTypeName, @boolType) then
+        expr^.SetResultType(boolType); 
 end;
 
 procedure SyntaxAnalyzerExpressionVisitor.Visit(expr : ^NotExpression);
+var
+    inner : ^Expression = expr^.GetInner();
 begin
+    inner^.Accept(this);
+    expr^.SetResultType(inner^.GetResultType());
 end;
 
 procedure SyntaxAnalyzerExpressionVisitor.Visit(expr : ^NewExpression);
@@ -618,7 +695,33 @@ end;
 
 procedure SyntaxAnalyzerExpressionVisitor.Visit(
     expr : ^CallReferenceExpression);
+var
+    innerVisitor : SyntaxAnalyzerExpressionVisitor;
+    innerRef : ^ReferenceExpression = expr^.GetInner();
+    args : ^LinkedListOfExpression = expr^.GetArguments();
+    argEnum : LinkedListEnumeratorOfExpression;
+    meth : ^MethodInfo;
+    arg : ^Expression;
 begin
+    {TODO: Handle overload}
+    {TODO: Handle imposed types for args}
+    innerVisitor := SyntaxAnalyzerExpressionVisitor(
+        _context,
+        _generator,
+        _methodImpl,
+        _log);
+    innerRef^.Accept(@innerVisitor);
+    argEnum := args^.GetEnumerator();
+    while argEnum.MoveNext() do 
+    begin
+        innerVisitor := SyntaxAnalyzerExpressionVisitor(
+            _context,
+            _generator,
+            _methodImpl,
+            _log);
+        arg := argEnum.GetCurrent();
+        arg^.Accept(@innerVisitor);
+    end;
 end;
 
 procedure SyntaxAnalyzerExpressionVisitor.Visit(
@@ -637,14 +740,88 @@ var
     localOrArgIndex : integer;
     scope : ^Scope;
     varType : ^TypeDefinition;
+    currentMethod, testMethod, matchMethod : ^MethodInfo;
+    currentMethodType : ^TypeDefinition;
+    resolvedRef : ^ResolvedReference;
+    methodList : ^LinkedListOfMethodInfo;
+    methodEnum : LinkedListEnumeratorOfMethodInfo;
+    fieldList : ^LinkedListOfFieldInfo;
+    fieldEnum : LinkedListEnumeratorOfFieldInfo;
+    testField, matchField : ^FieldInfo;
+    found : boolean = false;
 begin
     scope := _methodImpl^.GetScope();
+    currentMethod := _methodImpl^.GetMethodInfo();
+    currentMethodType := currentMethod^.GetOwnerType();
     if scope^.TryGetSymbolIndexByName(
         expr^.GetName(),
         @localOrArgIndex) then
     begin
         varType := scope^.GetSymbolTypeByIndex(localOrArgIndex);
         expr^.SetResultType(varType);
+        resolvedRef := new ResolvedReference(ReferenceType.ArgumentOrLocal);
+        resolvedRef^.SetLocalOrArgIndex(localOrArgIndex);
+        expr^.SetResolvedReference(resolvedRef);
+    end
+    else
+    begin
+        {TODO: Method Protection filtering.}
+        {TODO: Overloads.}
+        {TODO: Reference Base class.}
+        methodList := currentMethodType^.GetMethods();
+        methodEnum := methodList^.GetEnumerator();
+        while not found and methodEnum.MoveNext() do
+        begin
+            testMethod := methodEnum.GetCurrent();
+            if String.CompareOrdinal(testMethod^.GetName(), expr^.GetName()) = 0 then
+            begin
+                found := true;
+                matchMethod := testMethod;
+            end;
+        end;
+
+        if found then
+        begin
+            resolvedRef := new ResolvedReference(ReferenceType.TypeMember);
+            resolvedRef^.SetTypeMember(
+                currentMethodType,
+                matchMethod^.GetName(),
+                matchMethod,
+                nil);
+            expr^.SetResolvedReference(resolvedRef);
+            expr^.SetResultType(matchMethod^.GetReturnType());
+        end;
+    
+        {Search for field.}    
+        if not found then
+        begin
+            if not currentMethod^.GetIsStatic() then
+            begin
+                fieldList := currentMethodType^.GetFields();
+                fieldEnum := fieldList^.GetEnumerator();
+                while not found and fieldEnum.MoveNext() do
+                begin
+                    testField := fieldEnum.GetCurrent();
+                    if String.CompareOrdinal(testField^.GetName(), expr^.GetName()) = 0 then
+                    begin
+                        found := true;
+                        matchField := testField;
+                    end;
+                end;
+
+                if found then
+                begin
+                    resolvedRef := new ResolvedReference(ReferenceType.TypeMember);
+                    resolvedRef^.SetTypeMember(
+                        currentMethodType,
+                        matchField^.GetName(),
+                        nil,
+                        matchField);
+                    expr^.SetResolvedReference(resolvedRef);
+                    expr^.SetResultType(matchField^.GetType());
+                end;
+            end;
+        end;
     end;
 end;
 
@@ -669,6 +846,7 @@ begin
     _generator := generator;
     _methodImpl := methodImpl;
     _log := log;
+    _currentResolvedReference := nil;
 end;
 
 procedure ExpressionVisitor.Visit(expr : ^TermExpression);
@@ -784,7 +962,41 @@ begin
 end;
 
 procedure ExpressionVisitor.Visit(expr : ^CallReferenceExpression);
+var
+    args : ^LinkedListOfExpression;
+    argEnum : LinkedListReverseEnumeratorOfExpression; 
+    argVisitor : ExpressionVisitor;
+    innerVisitor : ExpressionVisitor;
+    arg : ^Expression;
+    inner : ^ReferenceExpression = expr^.GetInner();
+    innerRef : ^ResolvedReference;
+    meth : ^MethodInfo;
+    methMangledName : String;
+    callStatement : ^OpStatement;
+    statements : ^LinkedListOfOpStatement = _methodImpl^.GetStatements();
 begin
+    args := expr^.GetArguments();
+    argEnum := args^.GetReverseEnumerator();
+    while argEnum.MoveNext() do
+    begin
+        argVisitor := ExpressionVisitor(_context, _generator, _methodImpl, _log);
+        arg := argEnum.GetCurrent();
+        arg^.Accept(@argVisitor);
+    end;
+
+    innerVisitor := ExpressionVisitor(_context, _generator, _methodImpl, _log);
+    inner^.Accept(@innerVisitor);
+    innerRef := innerVisitor.GetCurrentResolvedReference();
+    if innerRef^.GetReferenceType() = ReferenceType.TypeMember then
+    begin
+        meth := innerRef^.GetMethodInfo();
+        if meth^.GetMangledName(@methMangledName) then
+        begin
+            callStatement := new OpStatement();
+            callStatement^.AssignCall(@methMangledName);
+            statements^.Add(callStatement);
+        end;
+    end;
 end;
 
 procedure ExpressionVisitor.Visit(expr : ^MemberReferenceExpression);
@@ -797,27 +1009,70 @@ end;
 
 procedure ExpressionVisitor.Visit(expr : ^NamedReferenceExpression);
 var
-    localOrArgIndex : integer;
-    scope : ^Scope;
+    fieldRef : ^FieldInfo;    
+    statements : ^LinkedListOfOpStatement = _methodImpl^.GetStatements();
+    loadThisStatement : ^OpStatement;
 begin
-    scope := _methodImpl^.GetScope();
-    if scope^.TryGetSymbolIndexByName(
-        expr^.GetName(),
-        @localOrArgIndex) then
+    _currentResolvedReference := expr^.GetResolvedReference();
+    if _currentResolvedReference^.GetReferenceType() = ReferenceType.TypeMember then
     begin
-        _currentReferenceType := ReferenceType.ArgumentOrLocal;
-        _currentLocalOrArgIndex := localOrArgIndex; 
+        fieldRef := _currentResolvedReference^.GetFieldInfo();
+        if fieldRef <> nil then
+        begin
+            loadThisStatement := new OpStatement();
+            if loadThisStatement <> nil then
+            begin
+                loadThisStatement^.AssignLoadArg(0, 4);
+                statements^.Add(loadThisStatement);
+            end;
+        end;
     end;
 end;
 
-function ExpressionVisitor.GetCurrentReferenceType() : ReferenceType;
+function ExpressionVisitor.GetCurrentResolvedReference() : ^ResolvedReference;
 begin
-    GetCurrentReferenceType := _currentReferenceType;
+    GetCurrentResolvedReference := _currentResolvedReference;
 end;
 
-function ExpressionVisitor.GetCurrentLocalOrArgIndex() : integer;
+procedure ExpressionVisitor.GenerateLoadValue(expr : ^Expression);
+var
+    exprType : ^TypeDefinition = expr^.GetResultType();
+    loadStatement : ^OpStatement;
+    argOrLocalIndex : integer;
+    fieldRef : ^FieldInfo;
+    statements : ^LinkedListOfOpStatement = _methodImpl^.GetStatements();
 begin
-    GetCurrentLocalOrArgIndex := _currentLocalOrArgIndex;
+    if _currentResolvedReference <> nil then
+    begin
+        loadStatement := new OpStatement();
+        if loadStatement <> nil then
+        begin
+            if _currentResolvedReference^.GetReferenceType() = ReferenceType.ArgumentOrLocal then
+            begin
+                argOrLocalIndex := _currentResolvedReference^.GetLocalOrArgIndex();
+                if argOrLocalIndex < 0 then
+                    loadStatement^.AssignLoadLocal(
+                        -argOrLocalIndex, 
+                        exprType^.GetSize())
+                else
+                    loadStatement^.AssignLoadArg(
+                        argOrLocalIndex, 
+                        exprType^.GetSize());
+            end
+            else if _currentResolvedReference^.GetReferenceType() = ReferenceType.TypeMember then
+            begin
+                fieldRef := _currentResolvedReference^.GetFieldInfo();
+                if fieldRef <> nil then
+                begin
+                    loadStatement^.AssignLoadField(
+                        fieldRef^.GetOffset(),
+                        exprType^.GetSize());
+                end;
+            end;
+
+            statements^.Add(loadStatement);
+        end;
+    end;
 end;
 
 constructor CodeGenerator(log : ^MessageLog);

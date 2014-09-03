@@ -3,8 +3,73 @@ uses System, TEAC;
 
 constructor FieldInfo();
 begin
+    _type := nil;
+    _offset := 0;
+    _isStatic := false;
+    _isPublic := false;
+    _isProtected := false;
 end;
 
 destructor FieldInfo();
 begin
+end;
+
+function FieldInfo.GetName() : ^String;
+begin
+    GetName := @_name;
+end;
+
+function FieldInfo.GetType() : ^TypeDefinition;
+begin
+    GetType := _type;
+end;
+
+function FieldInfo.GetOffset() : integer;
+begin
+    GetOffset := _offset;
+end;
+
+function FieldInfo.GetIsStatic() : boolean;
+begin
+    GetIsStatic := _isStatic;
+end;
+
+function FieldInfo.GetIsPublic() : boolean;
+begin
+    GetIsPublic := _isPublic;
+end;
+
+function FieldInfo.GetIsProtected() : boolean;
+begin
+    GetIsProtected := _isProtected;
+end;
+
+procedure FieldInfo.SetName(value : ^String);
+begin
+    _name.assign(value);
+end;
+
+procedure FieldInfo.SetType(value : ^TypeDefinition);
+begin
+    _type := value;
+end;
+
+procedure FieldInfo.SetOffset(value : integer);
+begin
+    _offset := value;
+end;
+
+procedure FieldInfo.SetIsStatic(value : boolean);
+begin
+    _isStatic := value;
+end;
+
+procedure FieldInfo.SetIsPublic(value : boolean);
+begin
+    _isPublic := value;
+end;
+
+procedure FieldInfo.SetIsProtected(value : boolean);
+begin
+    _isProtected := value;
 end;

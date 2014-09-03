@@ -1,0 +1,49 @@
+namespace TEAC;
+uses System, TEAC;
+
+constructor ResolvedReference(refType : ReferenceType);
+begin
+    _referenceType := refType;
+end;
+
+destructor ResolvedReference();
+begin
+end;
+
+function ResolvedReference.GetReferenceType() : ReferenceType;
+begin
+    GetReferenceType := _referenceType;
+end;
+
+function ResolvedReference.GetMethodInfo() : ^MethodInfo;
+begin
+    GetMethodInfo := _methodRef;
+end;
+
+function ResolvedReference.GetFieldInfo() : ^FieldInfo;
+begin
+    GetFieldInfo := _fieldRef;
+end;
+
+function ResolvedReference.GetLocalOrArgIndex() : integer;
+begin
+    GetLocalOrArgIndex := _localOrArgIndex;
+end;
+
+procedure ResolvedReference.SetLocalOrArgIndex(value : integer);
+begin
+    _localOrArgIndex := value;
+end;
+
+procedure ResolvedReference.SetTypeMember(
+    typeRef : ^TypeDefinition;
+    memberRef : ^String;
+    methodRef : ^MethodInfo;
+    fieldRef : ^FieldInfo);
+begin
+    _typeRef := typeRef;
+    _memberRef.assign(memberRef);
+    _methodRef := methodRef;
+    _fieldRef := fieldRef;
+end;
+

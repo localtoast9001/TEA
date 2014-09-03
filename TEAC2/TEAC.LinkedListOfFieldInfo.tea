@@ -35,6 +35,26 @@ begin
     _started := false;
 end;
 
+function LinkedListEnumeratorOfFieldInfo.MoveNext() : boolean;
+begin
+    if not _started then
+    begin
+        _started := true;
+        _current := _head;
+    end
+    else if _current <> nil then
+        _current := _current^.GetNext();
+    MoveNext := _current <> nil;
+end;
+
+function LinkedListEnumeratorOfFieldInfo.GetCurrent() : ^FieldInfo;
+begin
+    if _current <> nil then
+        GetCurrent := _current^.GetValue()
+    else
+        GetCurrent := nil;
+end;
+
 constructor LinkedListOfFieldInfo();
 begin
     _head := nil;

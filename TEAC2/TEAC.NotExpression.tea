@@ -19,3 +19,9 @@ procedure NotExpression.Accept(visitor : ^IExpressionVisitor);
 begin
     visitor^.Visit(this);
 end;
+
+function NotExpression.GetInner() : ^Expression;
+begin
+    GetInner := _inner;
+end;
+

@@ -82,3 +82,37 @@ begin
     _targetSymbol.assign(targetSymbol);
 end;
 
+procedure OpStatement.AssignCall(targetSymbol : ^String);
+begin
+    _opCode := OpCode.Call;
+    _size := 4;
+    _targetSymbol.assign(targetSymbol);
+end;
+
+procedure OpStatement.AssignLoadLocal(index : integer; size : integer);
+begin
+    _opCode := OpCode.LoadLocal;
+    _argOrLocalIndex := index;
+    _size := size;
+end;
+
+procedure OpStatement.AssignLoadArg(index : integer; size : integer);
+begin
+    _opCode := OpCode.LoadArg;
+    _argOrLocalIndex := index;
+    _size := size;
+end;
+
+procedure OpStatement.AssignLoadField(offset : integer; size : integer);
+begin
+    _opCode := OpCode.LoadField;
+    _argOrLocalIndex := offset;
+    _size := size;
+end;
+
+procedure OpStatement.AssignStoreField(offset : integer; size : integer);
+begin
+    _opCode := OpCode.StoreField;
+    _argOrLocalIndex := offset;
+    _size := size;
+end;

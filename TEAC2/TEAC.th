@@ -371,15 +371,28 @@ type
             function GetValue() : ^Expression;
             function GetNext() : ^LinkedListNodeOfExpression;
             procedure SetNext(next : ^LinkedListNodeOfExpression);
+            function GetPrev() : ^LinkedListNodeOfExpression;
+            procedure SetPrev(prev : ^LinkedListNodeOfExpression);
         var
             _value : ^Expression;
-            _next : ^LinkedListNodeOfExpression;
+            _next, _prev : ^LinkedListNodeOfExpression;
     end;
     LinkedListEnumeratorOfExpression = class
         public
             constructor(head : ^LinkedListNodeOfExpression);
+            function MoveNext() : boolean;
+            function GetCurrent() : ^Expression;
         var
             _head, _current : ^LinkedListNodeOfExpression;
+            _started : boolean;
+    end;
+    LinkedListReverseEnumeratorOfExpression = class
+        public 
+            constructor(tail : ^LinkedListNodeOfExpression);
+            function MoveNext() : boolean;
+            function GetCurrent() : ^Expression;
+        var
+            _tail, _current : ^LinkedListNodeOfExpression;
             _started : boolean;
     end;
     LinkedListOfExpression = class
@@ -388,6 +401,7 @@ type
             destructor();
             function Add(item : ^Expression) : boolean;
             function GetEnumerator() : LinkedListEnumeratorOfExpression;
+            function GetReverseEnumerator() : LinkedListReverseEnumeratorOfExpression;
             procedure Clear();
         var
             _head, _tail : ^LinkedListNodeOfExpression;
@@ -395,8 +409,12 @@ type
     ReferenceExpression = class(Expression)
         public
             virtual destructor();
+            function GetResolvedReference() : ^ResolvedReference;
+            procedure SetResolvedReference(value : ^ResolvedReference);
         protected
             constructor(start : ^SharedOfToken);
+        var
+            _resolvedRef : ^ResolvedReference;
     end;
     NamedReferenceExpression = class(ReferenceExpression)
         public
@@ -435,6 +453,8 @@ type
             virtual destructor();
             virtual procedure Accept(visitor : ^IExpressionVisitor);
             function AddArgument(item : ^Expression) : boolean;
+            function GetInner() : ^ReferenceExpression;
+            function GetArguments() : ^LinkedListOfExpression;
         var
             _inner : ^ReferenceExpression;
             _args : LinkedListOfExpression;
@@ -548,6 +568,9 @@ type
                 operator : RelationalOperator);
             virtual destructor();
             virtual procedure Accept(visitor : ^IExpressionVisitor);
+            function GetLeft() : ^Expression;
+            function GetRight() : ^Expression;
+            function GetOperator() : RelationalOperator;
         var
             _left, _right : ^Expression;
             _operator : RelationalOperator;
@@ -560,6 +583,9 @@ type
                 operator : SimpleOperator);
             virtual destructor();
             virtual procedure Accept(visitor : ^IExpressionVisitor);
+            function GetLeft() : ^Expression;
+            function GetRight() : ^Expression;
+            function GetOperator() : SimpleOperator;
         var
             _left, _right : ^Expression;
             _operator : SimpleOperator;
@@ -572,6 +598,9 @@ type
                 operator : TermOperator);
             virtual destructor();
             virtual procedure Accept(visitor : ^IExpressionVisitor);
+            function GetLeft() : ^Expression;
+            function GetRight() : ^Expression;
+            function GetOperator() : TermOperator;
         var
             _left, _right : ^Expression;
             _operator : TermOperator;
@@ -1165,6 +1194,8 @@ type
     LinkedListEnumeratorOfFieldInfo = class
         public
             constructor(head : ^LinkedListNodeOfFieldInfo);
+            function MoveNext() : boolean;
+            function GetCurrent() : ^FieldInfo;
         var
             _head, _current : ^LinkedListNodeOfFieldInfo;
             _started : boolean;
@@ -1183,6 +1214,19 @@ type
         public
             constructor();
             destructor();
+
+            function GetName() : ^String;
+            function GetType() : ^TypeDefinition;
+            function GetOffset() : integer;
+            function GetIsStatic() : boolean;
+            function GetIsPublic() : boolean;
+            function GetIsProtected() : boolean;
+            procedure SetName(value : ^String);
+            procedure SetType(value : ^TypeDefinition);
+            procedure SetOffset(value : integer);
+            procedure SetIsStatic(value : boolean);
+            procedure SetIsPublic(value : boolean);
+            procedure SetIsProtected(value : boolean);
         var
             _name : String;
             _type : ^TypeDefinition;
@@ -1290,6 +1334,8 @@ type
             function AddMethod(item : ^MethodInfo) : boolean;
             function GetMangledName(value : ^String) : boolean;
             function GetMangledQualifiedName(value : ^String) : boolean;
+            function GetFields() : ^LinkedListOfFieldInfo;
+            function AddField(item : ^FieldInfo) : boolean;
         var
             _enumValues : DictionaryOfStringToInteger;
             _fullName : String;
@@ -1754,6 +1800,11 @@ type
             procedure AssignStoreArg(index : integer; size : integer);
             procedure AssignNeg(size : integer);
             procedure AssignLoadStaticRef(targetSymbol : ^String);
+            procedure AssignCall(targetSymbol : ^String);
+            procedure AssignLoadLocal(index : integer; size : integer);
+            procedure AssignLoadArg(index : integer; size : integer);
+            procedure AssignLoadField(offset : integer; size : integer);
+            procedure AssignStoreField(offset : integer; size : integer);
         var
             _label : String;
             _opCode : OpCode;
@@ -1762,6 +1813,30 @@ type
             _targetSymbol : String;
             _intValue : integer;
     end;
+    ReferenceType = (Namespace, Type, TypeMember, ArgumentOrLocal);
+    ResolvedReference = class
+        public 
+            constructor(refType : ReferenceType);
+            destructor();
+            function GetReferenceType() : ReferenceType;
+            function GetLocalOrArgIndex() : integer;
+            function GetMethodInfo() : ^MethodInfo;
+            function GetFieldInfo() : ^FieldInfo;
+            procedure SetLocalOrArgIndex(value : integer);
+            procedure SetTypeMember(
+                typeRef : ^TypeDefinition;
+                memberRef : ^String;
+                methodRef : ^MethodInfo;
+                fieldRef : ^FieldInfo);
+        var
+            _referenceType : ReferenceType;
+            _namespaceRef : String;
+            _typeRef : ^TypeDefinition;
+            _memberRef : String;
+            _fieldRef : ^FieldInfo;
+            _methodRef : ^MethodInfo;
+            _localOrArgIndex : integer;            
+    end;    
     CodeGenerator = class
         public
             constructor(log : ^MessageLog);
@@ -1823,8 +1898,31 @@ type
             procedure WriteLoadStaticRefStatement(
                 module : ^Module;
                 methodImpl : ^MethodImpl;
-                statement : ^OpStatement);                
+                statement : ^OpStatement);
+            procedure WriteCallStatement(
+                module : ^Module;
+                methodImpl : ^MethodImpl;
+                statement : ^OpStatement);
+            procedure WriteLoadLocalStatement(
+                module : ^Module;
+                methodImpl : ^MethodImpl;
+                statement : ^OpStatement);
+            procedure WriteLoadArgStatement(
+                module : ^Module;
+                methodImpl : ^MethodImpl;
+                statement : ^OpStatement);
+            procedure WriteLoadFieldStatement(
+                module : ^Module;
+                methodImpl : ^MethodImpl;
+                statement : ^OpStatement);
+            procedure WriteStoreFieldStatement(
+                module : ^Module;
+                methodImpl : ^MethodImpl;
+                statement : ^OpStatement);
+            procedure PushResult(); 
         var
             _log : ^MessageLog;
-            _inner : ^TextWriter; 
+            _inner : ^TextWriter;
+            _lastResultInEax : boolean;
+            _lastResultInEdxEax : boolean; 
     end;

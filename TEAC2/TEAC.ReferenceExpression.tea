@@ -3,9 +3,24 @@ uses TEAC, System;
 
 destructor ReferenceExpression();
 begin
+    if _resolvedRef <> nil then
+        delete _resolvedRef;
 end;
 
 constructor ReferenceExpression(start : ^SharedOfToken);
 inherited(start);
 begin
+    _resolvedRef := nil;
+end;
+
+function ReferenceExpression.GetResolvedReference() : ^ResolvedReference;
+begin
+    GetResolvedReference := _resolvedRef;
+end;
+
+procedure ReferenceExpression.SetResolvedReference(value : ^ResolvedReference);
+begin
+    if _resolvedRef <> nil then
+        delete _resolvedRef;
+    _resolvedRef := value;
 end;

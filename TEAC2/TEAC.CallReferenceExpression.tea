@@ -25,3 +25,14 @@ function CallReferenceExpression.AddArgument(
 begin
     AddArgument := _args.Add(item);
 end;
+
+function CallReferenceExpression.GetInner() : ^ReferenceExpression;
+begin
+    GetInner := _inner;
+end;
+
+function CallReferenceExpression.GetArguments() : ^LinkedListOfExpression;
+begin
+    GetArguments := @_args;
+end;
+

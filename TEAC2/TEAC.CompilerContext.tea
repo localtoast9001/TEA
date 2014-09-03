@@ -224,16 +224,7 @@ var
     thisString : String;
     success : boolean = true;
 begin
-    paramEnum := methodParams^.GetEnumerator();
-    while success and paramEnum.MoveNext() do
-    begin
-        currentParam := paramEnum.GetCurrent();
-        success := scope^.DefineParameter(
-            currentParam^.GetName(),
-            currentParam^.GetType());
-    end;
-
-    if success and not methodInfo^.GetIsStatic() then
+    if not methodInfo^.GetIsStatic() then
     begin
         success := thisString.TryAssign('this');
         if success then
@@ -244,6 +235,15 @@ begin
             success := scope^.DefineParameter(
                 @thisString,
                 thisType);
+    end;
+
+    paramEnum := methodParams^.GetEnumerator();
+    while success and paramEnum.MoveNext() do
+    begin
+        currentParam := paramEnum.GetCurrent();
+        success := scope^.DefineParameter(
+            currentParam^.GetName(),
+            currentParam^.GetType());
     end;
 
     returnType := methodInfo^.GetReturnType();

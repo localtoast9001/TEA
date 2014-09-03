@@ -1,0 +1,51 @@
+namespace SmokeTests;
+
+type
+    Program = static class
+        public
+            static function Main(
+                argc : integer; 
+                argv : array of array of character) : integer;
+        private
+            static function F1() : integer;
+            static function F2() : integer;
+            static function F3(a : integer) : integer;
+    end;
+
+function Program.Main(
+    argc : integer; 
+    argv : array of array of character) : integer;
+begin
+    Main := F1();
+end;
+
+function Program.F1() : integer;
+var
+    a : integer;
+    b : short;
+    c : character;
+    d : long;
+    e : long;
+begin
+    a := 5;
+    b := 1;
+    c := 'A';
+    d := 9001;
+    e := -1;
+    a := -7;
+    a := 0;
+    F1 := F2();
+end;
+
+function Program.F2() : integer;
+var
+    a : array of character;
+begin
+    a := 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    F2 := F3(9001);
+end;
+
+function Program.F3(a : integer) : integer;
+begin
+    F3 := a;
+end;

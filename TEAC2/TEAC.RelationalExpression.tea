@@ -24,3 +24,18 @@ procedure RelationalExpression.Accept(visitor : ^IExpressionVisitor);
 begin
     visitor^.Visit(this);
 end;
+
+function RelationalExpression.GetLeft() : ^Expression;
+begin
+    GetLeft := _left;
+end;
+
+function RelationalExpression.GetRight() : ^Expression;
+begin
+    GetRight := _right;
+end;
+
+function RelationalExpression.GetOperator() : RelationalOperator;
+begin
+    GetOperator := _operator;
+end;

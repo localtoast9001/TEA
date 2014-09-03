@@ -283,3 +283,13 @@ begin
 
     GetMangledQualifiedName := success;
 end;
+
+function TypeDefinition.GetFields() : ^LinkedListOfFieldInfo;
+begin
+    GetFields := @_fields;
+end;
+
+function TypeDefinition.AddField(item : ^FieldInfo) : boolean;
+begin
+    AddField := _fields.Add(item);
+end;

@@ -5,6 +5,7 @@ constructor LinkedListNodeOfExpression(value : ^Expression);
 begin
     _value := value;
     _next := nil;
+    _prev := nil;
 end;
 
 destructor LinkedListNodeOfExpression();
@@ -28,11 +29,75 @@ begin
     _next := next;
 end;
 
+function LinkedListNodeOfExpression.GetPrev() : ^LinkedListNodeOfExpression;
+begin
+    GetPrev := _prev;
+end;
+
+procedure LinkedListNodeOfExpression.SetPrev(prev : ^LinkedListNodeOfExpression);
+begin
+    _prev := prev;
+end;
+
 constructor LinkedListEnumeratorOfExpression(head : ^LinkedListNodeOfExpression);
 begin
     _head := head;
     _current := nil;
     _started := false;
+end;
+
+function LinkedListEnumeratorOfExpression.MoveNext() : boolean;
+begin
+    if not _started then
+    begin
+        _current := _head;
+        _started := true;
+    end
+    else if _current <> nil then
+    begin
+        _current := _current^.GetNext();
+    end;
+
+    MoveNext := _current <> nil;
+end;
+
+function LinkedListEnumeratorOfExpression.GetCurrent() : ^Expression;
+begin
+    if _current <> nil then
+        GetCurrent := _current^.GetValue()
+    else
+        GetCurrent := nil;
+end;
+
+constructor LinkedListReverseEnumeratorOfExpression(
+    tail : ^LinkedListNodeOfExpression);
+begin
+    _tail := tail;
+    _current := nil;
+    _started := false;
+end;
+
+function LinkedListReverseEnumeratorOfExpression.MoveNext() : boolean;
+begin
+    if not _started then
+    begin
+        _current := _tail;
+        _started := true;
+    end
+    else if _current <> nil then
+    begin
+        _current := _current^.GetPrev();
+    end;
+
+    MoveNext := _current <> nil;
+end;
+
+function LinkedListReverseEnumeratorOfExpression.GetCurrent() : ^Expression;
+begin
+    if _current <> nil then
+        GetCurrent := _current^.GetValue()
+    else
+        GetCurrent := nil;
 end;
 
 constructor LinkedListOfExpression();
@@ -56,6 +121,7 @@ begin
         Add := true;
         if _tail <> nil then
         begin
+            node^.SetPrev(_tail);
             _tail^.SetNext(node);
             _tail := node;
         end
@@ -72,6 +138,11 @@ end;
 function LinkedListOfExpression.GetEnumerator() : LinkedListEnumeratorOfExpression;
 begin
     GetEnumerator := LinkedListEnumeratorOfExpression(_head);
+end;
+
+function LinkedListOfExpression.GetReverseEnumerator() : LinkedListReverseEnumeratorOfExpression;
+begin
+    GetReverseEnumerator := LinkedListReverseEnumeratorOfExpression(_tail);
 end;
 
 procedure LinkedListOfExpression.Clear();
