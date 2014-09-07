@@ -452,34 +452,38 @@ var
     size : integer = statement^.GetSize();
 begin
     _inner^.WriteLine('        lea ecx,dword ptr [eax]');
-    if offset > 0 then
-    begin
-        _inner^.Write('        add ecx,');
-        _inner^.WriteLine(offset);
-    end;
 
     _lastResultInEax := false;
     _lastResultInEdxEax := false;
     if (size > 4) and (size <= 8) then
     begin
-        _inner^.WriteLine('        mov eax,dword ptr [ecx]');
-        _inner^.WriteLine('        add ecx,4');
-        _inner^.WriteLine('        mov edx,dword ptr [ecx]');
+        _inner^.Write('        mov eax,dword ptr [ecx+');
+        _inner^.Write(offset);
+        _inner^.WriteLine(']');
+        _inner^.Write('        mov edx,dword ptr [ecx+');
+        _inner^.Write(offset + 4);
+        _inner^.WriteLine(']');
         _lastResultInEdxEax := true;
     end
     else if (size = 4) or (size = 3) then
     begin
-        _inner^.WriteLine('        mov eax,dword ptr [ecx]');
+        _inner^.Write('        mov eax,dword ptr [ecx+');
+        _inner^.Write(offset);
+        _inner^.WriteLine(']');
         _lastResultInEax := true;
     end
     else if size = 2 then
     begin
-        _inner^.WriteLine('        mov ax,word ptr [ecx]');
+        _inner^.Write('        mov ax,word ptr [ecx+');
+        _inner^.Write(offset);
+        _inner^.WriteLine(']');
         _lastResultInEax := true;
     end
     else if size = 1 then
     begin
-        _inner^.WriteLine('        mov al,byte ptr [ecx]');
+        _inner^.Write('        mov al,byte ptr [ecx+');
+        _inner^.Write(offset);
+        _inner^.WriteLine(']');
         _lastResultInEax := true;
     end;
 end;
@@ -493,36 +497,39 @@ var
     size : integer = statement^.GetSize();
 begin
     _inner^.WriteLine('        lea ecx,dword ptr [eax]');
-    if offset > 0 then
-    begin
-        _inner^.Write('        add ecx,');
-        _inner^.WriteLine(offset);
-    end;
-
     _lastResultInEax := false;
     _lastResultInEdxEax := false;
     if (size <= 8) and (size > 4) then
     begin
         _inner^.WriteLine('        pop eax');
         _inner^.WriteLine('        pop edx');
-        _inner^.WriteLine('        mov dword ptr [ecx],eax');
-        _inner^.WriteLine('        add ecx,4');
-        _inner^.WriteLine('        mov dword ptr [ecx],edx');
+        _inner^.Write('        mov dword ptr [ecx+');
+        _inner^.Write(offset);
+        _inner^.WriteLine('],eax');
+        _inner^.Write('        mov dword ptr [ecx+');
+        _inner^.Write(offset + 4);
+        _inner^.WriteLine('],edx');
     end
     else if (size = 4) or (size = 3) then
     begin
         _inner^.WriteLine('        pop eax');
-        _inner^.WriteLine('        mov dword ptr [ecx],eax');
+        _inner^.Write('        mov dword ptr [ecx+');
+        _inner^.Write(offset);
+        _inner^.WriteLine('],eax');
     end
     else if (size = 2) then
     begin
         _inner^.WriteLine('        pop eax');
-        _inner^.WriteLine('        mov word ptr [ecx],ax');
+        _inner^.Write('        mov word ptr [ecx+');
+        _inner^.Write(offset);
+        _inner^.WriteLine('],ax');
     end
     else if (size = 1) then
     begin
         _inner^.WriteLine('        pop eax');
-        _inner^.WriteLine('        mov byte ptr [ecx],al');
+        _inner^.Write('        mov byte ptr [ecx+');
+        _inner^.Write(offset);
+        _inner^.WriteLine('],al');
     end;
 end;
 
