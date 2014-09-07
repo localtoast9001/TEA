@@ -206,6 +206,7 @@ begin
             @baseTypeDef) then
         begin
             _target^.SetBaseType(baseTypeDef);
+            offset := baseTypeDef^.GetSize();
         end
         else
         begin
@@ -286,40 +287,45 @@ begin
     end;
 
     fieldBlock := classDecl^.GetFields();
-    fieldList := fieldBlock^.GetVariables();
-    fieldEnum := fieldList^.GetEnumerator();
-    while fieldEnum.MoveNext() do 
+    if fieldBlock <> nil then
     begin
-        sourceField := fieldEnum.GetCurrent();
-        sourceFieldTypeRef := sourceField^.GetVariableType();
-        sourceFieldTypeRef^.Accept(@typeResolver);
-        sourceFieldType := typeResolver.GetResult();
-        if sourceFieldType <> nil then
+        fieldList := fieldBlock^.GetVariables();
+        fieldEnum := fieldList^.GetEnumerator();
+        while fieldEnum.MoveNext() do 
         begin
-            fieldNameList := sourceField^.GetVariableNames();
-            fieldNameEnum := fieldNameList^.GetEnumerator();
-            while fieldNameEnum.MoveNext() do
+            sourceField := fieldEnum.GetCurrent();
+            sourceFieldTypeRef := sourceField^.GetVariableType();
+            sourceFieldTypeRef^.Accept(@typeResolver);
+            sourceFieldType := typeResolver.GetResult();
+            if sourceFieldType <> nil then
             begin
-                fieldInfo := new FieldInfo();
-                if fieldInfo <> nil then
+                fieldNameList := sourceField^.GetVariableNames();
+                fieldNameEnum := fieldNameList^.GetEnumerator();
+                while fieldNameEnum.MoveNext() do
                 begin
-                    fieldInfo^.SetName(fieldNameEnum.GetCurrent());
-                    fieldInfo^.SetType(sourceFieldType);
-                    fieldInfo^.SetOffset(offset);
-                    offset := offset + sourceFieldType^.GetSize();
-                    if not _target^.AddField(fieldInfo) then
+                    fieldInfo := new FieldInfo();
+                    if fieldInfo <> nil then
                     begin
+                        fieldInfo^.SetName(fieldNameEnum.GetCurrent());
+                        fieldInfo^.SetType(sourceFieldType);
+                        fieldInfo^.SetOffset(offset);
+                        offset := offset + sourceFieldType^.GetSize();
+                        if not _target^.AddField(fieldInfo) then
+                        begin
+                            _failed := true;
+                            delete fieldInfo;
+                        end;
+                    end
+                    else
                         _failed := true;
-                        delete fieldInfo;
-                    end;
-                end
-                else
-                    _failed := true;
-            end;
-        end
-        else
-            _failed := true;
+                end;
+            end
+            else
+                _failed := true;
+        end;
     end;
+
+    _target^.SetSize(offset);
 end;
 
 procedure TypeCreationVisitor.Visit(methodTypeDecl : ^MethodTypeDeclaration);

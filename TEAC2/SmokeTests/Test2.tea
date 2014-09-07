@@ -13,6 +13,24 @@ type
         var
             _x, _y : integer;
     end;
+    LongPoint = class
+        public
+            constructor();
+            constructor(x, y : long);
+            destructor();
+            function GetX() : long;
+            function GetY() : long;
+            procedure SetX(value : long);
+            procedure SetY(value : long);
+        var
+            _x, _y : long;
+    end;
+    Program = static class
+        public
+            static function Main(
+                argc : integer; 
+                argv : array of array of character) : integer;
+    end;
 
 {constructor Point();
 begin
@@ -30,6 +48,7 @@ destructor Point();
 begin
 end;
 }
+
 function Point.GetX() : integer;
 begin
     GetX := _x;
@@ -48,4 +67,33 @@ end;
 procedure Point.SetY(value : integer);
 begin
     _y := value;
+end;
+
+function LongPoint.GetX() : long;
+begin
+    GetX := _x;
+end;
+
+function LongPoint.GetY() : long;
+begin
+    GetY := _y;
+end;
+
+procedure LongPoint.SetX(value : long);
+begin
+    _x := value;
+end;
+
+procedure LongPoint.SetY(value : long);
+begin
+    _y := value;
+end;
+
+function Program.Main(
+    argc : integer; 
+    argv : array of array of character) : boolean;
+var
+    pt : Point;
+    lpt : LongPoint;
+begin
 end;
