@@ -13,7 +13,8 @@ end;
 
 function CharacterUtility.IsLetter(ch : character) : boolean;
 begin
-    IsLetter := (ch >= 65) and (ch <= 90) or (ch >= 91) and (ch <= 122);
+    IsLetter := (ch >= 65 {A}) and (ch <= 90 {Z}) or 
+        (ch >= 97 {a}) and (ch <= 122 {z});
 end;
 
 function CharacterUtility.IsLetterOrDigit(ch : character) : boolean;
