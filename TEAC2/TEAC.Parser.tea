@@ -1461,8 +1461,31 @@ end;
  
 function Parser.TryParseAddressExpression(
     reader : ^TokenReader;
-    exprRef : ^^Expression) : boolean; 
+    exprRef : ^^Expression) : boolean;
+var
+    success : boolean; 
+    innerExpr : ^ReferenceExpression;
+    expr : ^Expression = nil;
+    start : SharedOfToken;
 begin
+    success := reader^.Peek(@start);
+    if success then
+        success := Expect(reader, Keyword.Address);
+    if success then
+        success := TryParseReferenceExpression(reader, @innerExpr);
+    if success then
+    begin
+        expr := new AddressExpression(@start, innerExpr);
+        success := expr <> nil;
+        if not success then
+        begin
+            success := false;
+            delete innerExpr;
+        end;
+    end;
+
+    exprRef^ := expr;
+    TryParseAddressExpression := success;
 end;
 
 function Parser.TryParseLiteralNilExpression(

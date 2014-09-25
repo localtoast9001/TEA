@@ -10,6 +10,7 @@ type
             static function F1() : integer;
             static function F2() : integer;
             static function F3(a : integer) : integer;
+            static function F4(a, b : integer) : integer;
     end;
 
 function Program.Main(
@@ -47,5 +48,10 @@ end;
 
 function Program.F3(a : integer) : integer;
 begin
-    F3 := a;
+    F3 := F4(a, 9002);
+end;
+
+function Program.F4(a, b : integer) : integer;
+begin
+    F4 := b;
 end;

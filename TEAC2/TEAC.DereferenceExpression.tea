@@ -20,3 +20,8 @@ begin
     visitor^.Visit(this);
 end;
 
+function DereferenceExpression.GetInner() : ^ReferenceExpresion;
+begin
+    GetInner := _inner;
+end;
+

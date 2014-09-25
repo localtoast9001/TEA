@@ -1,0 +1,26 @@
+namespace TEAC;
+uses TEAC, System;
+
+constructor AddressExpression(
+    start : ^SharedOfToken; 
+    inner : ^ReferenceExpression);
+inherited(start);
+begin
+    _inner := inner;
+end;
+
+destructor AddressExpression();
+begin
+    if _inner <> nil then
+        delete _inner;
+end;
+
+procedure AddressExpression.Accept(visitor : ^IExpressionVisitor);
+begin
+    visitor^.Visit(this);
+end;
+
+function AddressExpression.GetInner() : ^ReferenceExpression;
+begin
+    GetInner := _inner;
+end;

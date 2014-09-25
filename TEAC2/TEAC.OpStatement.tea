@@ -96,9 +96,23 @@ begin
     _size := size;
 end;
 
+procedure OpStatement.AssignLoadLocalRef(index : integer; size : integer);
+begin
+    _opCode := OpCode.LoadLocalRef;
+    _argOrLocalIndex := index;
+    _size := size;
+end;
+
 procedure OpStatement.AssignLoadArg(index : integer; size : integer);
 begin
     _opCode := OpCode.LoadArg;
+    _argOrLocalIndex := index;
+    _size := size;
+end;
+
+procedure OpStatement.AssignLoadArgRef(index : integer; size : integer);
+begin
+    _opCode := OpCode.LoadArgRef;
     _argOrLocalIndex := index;
     _size := size;
 end;
@@ -107,6 +121,25 @@ procedure OpStatement.AssignLoadField(offset : integer; size : integer);
 begin
     _opCode := OpCode.LoadField;
     _argOrLocalIndex := offset;
+    _size := size;
+end;
+
+procedure OpStatement.AssignLoadFieldRef(offset : integer; size : integer);
+begin
+    _opCode := OpCode.LoadFieldRef;
+    _argOrLocalIndex := offset;
+    _size := size;
+end;
+
+procedure OpStatement.AssignLoadIndirect(size : integer);
+begin
+    _opCode := OpCode.LoadIndirect;
+    _size := size;
+end;
+
+procedure OpStatement.AssignStoreIndirect(size : integer);
+begin
+    _opCode := OpCode.StoreIndirect;
     _size := size;
 end;
 

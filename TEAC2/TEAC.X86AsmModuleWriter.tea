@@ -217,17 +217,37 @@ begin
     begin
         WriteLoadLocalStatement(module, methodImpl, statement);
     end
+    else if opCode = OpCode.LoadLocalRef then
+    begin
+        WriteLoadLocalRefStatement(module, methodImpl, statement);
+    end
     else if opCode = OpCode.LoadArg then
     begin
         WriteLoadArgStatement(module, methodImpl, statement);
+    end
+    else if opCode = OpCode.LoadArgRef then
+    begin
+        WriteLoadArgRefStatement(module, methodImpl, statement);
     end
     else if opCode = OpCode.LoadField then
     begin
         WriteLoadFieldStatement(module, methodImpl, statement);
     end
+    else if opCode = OpCode.LoadFieldRef then
+    begin
+        WriteLoadFieldRefStatement(module, methodImpl, statement);
+    end
     else if opCode = OpCode.StoreField then
     begin
         WriteStoreFieldStatement(module, methodImpl, statement);
+    end
+    else if opCode = OpCode.LoadIndirect then
+    begin
+        WriteLoadIndirectStatement(module, methodImpl, statement);
+    end
+    else if opCode = OpCode.StoreIndirect then
+    begin
+        WriteStoreIndirectStatement(module, methodImpl, statement);
     end;
 end;
 
@@ -398,6 +418,23 @@ begin
     end;
 end;
 
+procedure X86AsmModuleWriter.WriteLoadLocalRefStatement(
+    module : ^Module;
+    methodImpl : ^MethodImpl;
+    statement : ^OpStatement);
+var
+    scope : ^Scope = methodImpl^.GetScope();
+    symbol : String;
+begin
+    PushResult();    
+    symbol.assign(scope^.GetLocalVariableNameByIndex(
+        statement^.GetArgOrLocalIndex()));
+    _inner^.Write('        lea eax,dword ptr _');
+    _inner^.Write(@symbol);
+    _inner^.WriteLine('$[ebp]');
+    _lastResultInEax := true;
+end;
+
 procedure X86AsmModuleWriter.WriteLoadArgStatement(
     module : ^Module;
     methodImpl : ^MethodImpl;
@@ -441,6 +478,23 @@ begin
         _inner^.WriteLine('$[ebp]');  
         _lastResultInEax := true;
     end;
+end;
+
+procedure X86AsmModuleWriter.WriteLoadArgRefStatement(
+    module : ^Module;
+    methodImpl : ^MethodImpl;
+    statement : ^OpStatement);
+var
+    scope : ^Scope = methodImpl^.GetScope();
+    symbol : String;
+begin
+    PushResult();
+    symbol.assign(scope^.GetParameterNameByIndex(
+        statement^.GetArgOrLocalIndex()));
+    _inner^.Write('        lea eax,dword ptr _');
+    _inner^.Write(@symbol);
+    _inner^.WriteLine('$[ebp]');  
+    _lastResultInEax := true;
 end;
 
 procedure X86AsmModuleWriter.WriteLoadFieldStatement(
@@ -488,6 +542,20 @@ begin
     end;
 end;
 
+procedure X86AsmModuleWriter.WriteLoadFieldRefStatement(
+    module : ^Module;
+    methodImpl : ^MethodImpl;
+    statement : ^OpStatement);
+var
+    offset : integer = statement^.GetArgOrLocalIndex();
+    size : integer = statement^.GetSize();
+begin
+    _inner^.Write('        add eax,');
+    _inner^.WriteLine(offset);
+    _lastResultInEax := true;
+    _lastResultInEdxEax := false;
+end;
+
 procedure X86AsmModuleWriter.WriteStoreFieldStatement(
     module : ^Module;
     methodImpl : ^MethodImpl;
@@ -531,6 +599,77 @@ begin
         _inner^.Write(offset);
         _inner^.WriteLine('],al');
     end;
+end;
+
+procedure X86AsmModuleWriter.WriteLoadIndirectStatement(
+    module : ^Module;
+    methodImpl : ^MethodImpl;
+    statement : ^OpStatement);
+var
+    size : integer = statement^.GetSize();
+begin
+    _lastResultInEax := false;
+    _lastResultInEdxEax := false;
+    _inner^.WriteLine('        mov ecx,eax');
+    if size >= 3 then
+    begin
+        _inner^.WriteLine('        mov eax,dword ptr [ecx]');
+    end
+    else if size = 2 then
+    begin
+        _inner^.WriteLine('        mov ax,word ptr [ecx]');
+    end
+    else
+    begin
+        _inner^.WriteLine('        mov al,byte ptr [ecx]');
+    end;
+
+    if (size = 7) or (size = 8) then
+    begin
+        _inner^.WriteLine('        mov edx,dword ptr [ecx+4]');        
+    end
+    else if size = 6 then
+    begin
+        _inner^.WriteLine('        mov dx,word ptr [ecx+4]');        
+    end
+    else if size = 5 then
+    begin
+        _inner^.WriteLine('        mov dl,byte ptr [ecx+4]');        
+    end;
+
+    if size <= 4 then
+        _lastResultInEax := true
+    else if size <= 8 then
+        _lastResultInEdxEax := true;
+end;
+
+procedure X86AsmModuleWriter.WriteStoreIndirectStatement(
+    module : ^Module;
+    methodImpl : ^MethodImpl;
+    statement : ^OpStatement);
+var
+    size : integer = statement^.GetSize();
+begin
+    _lastResultInEax := false;
+    _lastResultInEdxEax := false;
+    _inner^.WriteLine('        mov ecx,eax');
+    _inner^.WriteLine('        pop eax');
+    if (size > 4) and (size <= 8) then
+        _inner^.WriteLine('        pop edx');
+    if size >= 3 then
+    begin
+        _inner^.WriteLine('        mov dword ptr [ecx],eax');
+        if (size = 8) or (size = 7) then
+            _inner^.WriteLine('        mov dword ptr [ecx+4],edx')
+        else if (size = 6) then
+            _inner^.WriteLine('        mov word ptr [ecx+4],dx')
+        else if (size = 5) then
+            _inner^.WriteLine('        mov byte ptr [ecx+4,dl');
+    end
+    else if size = 2 then
+        _inner^.WriteLine('        mov word ptr [ecx],ax')
+    else if size = 1 then
+        _inner^.WriteLine('        mov byte ptr [ecx],al');
 end;
 
 procedure X86AsmModuleWriter.PushResult();

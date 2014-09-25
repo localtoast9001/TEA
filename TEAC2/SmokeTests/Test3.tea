@@ -1,0 +1,26 @@
+namespace SmokeTests;
+
+type
+    Program = public static class
+        public
+            static function Main(
+                argc : integer;
+                argv : array of array of character) : integer;
+    end;
+
+function Program.Main(
+    argc : integer;
+    argv : array of array of character) : integer;
+var
+    x, y, z : integer;
+    px, py : ^integer;
+begin
+    x := 4;
+    y := 5;
+    px := @x;
+    py := @y; 
+    px^ := 2;
+    z := 0;
+    py^ := px^;
+    z := 1;
+end;

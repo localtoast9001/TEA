@@ -503,6 +503,15 @@ begin
                 methodStatements^.Add(assignStatement);
             end;
         end;
+    end
+    else if storageResolvedRef^.GetReferenceType() = ReferenceType.Pointer then
+    begin
+        assignStatement := new OpStatement();
+        if assignStatement <> nil then
+        begin
+            assignStatement^.AssignStoreIndirect(storageType^.GetSize());
+            methodStatements^.Add(assignStatement);
+        end;
     end;
 end;
 
@@ -686,12 +695,44 @@ end;
 
 procedure SyntaxAnalyzerExpressionVisitor.Visit(
     expr : ^AddressExpression);
+var
+    innerExpr : ^ReferenceExpression = expr^.GetInner();
+    addrType : ^TypeDefinition = nil;
 begin
+    innerExpr^.Accept(this);
+    if not _failed then
+    begin
+        if not _context^.TryGetPointerType(innerExpr^.GetResultType(), @addrType) then
+            _failed := true
+        else
+        begin
+            expr^.SetResultType(addrType);
+        end;
+    end;
 end;
 
 procedure SyntaxAnalyzerExpressionVisitor.Visit(
     expr : ^DereferenceExpression);
+var
+    innerExpr : ^ReferenceExpression = expr^.GetInner();
+    ptrType, elemType : ^TypeDefinition = nil;
 begin
+    innerExpr^.Accept(this);
+    if not _failed then
+    begin
+        ptrType := innerExpr^.GetResultType();
+        if ptrType^.GetIsPointer() then
+        begin
+            elemType := ptrType^.GetInnerType();
+            expr^.SetResultType(elemType);
+            expr^.SetResolvedReference(new ResolvedReference(ReferenceType.Pointer));
+        end
+        else
+        begin
+            {TODO: Error message. A non-pointer type cannot be dereferenced.}
+            _failed := true;
+        end;
+    end;
 end;
 
 procedure SyntaxAnalyzerExpressionVisitor.Visit(
@@ -956,11 +997,62 @@ begin
 end;
 
 procedure ExpressionVisitor.Visit(expr : ^AddressExpression);
+var
+    exprType : ^TypeDefinition = expr^.GetResultType();
+    innerExpr : ^ReferenceExpression = expr^.GetInner();
+    innerRef : ^ResolvedReference = nil;
+    fieldRef : ^FieldInfo = nil;
+    argOrLocalIndex : integer = 0;
+    innerVisitor : ExpressionVisitor;
+    loadStatement : ^OpStatement = nil;
+    statements : ^LinkedListOfOpStatement = _methodImpl^.GetStatements();
 begin
+    innerVisitor := ExpressionVisitor(_context, _generator, _methodImpl, _log);
+    innerExpr^.Accept(@innerVisitor);
+    innerRef := innerExpr^.GetResolvedReference();
+    _currentResolvedReference := nil;
+    if innerRef^.GetReferenceType() = ReferenceType.ArgumentOrLocal then
+    begin
+        loadStatement := new OpStatement();
+        argOrLocalIndex := innerRef^.GetLocalOrArgIndex();
+        if argOrLocalIndex < 0 then
+            loadStatement^.AssignLoadLocalRef(
+                -argOrLocalIndex - 1, 
+                exprType^.GetSize())
+        else
+            loadStatement^.AssignLoadArgRef(
+                argOrLocalIndex, 
+                exprType^.GetSize());
+        statements^.Add(loadStatement);
+    end
+    else if innerRef^.GetReferenceType() = ReferenceType.TypeMember then
+    begin
+        fieldRef := innerRef^.GetFieldInfo();
+        if fieldRef <> nil then
+        begin
+            loadStatement := new OpStatement();
+            loadStatement^.AssignLoadFieldRef(
+                fieldRef^.GetOffset(),
+                exprType^.GetSize());
+            statements^.Add(loadStatement);
+        end;
+    end
+    else
+    begin
+        {TODO: Error message.}
+    end;
 end;
 
 procedure ExpressionVisitor.Visit(expr : ^DereferenceExpression);
+var
+    innerExpr : ^ReferenceExpression = expr^.GetInner();
+    innerRef : ^ResolvedReference = nil;
+    innerVisitor : ExpressionVisitor;
 begin
+    innerVisitor := ExpressionVisitor(_context, _generator, _methodImpl, _log);
+    innerExpr^.Accept(@innerVisitor);
+    innerVisitor.GenerateLoadValue(innerExpr);
+    _currentResolvedReference := expr^.GetResolvedReference(); 
 end;
 
 procedure ExpressionVisitor.Visit(expr : ^ArrayIndexReferenceExpression);
@@ -988,6 +1080,7 @@ begin
         argVisitor := ExpressionVisitor(_context, _generator, _methodImpl, _log);
         arg := argEnum.GetCurrent();
         arg^.Accept(@argVisitor);
+        argVisitor.GenerateLoadValue(arg);
     end;
 
     innerVisitor := ExpressionVisitor(_context, _generator, _methodImpl, _log);
@@ -1058,12 +1151,14 @@ begin
                 argOrLocalIndex := _currentResolvedReference^.GetLocalOrArgIndex();
                 if argOrLocalIndex < 0 then
                     loadStatement^.AssignLoadLocal(
-                        -argOrLocalIndex, 
+                        -argOrLocalIndex - 1, 
                         exprType^.GetSize())
                 else
                     loadStatement^.AssignLoadArg(
                         argOrLocalIndex, 
                         exprType^.GetSize());
+
+                statements^.Add(loadStatement);
             end
             else if _currentResolvedReference^.GetReferenceType() = ReferenceType.TypeMember then
             begin
@@ -1073,10 +1168,16 @@ begin
                     loadStatement^.AssignLoadField(
                         fieldRef^.GetOffset(),
                         exprType^.GetSize());
-                end;
-            end;
 
-            statements^.Add(loadStatement);
+                    statements^.Add(loadStatement);
+                end;
+            end
+            else if _currentResolvedReference^.GetReferenceType() = ReferenceType.Pointer then
+            begin
+                loadStatement^.AssignLoadIndirect(
+                    exprType^.GetSize());
+                statements^.Add(loadStatement);
+            end; 
         end;
     end;
 end;

@@ -478,6 +478,7 @@ type
                 inner : ^ReferenceExpression);
             virtual destructor();
             virtual procedure Accept(visitor : ^IExpressionVisitor);
+            function GetInner() : ^ReferenceExpression;
         var
             _inner : ^ReferenceExpression;
     end;
@@ -1761,7 +1762,9 @@ type
         Pop,
         LoadInt,
         LoadStatic,
-        LoadStaticRef
+        LoadStaticRef,
+        LoadIndirect,
+        StoreIndirect
     );
     DataCode = (DB, DW, DD, DP);
     DataEntry = class
@@ -1802,9 +1805,14 @@ type
             procedure AssignLoadStaticRef(targetSymbol : ^String);
             procedure AssignCall(targetSymbol : ^String);
             procedure AssignLoadLocal(index : integer; size : integer);
+            procedure AssignLoadLocalRef(index : integer; size : integer);
             procedure AssignLoadArg(index : integer; size : integer);
+            procedure AssignLoadArgRef(index : integer; size : integer);
             procedure AssignLoadField(offset : integer; size : integer);
+            procedure AssignLoadFieldRef(offset : integer; size : integer);
             procedure AssignStoreField(offset : integer; size : integer);
+            procedure AssignLoadIndirect(size : integer);
+            procedure AssignStoreIndirect(size : integer);
         var
             _label : String;
             _opCode : OpCode;
@@ -1813,7 +1821,7 @@ type
             _targetSymbol : String;
             _intValue : integer;
     end;
-    ReferenceType = (Namespace, Type, TypeMember, ArgumentOrLocal);
+    ReferenceType = (Namespace, Type, TypeMember, ArgumentOrLocal, Pointer);
     ResolvedReference = class
         public 
             constructor(refType : ReferenceType);
@@ -1907,7 +1915,15 @@ type
                 module : ^Module;
                 methodImpl : ^MethodImpl;
                 statement : ^OpStatement);
+            procedure WriteLoadLocalRefStatement(
+                module : ^Module;
+                methodImpl : ^MethodImpl;
+                statement : ^OpStatement);
             procedure WriteLoadArgStatement(
+                module : ^Module;
+                methodImpl : ^MethodImpl;
+                statement : ^OpStatement);
+            procedure WriteLoadArgRefStatement(
                 module : ^Module;
                 methodImpl : ^MethodImpl;
                 statement : ^OpStatement);
@@ -1919,6 +1935,18 @@ type
                 module : ^Module;
                 methodImpl : ^MethodImpl;
                 statement : ^OpStatement);
+            procedure WriteLoadFieldRefStatement(
+                module : ^Module;
+                methodImpl : ^MethodImpl;
+                statement : ^OpStatement);
+            procedure WriteLoadIndirectStatement(
+                module : ^Module;
+                methodImpl : ^MethodImpl;
+                statement : ^OpStatement);
+            procedure WriteStoreIndirectStatement(
+                module : ^Module;
+                methodImpl : ^MethodImpl;
+                statement : ^OpStatement);                
             procedure PushResult(); 
         var
             _log : ^MessageLog;
