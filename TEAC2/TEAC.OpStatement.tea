@@ -149,3 +149,9 @@ begin
     _argOrLocalIndex := offset;
     _size := size;
 end;
+
+procedure OpStatement.AssignPop(size : integer);
+begin
+    _opCode := OpCode.Pop;
+    _size := size;
+end;

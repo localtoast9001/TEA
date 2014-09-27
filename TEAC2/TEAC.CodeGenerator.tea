@@ -1066,12 +1066,15 @@ var
     argVisitor : ExpressionVisitor;
     innerVisitor : ExpressionVisitor;
     arg : ^Expression;
+    argType : ^TypeDefinition;
     inner : ^ReferenceExpression = expr^.GetInner();
     innerRef : ^ResolvedReference;
     meth : ^MethodInfo;
     methMangledName : String;
     callStatement : ^OpStatement;
+    popArgsStatement : ^OpStatement;
     statements : ^LinkedListOfOpStatement = _methodImpl^.GetStatements();
+    argSize : integer = 0;
 begin
     args := expr^.GetArguments();
     argEnum := args^.GetReverseEnumerator();
@@ -1080,7 +1083,9 @@ begin
         argVisitor := ExpressionVisitor(_context, _generator, _methodImpl, _log);
         arg := argEnum.GetCurrent();
         arg^.Accept(@argVisitor);
+        argType := arg^.GetResultType();
         argVisitor.GenerateLoadValue(arg);
+        argSize := argSize + ((argType^.GetSize() + 3) div 4) * 4;
     end;
 
     innerVisitor := ExpressionVisitor(_context, _generator, _methodImpl, _log);
@@ -1094,7 +1099,17 @@ begin
             callStatement := new OpStatement();
             callStatement^.AssignCall(@methMangledName);
             statements^.Add(callStatement);
+            if argSize > 0 then
+            begin
+                popArgsStatement := new OpStatement();
+                popArgsStatement^.AssignPop(argSize);
+                statements^.Add(popArgsStatement);
+            end;
         end;
+    end
+    else
+    begin
+        {TODO: Error.}
     end;
 end;
 

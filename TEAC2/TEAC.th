@@ -1813,6 +1813,7 @@ type
             procedure AssignStoreField(offset : integer; size : integer);
             procedure AssignLoadIndirect(size : integer);
             procedure AssignStoreIndirect(size : integer);
+            procedure AssignPop(size : integer);
         var
             _label : String;
             _opCode : OpCode;
@@ -1944,6 +1945,10 @@ type
                 methodImpl : ^MethodImpl;
                 statement : ^OpStatement);
             procedure WriteStoreIndirectStatement(
+                module : ^Module;
+                methodImpl : ^MethodImpl;
+                statement : ^OpStatement);                
+            procedure WritePopStatement(
                 module : ^Module;
                 methodImpl : ^MethodImpl;
                 statement : ^OpStatement);                

@@ -248,6 +248,10 @@ begin
     else if opCode = OpCode.StoreIndirect then
     begin
         WriteStoreIndirectStatement(module, methodImpl, statement);
+    end
+    else if opCode = OpCode.Pop then
+    begin
+        WritePopStatement(module, methodImpl, statement);
     end;
 end;
 
@@ -670,6 +674,15 @@ begin
         _inner^.WriteLine('        mov word ptr [ecx],ax')
     else if size = 1 then
         _inner^.WriteLine('        mov byte ptr [ecx],al');
+end;
+
+procedure X86AsmModuleWriter.WritePopStatement(
+    module : ^Module;
+    methodImpl : ^MethodImpl;
+    statement : ^OpStatement);
+begin
+    _inner^.Write('        add esp,');
+    _inner^.WriteLine(statement^.GetSize());
 end;
 
 procedure X86AsmModuleWriter.PushResult();
