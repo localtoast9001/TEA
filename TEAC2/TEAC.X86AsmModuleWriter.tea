@@ -112,12 +112,15 @@ var
     index : integer = 0;
     paramOffset : integer = 8;
     localOffset : integer = 0;
+    returnType : ^TypeDefinition = nil;
+    returnTypeSize : integer = 0;
     statementList : ^LinkedListOfOpStatement;
     statementEnum : LinkedListEnumeratorOfOpStatement;
 begin
     _lastResultInEax := false;
     _lastResultInEdxEax := false;
     methodInfo := methodImpl^.GetMethodInfo();
+    returnType := methodInfo^.GetReturnType();
     if methodInfo^.GetMangledName(@mangledName) then
     begin
         scope := methodImpl^.GetScope();
@@ -175,6 +178,54 @@ begin
         while statementEnum.MoveNext() do
         begin
             WriteStatement(module, methodImpl, statementEnum.GetCurrent());
+        end;
+
+        if returnType <> nil then
+        begin
+            if not returnType^.GetIsClass() then
+            begin
+                returnTypeSize := returnType^.GetSize();
+                if returnTypeSize <= 8 then
+                begin
+                    if returnTypeSize > 2 then
+                    begin
+                        _inner^.Write('        mov eax,dword ptr _');
+                        _inner^.Write(methodInfo^.GetName());
+                        _inner^.WriteLine('$[ebp]');
+                        if returnTypeSize > 6 then
+                        begin
+                            _inner^.Write('        mov edx,dword ptr _');
+                            _inner^.Write(methodInfo^.GetName());
+                            _inner^.WriteLine('$[ebp+4]');
+                        end
+                        else if returnTypeSize = 6 then
+                        begin
+                            _inner^.Write('        mov edx,word ptr _');
+                            _inner^.Write(methodInfo^.GetName());
+                            _inner^.WriteLine('$[ebp+4]');
+                        end
+                        else if returnTypeSize = 5 then
+                        begin
+                            _inner^.Write('        mov edx,byte ptr _');
+                            _inner^.Write(methodInfo^.GetName());
+                            _inner^.WriteLine('$[ebp+4]');
+                        end;
+                    end
+                    else if returnTypeSize = 2 then
+                    begin
+                        _inner^.Write('        mov eax,word ptr _');
+                        _inner^.Write(methodInfo^.GetName());
+                        _inner^.WriteLine('$[ebp]');
+                    end
+                    else
+                    begin
+                        _inner^.Write('        mov eax,byte ptr _');
+                        _inner^.Write(methodInfo^.GetName());
+                        _inner^.WriteLine('$[ebp]');
+                    end;
+
+                end;
+            end;
         end;
 
         _inner^.WriteLine('        mov esp,ebp');
