@@ -1,0 +1,38 @@
+namespace SmokeTests;
+
+type
+    Point = class
+        public
+            function GetX() : integer;
+            function GetY() : integer;
+            function GetZ() : integer;
+            procedure Assign(x, y, z : integer);
+            procedure SetX(value : integer);
+            procedure SetY(value : integer);
+            procedure SetZ(value : integer);
+        var
+            _x, _y, _z : integer;
+    end;
+    Program = static class
+        public
+            static function Main(
+                argc : integer; 
+                argv : array of array of character) : integer;
+    end;
+
+function Program.Main(
+    argc : integer;
+    argv : array of array of character) : integer;
+var
+    p1, p2, p3 : Point;
+    pp3 : ^Point;
+begin
+    p1.SetX(1);
+    p1.SetY(2);
+    p1.SetZ(3);
+    p2.SetX(p1.GetX());
+    p2.SetY(p1.GetY());
+    p2.SetZ(p1.GetZ());
+    pp3 := @p3;
+    pp3^.Assign(p2.GetY(), p2.GetZ(), 0);
+end;
