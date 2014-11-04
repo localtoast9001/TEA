@@ -19,3 +19,9 @@ bin/
 *.lib
 *.exp
 *.bak
+*.pdb
+teastest/teastest.exe
+*.lnk
+TEAC2/SmokeTests/*.asm
+TEAC2/SmokeTests/*.exe
+*.swo
