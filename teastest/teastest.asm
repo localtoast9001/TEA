@@ -10,15 +10,22 @@ INCLUDELIB LIBCMT
 INCLUDELIB OLDNAMES
 
 CONST	SEGMENT
-$SG5081	DB	'Hello World!', 00H
+$SG5121	DB	'Hello World!', 00H
 	ORG $+3
-$SG5084	DB	'\', 00H, 't', 00H, 'm', 00H, 'p', 00H, '\', 00H, 'C', 00H
+$SG5124	DB	'\', 00H, 't', 00H, 'm', 00H, 'p', 00H, '\', 00H, 'C', 00H
 	DB	'R', 00H, 'T', 00H, '_', 00H, 'O', 00H, 'P', 00H, 'E', 00H, 'N'
 	DB	00H, '.', 00H, 'B', 00H, 'M', 00H, 'P', 00H, 00H, 00H
-$SG5086	DB	'Open failed on output file', 00H
+$SG5126	DB	'Open failed on output file', 00H
 	ORG $+1
-$SG5088	DB	'Open succeeded on output file', 0aH, 00H
+$SG5128	DB	'Open succeeded on output file', 0aH, 00H
 CONST	ENDS
+PUBLIC	?Func1@FooBar@Samples@@QAAHXZ			; Samples::FooBar::Func1
+PUBLIC	?Func2@FooBar@Samples@@QBAHXZ			; Samples::FooBar::Func2
+PUBLIC	?Main@Program@Samples@@SAHHQAPAD@Z		; Samples::Program::Main
+PUBLIC	?Main2@Program@Samples@@KAHHQAPAD@Z		; Samples::Program::Main2
+PUBLIC	?Main3@Program@Samples@@CAHHQAPAD@Z		; Samples::Program::Main3
+PUBLIC	?Main4@Program@Samples@@CAHH@Z			; Samples::Program::Main4
+PUBLIC	?Main5@Program@Samples@@CAHPAVFooBar@2@@Z	; Samples::Program::Main5
 PUBLIC	??1A@@UAE@XZ					; A::~A
 PUBLIC	?F1@A@@UAEHXZ					; A::F1
 PUBLIC	?F2@A@@UAEHXZ					; A::F2
@@ -106,27 +113,27 @@ _pA$ = -20						; size = 4
 tv72 = -16						; size = 4
 $T1 = -12						; size = 4
 tv65 = -8						; size = 4
-_fResult$ = -2						; size = 1
-_fDblResult$ = -1					; size = 1
+_fResult$ = -3						; size = 1
+_fDblResult$ = -2					; size = 1
+_foo$ = -1						; size = 1
 _argc$ = 8						; size = 4
 _argv$ = 12						; size = 4
 _main	PROC
 ; File c:\code\tea\teastest\teastest.cpp
-; Line 22
+; Line 63
 	push	ebp
 	mov	ebp, esp
 	sub	esp, 44					; 0000002cH
-; Line 23
-	fld	QWORD PTR __real@4024000000000000
-	fstp	QWORD PTR _dblA$[ebp]
-; Line 24
-	fld	QWORD PTR __real@4059000000000000
-	fstp	QWORD PTR _dblB$[ebp]
-; Line 25
-	fld	QWORD PTR _dblA$[ebp]
-	fld	QWORD PTR _dblB$[ebp]
-	fucompp
-	fnstsw	ax
+; Line 65
+	movsd	xmm0, QWORD PTR __real@4024000000000000
+	movsd	QWORD PTR _dblA$[ebp], xmm0
+; Line 66
+	movsd	xmm0, QWORD PTR __real@4059000000000000
+	movsd	QWORD PTR _dblB$[ebp], xmm0
+; Line 67
+	movsd	xmm0, QWORD PTR _dblA$[ebp]
+	ucomisd	xmm0, QWORD PTR _dblB$[ebp]
+	lahf
 	test	ah, 68					; 00000044H
 	jp	SHORT $LN5@main
 	mov	DWORD PTR tv65[ebp], 1
@@ -136,7 +143,7 @@ $LN5@main:
 $LN6@main:
 	mov	al, BYTE PTR tv65[ebp]
 	mov	BYTE PTR _fDblResult$[ebp], al
-; Line 26
+; Line 68
 	push	4
 	call	??2@YAPAXI@Z				; operator new
 	add	esp, 4
@@ -152,24 +159,24 @@ $LN7@main:
 $LN8@main:
 	mov	ecx, DWORD PTR tv72[ebp]
 	mov	DWORD PTR _pA$[ebp], ecx
-; Line 27
+; Line 69
 	mov	edx, DWORD PTR _pA$[ebp]
 	mov	eax, DWORD PTR [edx]
 	mov	ecx, DWORD PTR _pA$[ebp]
 	mov	edx, DWORD PTR [eax+4]
 	call	edx
-; Line 28
+; Line 70
 	push	0
 	push	2
 	push	1
 	push	0
 	call	?derp@@YAHFHF_N@Z			; derp
 	add	esp, 16					; 00000010H
-; Line 29
-	push	OFFSET $SG5081
+; Line 71
+	push	OFFSET $SG5121
 	call	_puts
 	add	esp, 4
-; Line 30
+; Line 72
 	cmp	DWORD PTR _argc$[ebp], 0
 	jle	SHORT $LN9@main
 	mov	DWORD PTR tv82[ebp], 1
@@ -179,36 +186,51 @@ $LN9@main:
 $LN10@main:
 	mov	al, BYTE PTR tv82[ebp]
 	mov	BYTE PTR _fResult$[ebp], al
-; Line 33
+; Line 75
 	push	384					; 00000180H
 	push	33025					; 00008101H
-	push	OFFSET $SG5084
+	push	OFFSET $SG5124
 	call	?_wopen@@YAHPB_WHH@Z			; _wopen
 	add	esp, 12					; 0000000cH
 	mov	DWORD PTR _fh2$[ebp], eax
-; Line 34
+; Line 76
 	cmp	DWORD PTR _fh2$[ebp], -1
 	jne	SHORT $LN2@main
-; Line 35
-	push	OFFSET $SG5086
+; Line 77
+	push	OFFSET $SG5126
 	call	_perror
 	add	esp, 4
-; Line 36
+; Line 78
 	jmp	SHORT $LN1@main
 $LN2@main:
-; Line 38
-	push	OFFSET $SG5088
+; Line 80
+	push	OFFSET $SG5128
 	call	_printf
 	add	esp, 4
-; Line 39
+; Line 81
 	mov	ecx, DWORD PTR _fh2$[ebp]
 	push	ecx
 	call	__close
 	add	esp, 4
 $LN1@main:
-; Line 41
-	xor	eax, eax
-; Line 42
+; Line 84
+	lea	edx, DWORD PTR _foo$[ebp]
+	push	edx
+	call	?Func1@FooBar@Samples@@QAAHXZ		; Samples::FooBar::Func1
+	add	esp, 4
+; Line 85
+	lea	eax, DWORD PTR _foo$[ebp]
+	push	eax
+	call	?Func2@FooBar@Samples@@QBAHXZ		; Samples::FooBar::Func2
+	add	esp, 4
+; Line 86
+	mov	ecx, DWORD PTR _argv$[ebp]
+	push	ecx
+	mov	edx, DWORD PTR _argc$[ebp]
+	push	edx
+	call	?Main@Program@Samples@@SAHHQAPAD@Z	; Samples::Program::Main
+	add	esp, 8
+; Line 87
 	mov	esp, ebp
 	pop	ebp
 	ret	0
@@ -223,15 +245,15 @@ _c$ = 16						; size = 2
 _d$ = 20						; size = 1
 ?derp@@YAHFHF_N@Z PROC					; derp
 ; File c:\code\tea\teastest\teastest.cpp
-; Line 16
+; Line 57
 	push	ebp
 	mov	ebp, esp
 	push	ecx
-; Line 17
+; Line 58
 	mov	DWORD PTR _length$[ebp], 0
-; Line 18
+; Line 59
 	mov	eax, DWORD PTR _length$[ebp]
-; Line 19
+; Line 60
 	mov	esp, ebp
 	pop	ebp
 	ret	0
@@ -289,7 +311,7 @@ _this$ = -4						; size = 4
 ?F3@A@@UAEHXZ PROC					; A::F3, COMDAT
 ; _this$ = ecx
 ; File c:\code\tea\teastest\teastest.cpp
-; Line 12
+; Line 53
 	push	ebp
 	mov	ebp, esp
 	push	ecx
@@ -307,7 +329,7 @@ _this$ = -4						; size = 4
 ?F2@A@@UAEHXZ PROC					; A::F2, COMDAT
 ; _this$ = ecx
 ; File c:\code\tea\teastest\teastest.cpp
-; Line 11
+; Line 52
 	push	ebp
 	mov	ebp, esp
 	push	ecx
@@ -325,7 +347,7 @@ _this$ = -4						; size = 4
 ?F1@A@@UAEHXZ PROC					; A::F1, COMDAT
 ; _this$ = ecx
 ; File c:\code\tea\teastest\teastest.cpp
-; Line 10
+; Line 51
 	push	ebp
 	mov	ebp, esp
 	push	ecx
@@ -343,7 +365,7 @@ _this$ = -4						; size = 4
 ??1A@@UAE@XZ PROC					; A::~A, COMDAT
 ; _this$ = ecx
 ; File c:\code\tea\teastest\teastest.cpp
-; Line 9
+; Line 50
 	push	ebp
 	mov	ebp, esp
 	push	ecx
@@ -354,5 +376,138 @@ _this$ = -4						; size = 4
 	pop	ebp
 	ret	0
 ??1A@@UAE@XZ ENDP					; A::~A
+_TEXT	ENDS
+; Function compile flags: /Odtp
+;	COMDAT ?Main5@Program@Samples@@CAHPAVFooBar@2@@Z
+_TEXT	SEGMENT
+_pFoo$ = 8						; size = 4
+?Main5@Program@Samples@@CAHPAVFooBar@2@@Z PROC		; Samples::Program::Main5, COMDAT
+; File c:\code\tea\teastest\teastest.cpp
+; Line 41
+	push	ebp
+	mov	ebp, esp
+; Line 42
+	mov	eax, DWORD PTR _pFoo$[ebp]
+	push	eax
+	call	?Func1@FooBar@Samples@@QAAHXZ		; Samples::FooBar::Func1
+	add	esp, 4
+; Line 43
+	pop	ebp
+	ret	0
+?Main5@Program@Samples@@CAHPAVFooBar@2@@Z ENDP		; Samples::Program::Main5
+_TEXT	ENDS
+; Function compile flags: /Odtp
+;	COMDAT ?Main4@Program@Samples@@CAHH@Z
+_TEXT	SEGMENT
+_foo$ = -1						; size = 1
+_argc$ = 8						; size = 4
+?Main4@Program@Samples@@CAHH@Z PROC			; Samples::Program::Main4, COMDAT
+; File c:\code\tea\teastest\teastest.cpp
+; Line 35
+	push	ebp
+	mov	ebp, esp
+	push	ecx
+; Line 37
+	lea	eax, DWORD PTR _foo$[ebp]
+	push	eax
+	call	?Main5@Program@Samples@@CAHPAVFooBar@2@@Z ; Samples::Program::Main5
+	add	esp, 4
+; Line 38
+	mov	esp, ebp
+	pop	ebp
+	ret	0
+?Main4@Program@Samples@@CAHH@Z ENDP			; Samples::Program::Main4
+_TEXT	ENDS
+; Function compile flags: /Odtp
+;	COMDAT ?Main3@Program@Samples@@CAHHQAPAD@Z
+_TEXT	SEGMENT
+_argc$ = 8						; size = 4
+_argv$ = 12						; size = 4
+?Main3@Program@Samples@@CAHHQAPAD@Z PROC		; Samples::Program::Main3, COMDAT
+; File c:\code\tea\teastest\teastest.cpp
+; Line 30
+	push	ebp
+	mov	ebp, esp
+; Line 31
+	mov	eax, DWORD PTR _argc$[ebp]
+	push	eax
+	call	?Main4@Program@Samples@@CAHH@Z		; Samples::Program::Main4
+	add	esp, 4
+; Line 32
+	pop	ebp
+	ret	0
+?Main3@Program@Samples@@CAHHQAPAD@Z ENDP		; Samples::Program::Main3
+_TEXT	ENDS
+; Function compile flags: /Odtp
+;	COMDAT ?Main2@Program@Samples@@KAHHQAPAD@Z
+_TEXT	SEGMENT
+_argc$ = 8						; size = 4
+_argv$ = 12						; size = 4
+?Main2@Program@Samples@@KAHHQAPAD@Z PROC		; Samples::Program::Main2, COMDAT
+; File c:\code\tea\teastest\teastest.cpp
+; Line 25
+	push	ebp
+	mov	ebp, esp
+; Line 26
+	mov	eax, DWORD PTR _argv$[ebp]
+	push	eax
+	mov	ecx, DWORD PTR _argc$[ebp]
+	push	ecx
+	call	?Main3@Program@Samples@@CAHHQAPAD@Z	; Samples::Program::Main3
+	add	esp, 8
+; Line 27
+	pop	ebp
+	ret	0
+?Main2@Program@Samples@@KAHHQAPAD@Z ENDP		; Samples::Program::Main2
+_TEXT	ENDS
+; Function compile flags: /Odtp
+;	COMDAT ?Main@Program@Samples@@SAHHQAPAD@Z
+_TEXT	SEGMENT
+_argc$ = 8						; size = 4
+_argv$ = 12						; size = 4
+?Main@Program@Samples@@SAHHQAPAD@Z PROC			; Samples::Program::Main, COMDAT
+; File c:\code\tea\teastest\teastest.cpp
+; Line 20
+	push	ebp
+	mov	ebp, esp
+; Line 21
+	mov	eax, DWORD PTR _argv$[ebp]
+	push	eax
+	mov	ecx, DWORD PTR _argc$[ebp]
+	push	ecx
+	call	?Main2@Program@Samples@@KAHHQAPAD@Z	; Samples::Program::Main2
+	add	esp, 8
+; Line 22
+	pop	ebp
+	ret	0
+?Main@Program@Samples@@SAHHQAPAD@Z ENDP			; Samples::Program::Main
+_TEXT	ENDS
+; Function compile flags: /Odtp
+;	COMDAT ?Func2@FooBar@Samples@@QBAHXZ
+_TEXT	SEGMENT
+_this$ = 8						; size = 4
+?Func2@FooBar@Samples@@QBAHXZ PROC			; Samples::FooBar::Func2, COMDAT
+; File c:\code\tea\teastest\teastest.cpp
+; Line 12
+	push	ebp
+	mov	ebp, esp
+	mov	eax, 1
+	pop	ebp
+	ret	0
+?Func2@FooBar@Samples@@QBAHXZ ENDP			; Samples::FooBar::Func2
+_TEXT	ENDS
+; Function compile flags: /Odtp
+;	COMDAT ?Func1@FooBar@Samples@@QAAHXZ
+_TEXT	SEGMENT
+_this$ = 8						; size = 4
+?Func1@FooBar@Samples@@QAAHXZ PROC			; Samples::FooBar::Func1, COMDAT
+; File c:\code\tea\teastest\teastest.cpp
+; Line 11
+	push	ebp
+	mov	ebp, esp
+	xor	eax, eax
+	pop	ebp
+	ret	0
+?Func1@FooBar@Samples@@QAAHXZ ENDP			; Samples::FooBar::Func1
 _TEXT	ENDS
 END
