@@ -442,7 +442,9 @@ var
     assignStatement : ^OpStatement;
     methodStatements: ^LinkedListOfOpStatement = _methodImpl^.GetStatements();
     fieldRef : ^FieldInfo;
+    startToken : ^Token;
 begin
+    startToken := statement^.GetStart();
     valueSyntaxVisitor := SyntaxAnalyzerExpressionVisitor(
         _context,
         _generator,
@@ -471,7 +473,7 @@ begin
     valueSyntaxVisitor.SetImposedType(storage^.GetResultType());
     valueExpr^.Accept(@valueSyntaxVisitor);
 
-    {Revisit to generator the code.}
+    {Revisit to generate the code.}
     valueExpr^.Accept(@exprVisitor);
     exprVisitor.GenerateLoadValue(valueExpr);
     storage^.Accept(@storageVisitor);
@@ -481,6 +483,9 @@ begin
     begin
         argOrLocalIndex := storageResolvedRef^.GetLocalOrArgIndex();
         assignStatement := new OpStatement();
+        assignStatement^.SetPath(startToken^.GetPath());
+        assignStatement^.SetLine(startToken^.GetLine());
+        assignStatement^.SetColumn(startToken^.GetColumn());
         if argOrLocalIndex >= 0 then
             assignStatement^.AssignStoreArg(
                 argOrLocalIndex, 
@@ -499,6 +504,9 @@ begin
             assignStatement := new OpStatement();
             if assignStatement <> nil then
             begin
+                assignStatement^.SetPath(startToken^.GetPath());
+                assignStatement^.SetLine(startToken^.GetLine());
+                assignStatement^.SetColumn(startToken^.GetColumn());
                 assignStatement^.AssignStoreField(fieldRef^.GetOffset(), storageType^.GetSize());
                 methodStatements^.Add(assignStatement);
             end;
@@ -509,6 +517,9 @@ begin
         assignStatement := new OpStatement();
         if assignStatement <> nil then
         begin
+            assignStatement^.SetPath(startToken^.GetPath());
+            assignStatement^.SetLine(startToken^.GetLine());
+            assignStatement^.SetColumn(startToken^.GetColumn());
             assignStatement^.AssignStoreIndirect(storageType^.GetSize());
             methodStatements^.Add(assignStatement);
         end;

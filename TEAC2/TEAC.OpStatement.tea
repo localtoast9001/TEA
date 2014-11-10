@@ -7,6 +7,8 @@ begin
     _size := 0;
     _argOrLocalIndex := 0;
     _intValue := 0;
+    _line := 0;
+    _column := 0;
 end;
 
 destructor OpStatement();
@@ -43,9 +45,39 @@ begin
     GetIntValue := _intValue;
 end;
 
+function OpStatement.GetPath() : ^String;
+begin
+    GetPath := @_path;
+end;
+
+function OpStatement.GetLine() : integer;
+begin
+    GetLine := _line;
+end;
+
+function OpStatement.GetColumn() : integer;
+begin
+    GetColumn := _column;
+end;
+
 procedure OpStatement.SetLabel(value : ^String);
 begin
     _label.assign(value);
+end;
+
+procedure OpStatement.SetPath(value : ^String);
+begin
+    _path.assign(value);
+end;
+
+procedure OpStatement.SetLine(value : integer);
+begin
+    _line := value;
+end;
+
+procedure OpStatement.SetColumn(value : integer);
+begin
+    _column := value;
 end;
 
 procedure OpStatement.AssignLoadInt(value : integer; size : integer);

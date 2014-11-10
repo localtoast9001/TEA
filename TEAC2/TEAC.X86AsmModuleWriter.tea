@@ -242,7 +242,23 @@ procedure X86AsmModuleWriter.WriteStatement(
     statement : ^OpStatement);
 var
     opCode : OpCode;
+    path : ^String;
+    line, column : integer;
 begin
+    path := statement^.GetPath();
+    line := statement^.GetLine();
+    column := statement^.GetColumn();
+    if path^.Length() > 0 then
+    begin
+        _inner^.Write('; ');
+        _inner^.Write(path);
+        _inner^.Write('(');
+        _inner^.Write(line);
+        _inner^.Write(',');
+        _inner^.Write(column);
+        _inner^.WriteLine(')');
+    end;
+
     opCode := statement^.GetOpCode();
     if opCode = OpCode.LoadInt then
     begin

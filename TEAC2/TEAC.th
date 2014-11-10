@@ -1797,7 +1797,13 @@ type
             function GetArgOrLocalIndex() : integer;
             function GetTargetSymbol() : ^String;
             function GetIntValue() : integer;
+            function GetPath() : ^String;
+            function GetLine() : integer;
+            function GetColumn() : integer;
             procedure SetLabel(value : ^String);
+            procedure SetPath(value : ^String);
+            procedure SetLine(value : integer);
+            procedure SetColumn(value : integer);
             procedure AssignLoadInt(value : integer; size : integer);
             procedure AssignStoreLocal(index : integer; size : integer);
             procedure AssignStoreArg(index : integer; size : integer);
@@ -1821,6 +1827,8 @@ type
             _argOrLocalIndex : integer;
             _targetSymbol : String;
             _intValue : integer;
+            _path : String;
+            _line, _column : integer;
     end;
     ReferenceType = (Namespace, Type, TypeMember, ArgumentOrLocal, Pointer);
     ResolvedReference = class
