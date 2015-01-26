@@ -114,10 +114,13 @@ begin
     _targetSymbol.assign(targetSymbol);
 end;
 
-procedure OpStatement.AssignCall(targetSymbol : ^String);
+procedure OpStatement.AssignCall(
+    targetSymbol : ^String;
+    resultSize, argSize : integer);
 begin
     _opCode := OpCode.Call;
-    _size := 4;
+    _argOrLocalIndex := resultSize;
+    _size := argSize;
     _targetSymbol.assign(targetSymbol);
 end;
 
@@ -186,4 +189,16 @@ procedure OpStatement.AssignPop(size : integer);
 begin
     _opCode := OpCode.Pop;
     _size := size;
+end;
+
+procedure OpStatement.AssignJump(targetLabel : ^String);
+begin
+    _opCode := OpCode.Jump;
+    _targetSymbol.assign(targetLabel);
+end;
+
+procedure OpStatement.AssignJumpFalse(targetLabel : ^String);
+begin
+    _opCode := OpCode.JumpFalse;
+    _targetSymbol.assign(targetLabel);
 end;

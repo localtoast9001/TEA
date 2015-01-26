@@ -22,3 +22,12 @@ begin
     visitor^.Visit(this);
 end;
 
+function MemberReferenceExpression.GetInner() : ^ReferenceExpression;
+begin
+    GetInner := _inner;
+end;
+
+function MemberReferenceExpression.GetName() : ^String;
+begin
+    GetName := @_name;
+end;

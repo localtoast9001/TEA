@@ -242,10 +242,11 @@ procedure X86AsmModuleWriter.WriteStatement(
     statement : ^OpStatement);
 var
     opCode : OpCode;
-    path : ^String;
+    path, jumpLabel : ^String;
     line, column : integer;
 begin
     path := statement^.GetPath();
+    jumpLabel := statement^.GetLabel();
     line := statement^.GetLine();
     column := statement^.GetColumn();
     if path^.Length() > 0 then
@@ -257,6 +258,12 @@ begin
         _inner^.Write(',');
         _inner^.Write(column);
         _inner^.WriteLine(')');
+    end;
+
+    if jumpLabel^.Length() > 0 then
+    begin
+        _inner^.Write(jumpLabel);
+        _inner^.WriteLine(':');
     end;
 
     opCode := statement^.GetOpCode();
@@ -319,6 +326,18 @@ begin
     else if opCode = OpCode.Pop then
     begin
         WritePopStatement(module, methodImpl, statement);
+    end
+    else if opCode = OpCode.Jump then
+    begin
+        WriteJumpStatement(module, methodImpl, statement);
+    end
+    else if opCode = OpCode.JumpFalse then
+    begin
+        WriteJumpFalseStatement(module, methodImpl, statement);
+    end
+    else if opCode = OpCode.Nop then
+    begin
+        WriteNopStatement(module, methodImpl, statement);
     end;
 end;
 
@@ -437,11 +456,24 @@ end;
 procedure X86AsmModuleWriter.WriteCallStatement(
     module : ^Module;
     methodImpl : ^MethodImpl;
-    statement : ^OpStatement); 
+    statement : ^OpStatement);
+var
+    resultSize : integer = statement^.GetArgOrLocalIndex();
+    argSize : integer = statement^.GetSize(); 
 begin
     PushResult();
     _inner^.Write('        call ');
     _inner^.WriteLine(statement^.GetTargetSymbol());
+    if argSize > 0 then
+    begin
+        _inner^.Write('        add esp,');
+        _inner^.WriteLine(argSize);
+    end;
+
+    if (resultSize > 0) and (resultSize <= 4) then
+        _lastResultInEax := true;
+    if (resultSize > 4) and (resultSize <= 8) then
+        _lastResultInEdxEax := true;
 end;
 
 procedure X86AsmModuleWriter.WriteLoadLocalStatement(
@@ -750,6 +782,34 @@ procedure X86AsmModuleWriter.WritePopStatement(
 begin
     _inner^.Write('        add esp,');
     _inner^.WriteLine(statement^.GetSize());
+end;
+
+procedure X86AsmModuleWriter.WriteJumpStatement(
+    module : ^Module;
+    methodImpl : ^MethodImpl;
+    statement : ^OpStatement);
+begin
+    _inner^.Write('        jmp ');
+    _inner^.WriteLine(statement^.GetTargetSymbol());
+end;
+
+procedure X86AsmModuleWriter.WriteJumpFalseStatement(
+    module : ^Module;
+    methodImpl : ^MethodImpl;
+    statement : ^OpStatement);            
+begin
+    _lastResultInEax := false;
+    _lastResultInEdxEax := false;
+    _inner^.Write('        jz ');
+    _inner^.WriteLine(statement^.GetTargetSymbol());
+end;
+
+procedure X86AsmModuleWriter.WriteNopStatement(
+    module : ^Module;
+    methodImpl : ^MethodImpl;
+    statement : ^OpStatement);
+begin
+    _inner^.WriteLine('        nop');
 end;
 
 procedure X86AsmModuleWriter.PushResult();

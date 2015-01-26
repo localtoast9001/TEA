@@ -441,6 +441,8 @@ type
                 name : ^String);
             virtual destructor();
             virtual procedure Accept(visitor : ^IExpressionVisitor);
+            function GetInner() : ^ReferenceExpression;
+            function GetName() : ^String;
         var
             _name : String;
             _inner : ^ReferenceExpression;
@@ -1464,6 +1466,7 @@ type
             function BeginScope(
                 methodInfo : ^MethodInfo;
                 scope : ^Scope) : boolean;
+            function GetBoolType() : ^TypeDefinition;
         private
             function InitializeIntType() : boolean;
             function InitializeShortType() : boolean;
@@ -1486,6 +1489,7 @@ type
             _usesList : LinkedListOfString;
             _includeList : LinkedListOfString;
             _types : DictionaryOfStringToTypeDefinition;
+            _boolType : ^TypeDefinition;
     end;
     Parser = class
         public
@@ -1607,7 +1611,10 @@ type
                 statementRef : ^^Statement) : boolean;
             function TryParseBlockStatement(
                 reader : ^TokenReader;
-                statementRef : ^^BlockStatement) : boolean; 
+                statementRef : ^^BlockStatement) : boolean;
+            function TryParseIfStatement(
+                reader : ^TokenReader;
+                statementRef : ^^IfStatement) : boolean; 
             function Expect(
                 reader : ^TokenReader;
                 keyword : Keyword) : boolean;
@@ -1720,8 +1727,10 @@ type
             function TryDefineStringLiteral(
                 value : ^String;
                 symbol : ^String) : boolean;
+            function TryGetNextJumpLabel(
+                value : ^String) : boolean;
         var
-            _literalStringIndex : integer;
+            _literalStringIndex, _nextJumpLabel : integer;
             _dataSeg : LinkedListOfDataEntry;
             _codeSeg : LinkedListOfMethodImpl;
     end;
@@ -1733,6 +1742,7 @@ type
             function GetScope() : ^Scope;
             function GetModule() : ^Module;
             function GetStatements() : ^LinkedListOfOpStatement;
+            function TryGetNextJumpLabel(value : ^String) : boolean;
         var
             _module : ^Module;
             _method : ^MethodInfo;
@@ -1749,6 +1759,14 @@ type
         Neg,
         Not,
         Jump,
+        JumpEq,
+        JumpNe,
+        JumpLt,
+        JumpGt,
+        JumpLe,
+        JumpGe,
+        JumpTrue,
+        JumpFalse,
         LoadArg,
         StoreArg,
         LoadArgRef,
@@ -1809,7 +1827,9 @@ type
             procedure AssignStoreArg(index : integer; size : integer);
             procedure AssignNeg(size : integer);
             procedure AssignLoadStaticRef(targetSymbol : ^String);
-            procedure AssignCall(targetSymbol : ^String);
+            procedure AssignCall(
+                targetSymbol : ^String;
+                resultSize, argSize : integer);
             procedure AssignLoadLocal(index : integer; size : integer);
             procedure AssignLoadLocalRef(index : integer; size : integer);
             procedure AssignLoadArg(index : integer; size : integer);
@@ -1820,6 +1840,8 @@ type
             procedure AssignLoadIndirect(size : integer);
             procedure AssignStoreIndirect(size : integer);
             procedure AssignPop(size : integer);
+            procedure AssignJump(targetLabel : ^String);
+            procedure AssignJumpFalse(targetLabel : ^String);
         var
             _label : String;
             _opCode : OpCode;
@@ -1959,7 +1981,19 @@ type
             procedure WritePopStatement(
                 module : ^Module;
                 methodImpl : ^MethodImpl;
-                statement : ^OpStatement);                
+                statement : ^OpStatement);
+            procedure WriteJumpStatement(
+                module : ^Module;
+                methodImpl : ^MethodImpl;
+                statement : ^OpStatement);
+            procedure WriteJumpFalseStatement(
+                module : ^Module;
+                methodImpl : ^MethodImpl;
+                statement : ^OpStatement);
+            procedure WriteNopStatement(
+                module : ^Module;
+                methodImpl : ^MethodImpl;
+                statement : ^OpStatement);
             procedure PushResult(); 
         var
             _log : ^MessageLog;

@@ -30,3 +30,8 @@ function MethodImpl.GetStatements() : ^LinkedListOfOpStatement;
 begin
     GetStatements := @_statements;
 end;
+
+function MethodImpl.TryGetNextJumpLabel(value : ^String) : boolean;
+begin
+    TryGetNextJumpLabel := _module^.TryGetNextJumpLabel(value);
+end;

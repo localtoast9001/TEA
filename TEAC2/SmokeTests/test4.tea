@@ -13,6 +13,15 @@ type
         var
             _x, _y, _z : integer;
     end;
+    Size = class
+        var
+            _cx, _cy, _cz : integer;
+    end;
+    Box = class
+        var
+            _origin : Point;
+            _size : Size;    
+    end;
     Program = static class
         public
             static function Main(
@@ -20,19 +29,69 @@ type
                 argv : array of array of character) : integer;
     end;
 
+function Point.GetX() : integer;
+begin
+    GetX := _x;
+end;
+
+function Point.GetY() : integer;
+begin
+    GetY := _y;
+end;
+
+function Point.GetZ() : integer;
+begin
+    GetZ := _z;
+end;
+
+procedure Point.Assign(x, y, z : integer);
+begin
+    _x := x;
+    _y := y;
+    _z := z;
+end;
+
+procedure Point.SetX(value : integer);
+begin
+    _x := value;
+end;
+
+procedure Point.SetY(value : integer);
+begin
+    _y := value;
+end;
+
+procedure Point.SetZ(value : integer);
+begin
+    _z := value;
+end;
+
 function Program.Main(
     argc : integer;
     argv : array of array of character) : integer;
 var
     p1, p2, p3 : Point;
     pp3 : ^Point;
+    b1 : Box;
 begin
+    p1._x := 1;
+    p1._y := 2;
+    p1._z := 3;
     p1.SetX(1);
     p1.SetY(2);
     p1.SetZ(3);
+    p2._x := p1.GetX();
+    p2._y := p1._y;
+    p2._z := p1._z;
     p2.SetX(p1.GetX());
     p2.SetY(p1.GetY());
     p2.SetZ(p1.GetZ());
     pp3 := @p3;
     pp3^.Assign(p2.GetY(), p2.GetZ(), 0);
+    b1._origin._x := 1;
+    b1._origin._y := 2;
+    b1._origin._z := 3;
+    b1._size._cx := 4;
+    b1._size._cy := 5;
+    b1._size._cz := 6;
 end;

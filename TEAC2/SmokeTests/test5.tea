@@ -1,0 +1,26 @@
+namespace SmokeTests;
+
+type
+    Program = static class
+        public
+            static function Main(
+                argc : integer; 
+                argv : array of array of character) : integer;
+    end;
+
+function Program.Main(
+    argc : integer;
+    argv : array of array of character) : integer;
+var
+    a, b : integer;
+    test : boolean;
+begin
+    a := 0;
+    b := 0;
+    test := true;
+    if test then
+        a := 1
+    else
+        a := 2;
+    Main := a;
+end;

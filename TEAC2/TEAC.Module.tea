@@ -4,6 +4,7 @@ uses TEAC, System, System.Text;
 constructor Module();
 begin
     _literalStringIndex := 0;
+    _nextJumpLabel := 0;
 end;
 
 destructor Module();
@@ -65,3 +66,20 @@ begin
     end;
     TryDefineStringLiteral := success;
 end;
+
+function Module.TryGetNextJumpLabel(
+    value : ^String) : boolean;
+var
+    sb : SimpleStringBuilder;
+    success : boolean;
+begin
+    success := sb.TryAppend('$Label_');
+    if success then
+        success := DefaultFormatter.TryFormat(_nextJumpLabel, nil, @sb);
+    if success then
+        success := sb.ToString(value);
+    if success then
+        _nextJumpLabel := _nextJumpLabel + 1;
+    TryGetNextJumpLabel := success;
+end;
+

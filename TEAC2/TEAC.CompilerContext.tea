@@ -262,6 +262,11 @@ begin
     BeginScope := success;
 end;
 
+function CompilerContext.GetBoolType() : ^TypeDefinition;
+begin
+    GetBoolType := _boolType;
+end;
+
 function CompilerContext.Initialize() : boolean;
 var
     success : boolean;
@@ -426,7 +431,9 @@ begin
                 typeDef^.GetFullName(),
                 typeDef);
             if not success then
-                delete typeDef; 
+                delete typeDef
+            else
+                _boolType := typeDef; 
         end;
     end;
 

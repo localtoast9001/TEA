@@ -1726,6 +1726,7 @@ var
     tok, start : SharedOfToken;
     statement : ^Statement = nil;
     block : ^BlockStatement = nil;
+    ifStatement : ^IfStatement = nil;
     lhs : ^ReferenceExpression = nil;
     rhs : ^Expression = nil;
     success : boolean;
@@ -1738,6 +1739,9 @@ begin
             statement := nil
         else if tok.Is(Keyword.If) then
         begin
+            success := TryParseIfStatement(reader, @ifStatement);
+            if success then
+                statement := ifStatement;
         end
         else if tok.Is(Keyword.While) then
         begin
@@ -1849,6 +1853,61 @@ begin
 
     statementRef^ := statement;
     TryParseBlockStatement := success;
+end;
+
+function Parser.TryParseIfStatement(
+    reader : ^TokenReader;
+    statementRef : ^^IfStatement) : boolean; 
+var
+    success : boolean;
+    tok, start : SharedOfToken;
+    condition : ^Expression = nil;
+    trueStatement, falseStatement : ^Statement = nil;
+    statement : ^IfStatement = nil;
+begin
+    success := reader^.Peek(@start);
+    if success then
+        success := Expect(reader, Keyword.If);
+    if success then
+        success := TryParseExpression(reader, @condition);
+    if success then
+        success := Expect(reader, Keyword.Then);
+    if success then
+        success := TryParseStatement(reader, @trueStatement);
+    if success then
+        success := reader^.Peek(@tok);
+    if success then
+    begin
+        if tok.Is(Keyword.Else) then
+        begin
+            reader^.Read(@tok);
+            success := TryParseStatement(reader, @falseStatement);
+        end;
+    end;
+
+    if success then
+    begin
+        statement := new IfStatement(
+            @start, 
+            condition, 
+            trueStatement, 
+            falseStatement);
+        success := statement <> nil;
+    end;
+    
+    if success then
+        statementRef^ := statement
+    else
+    begin
+        if condition <> nil then
+            delete condition;
+        if trueStatement <> nil then
+            delete trueStatement;
+        if falseStatement <> nil then
+            delete falseStatement;
+    end;
+
+    TryParseIfStatement := success;
 end;
 
 function Parser.Expect(

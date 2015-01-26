@@ -20,3 +20,8 @@ begin
     visitor^.Visit(this);
 end;
 
+function CallStatement.GetCallExpression() : ^ReferenceExpression;
+begin
+    GetCallExpression := _expression;
+end;
+
