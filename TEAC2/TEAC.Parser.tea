@@ -1727,6 +1727,7 @@ var
     statement : ^Statement = nil;
     block : ^BlockStatement = nil;
     ifStatement : ^IfStatement = nil;
+    whileStatement : ^WhileStatement = nil;
     lhs : ^ReferenceExpression = nil;
     rhs : ^Expression = nil;
     success : boolean;
@@ -1745,6 +1746,9 @@ begin
         end
         else if tok.Is(Keyword.While) then
         begin
+            success := TryParseWhileStatement(reader, @whileStatement);
+            if success then
+                statement := whileStatement;
         end
         else if tok.Is(Keyword.Delete) then
         begin
@@ -1908,6 +1912,46 @@ begin
     end;
 
     TryParseIfStatement := success;
+end;
+
+function Parser.TryParseWhileStatement(
+    reader : ^TokenReader;
+    statementRef : ^^WhileStatement) : boolean;
+var
+    start, tok : SharedOfToken;
+    condition : ^Expression = nil;
+    body : ^Statement = nil;
+    whileStatement : ^WhileStatement = nil;
+    success : boolean;
+begin
+    success := reader^.Peek(@start);
+    if success then
+        success := Expect(reader, Keyword.While);
+    if success then
+        success := TryParseExpression(reader, @condition);
+    if success then
+        success := Expect(reader, Keyword.Do);
+    if success then
+        success := TryParseStatement(reader, @body);
+    if success then
+    begin
+        whileStatement := new WhileStatement(
+            @start,
+            condition,
+            body);
+        success := whileStatement <> nil;
+    end;
+
+    if not success then
+    begin
+        if condition <> nil then
+            delete condition;
+        if body <> nil then
+            delete body;
+    end;
+
+    statementRef^ := whileStatement;
+    TryParseWhileStatement := success;
 end;
 
 function Parser.Expect(

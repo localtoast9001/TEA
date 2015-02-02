@@ -416,7 +416,56 @@ begin
 end;
 
 procedure StatementVisitor.Visit(statement : ^WhileStatement);
+var
+    conditionVisitor : ExpressionVisitor;
+    conditionSyntaxVisitor : SyntaxAnalyzerExpressionVisitor;
+    conditionExpr : ^Expression; 
+    bodyStatement : ^Statement;
+    boolType : ^TypeDefinition = _context^.GetBoolType(); 
+    topLabel, endLabel : String;
+    evalCondition : ^OpStatement;
+    jumpTop : ^OpStatement;
+    endNop, topNop : ^OpStatement;
+    methodStatements: ^LinkedListOfOpStatement = _methodImpl^.GetStatements();
 begin
+    conditionExpr := statement^.GetCondition();
+    bodyStatement := statement^.GetBodyStatement();
+    conditionSyntaxVisitor := SyntaxAnalyzerExpressionVisitor(
+        _context,
+        _generator,
+        _methodImpl,
+        _log);
+    conditionVisitor := ExpressionVisitor(
+        _context,
+        _generator,
+        _methodImpl,
+        _log);
+    conditionSyntaxVisitor.SetImposedType(boolType);
+    conditionExpr^.Accept(@conditionSyntaxVisitor);
+    if conditionExpr^.GetResultType() = boolType then
+    begin
+        _methodImpl^.TryGetNextJumpLabel(@topLabel);
+        _methodImpl^.TryGetNextJumpLabel(@endLabel);
+        topNop := new OpStatement();
+        topNop^.SetLabel(@topLabel);
+        methodStatements^.Add(topNop);
+        conditionExpr^.Accept(@conditionVisitor);
+        conditionVisitor.GenerateLoadValue(conditionExpr);
+        evalCondition := new OpStatement();
+        evalCondition^.AssignJumpFalse(@endLabel);
+        methodStatements^.Add(evalCondition);
+        bodyStatement^.Accept(this);
+        jumpTop := new OpStatement();
+        jumpTop^.AssignJump(@topLabel);
+        methodStatements^.Add(jumpTop);
+        endNop := new OpStatement();
+        endNop^.SetLabel(@endLabel);
+        methodStatements^.Add(endNop);
+    end
+    else
+    begin
+        {TODO: Error.}
+    end;
 end;
 
 procedure StatementVisitor.Visit(statement : ^IfStatement);
@@ -1173,7 +1222,20 @@ begin
 end;
 
 procedure ExpressionVisitor.Visit(expr : ^LiteralBooleanExpression);
+var
+    statements : ^LinkedListOfOpStatement = _methodImpl^.GetStatements();
+    resultType : ^TypeDefinition = expr^.GetResultType();
+    loadIntStatement : ^OpStatement;
+    value : integer;
 begin
+    value := 0;
+    if expr^.GetValue() then
+        value := 1;
+    loadIntStatement := new OpStatement();
+    loadIntStatement^.AssignLoadInt(
+        value,
+        resultType^.GetSize());
+    statements^.Add(loadIntStatement);    
 end;
 
 procedure ExpressionVisitor.Visit(expr : ^LiteralNilExpression);

@@ -508,6 +508,7 @@ type
                 value : boolean);
             virtual destructor();
             virtual procedure Accept(visitor : ^IExpressionVisitor);
+            function GetValue() : boolean;
         var
             _value : boolean;
     end;
@@ -728,7 +729,7 @@ type
             _trueStatement : ^Statement;
             _falseStatement : ^Statement;
     end;
-    WhileStatement = class(ParseNode)
+    WhileStatement = class(Statement)
         public
             constructor(
                 start : ^SharedOfToken;
@@ -1614,7 +1615,10 @@ type
                 statementRef : ^^BlockStatement) : boolean;
             function TryParseIfStatement(
                 reader : ^TokenReader;
-                statementRef : ^^IfStatement) : boolean; 
+                statementRef : ^^IfStatement) : boolean;
+            function TryParseWhileStatement(
+                reader : ^TokenReader;
+                statementRef : ^^WhileStatement) : boolean; 
             function Expect(
                 reader : ^TokenReader;
                 keyword : Keyword) : boolean;

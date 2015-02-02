@@ -17,3 +17,8 @@ procedure LiteralBooleanExpression.Accept(visitor : ^IExpressionVisitor);
 begin
     visitor^.Visit(this);
 end;
+
+function LiteralBooleanExpression.GetValue() : boolean;
+begin
+    GetValue := _value;
+end;

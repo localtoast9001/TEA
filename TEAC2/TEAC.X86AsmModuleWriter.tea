@@ -200,26 +200,26 @@ begin
                         end
                         else if returnTypeSize = 6 then
                         begin
-                            _inner^.Write('        mov edx,word ptr _');
+                            _inner^.Write('        mov dx,word ptr _');
                             _inner^.Write(methodInfo^.GetName());
                             _inner^.WriteLine('$[ebp+4]');
                         end
                         else if returnTypeSize = 5 then
                         begin
-                            _inner^.Write('        mov edx,byte ptr _');
+                            _inner^.Write('        mov dl,byte ptr _');
                             _inner^.Write(methodInfo^.GetName());
                             _inner^.WriteLine('$[ebp+4]');
                         end;
                     end
                     else if returnTypeSize = 2 then
                     begin
-                        _inner^.Write('        mov eax,word ptr _');
+                        _inner^.Write('        mov ax,word ptr _');
                         _inner^.Write(methodInfo^.GetName());
                         _inner^.WriteLine('$[ebp]');
                     end
                     else
                     begin
-                        _inner^.Write('        mov eax,byte ptr _');
+                        _inner^.Write('        mov al,byte ptr _');
                         _inner^.Write(methodInfo^.GetName());
                         _inner^.WriteLine('$[ebp]');
                     end;

@@ -6,7 +6,21 @@ type
             static function Main(
                 argc : integer; 
                 argv : array of array of character) : integer;
+        private
+            static function TestWhile() : boolean;
     end;
+
+function Program.TestWhile() : boolean;
+var
+    test : boolean;
+begin
+    test := true;
+    while test do
+    begin
+        test := false;
+    end;
+    TestWhile := test;
+end;
 
 function Program.Main(
     argc : integer;
@@ -15,6 +29,7 @@ var
     a, b : integer;
     test : boolean;
 begin
+    TestWhile();
     a := 0;
     b := 0;
     test := true;
