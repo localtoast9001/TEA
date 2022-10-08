@@ -17,15 +17,20 @@ namespace TEAC
 
         public bool TryParse(
             TokenReader reader, 
-            out ProgramUnit result)
+            out ProgramUnit? result)
         {
             result = null;
-            Token tok = reader.Peek();
+            Token? tok = reader.Peek();
+            if (tok == null)
+            {
+                return false;
+            }
+
             ProgramUnit programUnit = new ProgramUnit(tok);
             if (tok.Is(Keyword.Namespace))
             {
                 reader.Read();
-                string namespaceDecl = null;
+                string? namespaceDecl = null;
                 if (!this.ParseFullNameDeclaration(reader, out namespaceDecl))
                 {
                     return false;
@@ -36,15 +41,14 @@ namespace TEAC
                     return false;
                 }
 
-                programUnit.Namespace = namespaceDecl;
+                programUnit.Namespace = namespaceDecl ?? string.Empty;
             }
 
             tok = reader.Peek();
             if (tok.Is(Keyword.Uses))
             {
                 reader.Read();
-                string usesRef = null;
-                if (!this.ParseFullNameDeclaration(reader, out usesRef))
+                if (!this.ParseFullNameDeclaration(reader, out string? usesRef))
                 {
                     return false;
                 }
@@ -81,7 +85,7 @@ namespace TEAC
             tok = reader.Peek();
             if (tok.Is(Keyword.Var))
             {
-                VarBlock globalVars = null;
+                VarBlock? globalVars = null;
                 if (!this.ParseVarBlock(reader, true, out globalVars))
                 {
                     return false;
@@ -97,13 +101,12 @@ namespace TEAC
                 tok.Is(Keyword.Constructor) || 
                 tok.Is(Keyword.Destructor))
             {
-                MethodDefinition methodDef = null;
-                if (!this.ParseMethodDefinition(reader, out methodDef))
+                if (!this.ParseMethodDefinition(reader, out MethodDefinition? methodDef))
                 {
                     return false;
                 }
 
-                programUnit.AddMethod(methodDef);
+                programUnit.AddMethod(methodDef!);
                 if (!this.Expect(reader, Keyword.SemiColon))
                 {
                     return false;
@@ -121,11 +124,11 @@ namespace TEAC
             return passed;
         }
 
-        private bool ParseMethodDefinition(TokenReader reader, out MethodDefinition method)
+        private bool ParseMethodDefinition(TokenReader reader, out MethodDefinition? method)
         {
             method = null;
-            Token tok = reader.Peek();
-            Token start = tok;
+            Token? tok = reader.Peek();
+            Token? start = tok;
             bool isFunction = false;
             if (tok.Is(Keyword.Constructor))
             {
@@ -150,15 +153,15 @@ namespace TEAC
                 }
             }
 
-            string methodName = null;
+            string? methodName = null;
             if (!this.ParseFullNameDeclaration(reader, out methodName))
             {
                 return false;
             }
 
             MethodDefinition methodDef = new MethodDefinition(
-                start,
-                methodName);
+                start!,
+                methodName!);
 
             if (!this.Expect(reader, Keyword.LeftParen))
             {
@@ -168,13 +171,13 @@ namespace TEAC
             tok = reader.Peek();
             while (!tok.Is(Keyword.RightParen))
             {
-                ParameterDeclaration parameter = null;
+                ParameterDeclaration? parameter = null;
                 if (!this.ParseParameterDeclaration(reader, out parameter))
                 {
                     return false;
                 }
 
-                methodDef.AddParameter(parameter);
+                methodDef.AddParameter(parameter!);
 
                 tok = reader.Peek();
                 if (tok.Is(Keyword.SemiColon))
@@ -196,7 +199,7 @@ namespace TEAC
                     return false;
                 }
 
-                TypeReference returnType = null;
+                TypeReference? returnType = null;
                 if (!this.ParseTypeReference(reader, out returnType))
                 {
                     return false;
@@ -214,9 +217,9 @@ namespace TEAC
             if (tok.Is(Keyword.Extern))
             {
                 reader.Read();
-                string externalImpl = null;
+                string? externalImpl = null;
                 tok = reader.Read();
-                LiteralToken litTok = tok as LiteralToken;
+                LiteralToken? litTok = tok as LiteralToken;
                 if (tok == null || litTok == null || !(litTok.Value is string))
                 {
                     string message = string.Format(
@@ -240,7 +243,7 @@ namespace TEAC
             {
                 if (tok.Is(Keyword.Var))
                 {
-                    VarBlock varBlock = null;
+                    VarBlock? varBlock = null;
                     if (!this.ParseVarBlock(reader, true, out varBlock))
                     {
                         return false;
@@ -249,7 +252,7 @@ namespace TEAC
                     methodDef.LocalVariables = varBlock;
                 }
 
-                BlockStatement body = null;
+                BlockStatement? body = null;
                 if (!this.ParseBlockStatement(reader, out body))
                 {
                     return false;
@@ -262,16 +265,16 @@ namespace TEAC
             return true;
         }
 
-        private bool ParseConstructorDefinition(TokenReader reader, out MethodDefinition method)
+        private bool ParseConstructorDefinition(TokenReader reader, out MethodDefinition? method)
         {
-            Token start = reader.Peek();
+            Token? start = reader.Peek();
             method = null;
             if (!this.Expect(reader, Keyword.Constructor))
             {
                 return false;
             }
 
-            string methodName = null;
+            string? methodName = null;
             if (!this.ParseFullNameDeclaration(reader, out methodName))
             {
                 return false;
@@ -280,24 +283,24 @@ namespace TEAC
             methodName = methodName + ".constructor";
 
             MethodDefinition methodDef = new MethodDefinition(
-                start,
-                methodName);
+                start!,
+                methodName!);
 
             if (!this.Expect(reader, Keyword.LeftParen))
             {
                 return false;
             }
 
-            Token tok = reader.Peek();
+            Token? tok = reader.Peek();
             while (!tok.Is(Keyword.RightParen))
             {
-                ParameterDeclaration parameter = null;
+                ParameterDeclaration? parameter = null;
                 if (!this.ParseParameterDeclaration(reader, out parameter))
                 {
                     return false;
                 }
 
-                methodDef.AddParameter(parameter);
+                methodDef.AddParameter(parameter!);
 
                 tok = reader.Peek();
                 if (tok.Is(Keyword.SemiColon))
@@ -329,13 +332,13 @@ namespace TEAC
                 tok = reader.Peek();
                 while (!tok.Is(Keyword.RightParen))
                 {
-                    Expression arg = null;
+                    Expression? arg = null;
                     if (!this.ParseExpression(reader, out arg))
                     {
                         return false;
                     }
 
-                    methodDef.BaseConstructorArguments.Add(arg);
+                    methodDef.BaseConstructorArguments.Add(arg!);
                     tok = reader.Peek();
                     if (!tok.Is(Keyword.Comma))
                     {
@@ -361,7 +364,7 @@ namespace TEAC
             tok = reader.Peek();
             if (tok.Is(Keyword.Var))
             {
-                VarBlock varBlock = null;
+                VarBlock? varBlock = null;
                 if (!this.ParseVarBlock(reader, true, out varBlock))
                 {
                     return false;
@@ -370,7 +373,7 @@ namespace TEAC
                 methodDef.LocalVariables = varBlock;
             }
 
-            BlockStatement body = null;
+            BlockStatement? body = null;
             if (!this.ParseBlockStatement(reader, out body))
             {
                 return false;
@@ -381,26 +384,26 @@ namespace TEAC
             return true;
         }
 
-        private bool ParseDestructorDefinition(TokenReader reader, out MethodDefinition method)
+        private bool ParseDestructorDefinition(TokenReader reader, out MethodDefinition? method)
         {
             method = null;
-            Token start = reader.Peek();
+            Token? start = reader.Peek();
             if (!this.Expect(reader, Keyword.Destructor))
             {
                 return false;
             }
 
-            string methodName = null;
+            string? methodName = null;
             if (!this.ParseFullNameDeclaration(reader, out methodName))
             {
                 return false;
             }
 
-            methodName = methodName + ".destructor";
+            methodName = methodName! + ".destructor";
 
             MethodDefinition methodDef = new MethodDefinition(
-                start,
-                methodName);
+                start!,
+                methodName!);
 
             if (!this.Expect(reader, Keyword.LeftParen))
             {
@@ -417,10 +420,10 @@ namespace TEAC
                 return false;
             }
 
-            Token tok = reader.Peek();
+            Token? tok = reader.Peek();
             if (tok.Is(Keyword.Var))
             {
-                VarBlock varBlock = null;
+                VarBlock? varBlock = null;
                 if (!this.ParseVarBlock(reader, true, out varBlock))
                 {
                     return false;
@@ -429,7 +432,7 @@ namespace TEAC
                 methodDef.LocalVariables = varBlock;
             }
 
-            BlockStatement body = null;
+            BlockStatement? body = null;
             if (!this.ParseBlockStatement(reader, out body))
             {
                 return false;
@@ -440,21 +443,21 @@ namespace TEAC
             return true;
         }
 
-        private bool ParseBlockStatement(TokenReader reader, out BlockStatement result)
+        private bool ParseBlockStatement(TokenReader reader, out BlockStatement? result)
         {
             result = null;
-            Token tok = reader.Peek();
-            Token start = tok;
+            Token? tok = reader.Peek();
+            Token? start = tok;
             if (!this.Expect(reader, Keyword.Begin))
             {
                 return false;
             }
 
-            BlockStatement block = new BlockStatement(start);
+            BlockStatement block = new BlockStatement(start!);
             tok = reader.Peek();
             while (!tok.Is(Keyword.End))
             {
-                Statement statement = null;
+                Statement? statement = null;
                 if (!this.ParseStatement(reader, out statement))
                 {
                     return false;
@@ -482,11 +485,11 @@ namespace TEAC
             return true;
         }
 
-        private bool ParseStatement(TokenReader reader, out Statement result)
+        private bool ParseStatement(TokenReader reader, out Statement? result)
         {
             result = null;
-            Token tok = reader.Peek();
-            Token start = tok;
+            Token? tok = reader.Peek();
+            Token? start = tok;
 
             if (tok.Is(Keyword.SemiColon))
             {
@@ -510,13 +513,13 @@ namespace TEAC
 
             if (tok.Is(Keyword.Begin))
             {
-                BlockStatement block = null;
+                BlockStatement? block = null;
                 bool success = this.ParseBlockStatement(reader, out block);
                 result = block;
                 return success;
             }
 
-            ReferenceExpression lhs = null;
+            ReferenceExpression? lhs = null;
             if (!this.ParseReferenceExpression(reader, out lhs))
             {
                 return false;
@@ -526,44 +529,44 @@ namespace TEAC
             if (tok.Is(Keyword.Assign))
             {
                 reader.Read();
-                Expression rhs = null;
+                Expression? rhs = null;
                 if (!this.ParseExpression(reader, out rhs))
                 {
                     return false;
                 }
 
-                result = new AssignmentStatement(start, lhs, rhs);
+                result = new AssignmentStatement(start!, lhs!, rhs!);
                 return true;
             }
             else
             {
-                result = new CallStatement(start, lhs);
+                result = new CallStatement(start!, lhs!);
                 return true;
             }
         }
 
-        private bool ParseDeleteStatement(TokenReader reader, out Statement statement)
+        private bool ParseDeleteStatement(TokenReader reader, out Statement? statement)
         {
             statement = null;
-            Token start = reader.Peek();
+            Token? start = reader.Peek();
             if (!this.Expect(reader, Keyword.Delete))
             {
                 return false;
             }
 
-            Expression operand = null;
+            Expression? operand = null;
             if (!this.ParseExpression(reader, out operand))
             {
                 return false;
             }
 
-            statement = new DeleteStatement(start, operand);
+            statement = new DeleteStatement(start!, operand!);
             return true;
         }
 
-        private bool ParseIfStatement(TokenReader reader, out Statement statement)
+        private bool ParseIfStatement(TokenReader reader, out Statement? statement)
         {
-            Token start = reader.Peek();
+            Token? start = reader.Peek();
             statement = null;
             
             if (!this.Expect(reader, Keyword.If))
@@ -571,8 +574,8 @@ namespace TEAC
                 return false;
             }
 
-            IfStatement ifStatement = new IfStatement(start);
-            Expression condition = null;
+            IfStatement ifStatement = new IfStatement(start!);
+            Expression? condition = null;
             if (!this.ParseExpression(reader, out condition))
             {
                 return false;
@@ -584,18 +587,18 @@ namespace TEAC
                 return false;
             }
 
-            Statement trueStatement = null;
+            Statement? trueStatement = null;
             if (!this.ParseStatement(reader, out trueStatement))
             {
                 return false;
             }
 
             ifStatement.TrueStatement = trueStatement;
-            Token tok = reader.Peek();
+            Token? tok = reader.Peek();
             if (tok.Is(Keyword.Else))
             {
                 reader.Read();
-                Statement falseStatement = null;
+                Statement? falseStatement = null;
                 if (!this.ParseStatement(reader, out falseStatement))
                 {
                     return false;
@@ -608,17 +611,17 @@ namespace TEAC
             return true;
         }
 
-        private bool ParseWhileStatement(TokenReader reader, out Statement statement)
+        private bool ParseWhileStatement(TokenReader reader, out Statement? statement)
         {
-            Token start = reader.Peek();
+            Token? start = reader.Peek();
             statement = null;
             if (!this.Expect(reader, Keyword.While))
             {
                 return false;
             }
 
-            WhileStatement whileStatement = new WhileStatement(start);
-            Expression condition = null;
+            WhileStatement? whileStatement = new WhileStatement(start!);
+            Expression? condition = null;
             if (!this.ParseExpression(reader, out condition))
             {
                 return false;
@@ -630,7 +633,7 @@ namespace TEAC
                 return false;
             }
 
-            Statement bodyStatement = null;
+            Statement? bodyStatement = null;
             if (!this.ParseStatement(reader, out bodyStatement))
             {
                 return false;
@@ -641,27 +644,27 @@ namespace TEAC
             return true;
         }
 
-        private bool ParseExpression(TokenReader reader, out Expression result)
+        private bool ParseExpression(TokenReader reader, out Expression? result)
         {
             result = null;
-            Token start = reader.Peek();
-            Expression firstTerm = null;
+            Token? start = reader.Peek();
+            Expression? firstTerm = null;
             if (!this.ParseSimpleExpression(reader, out firstTerm))
             {
                 return false;
             }
 
-            Token tok = reader.Peek();
+            Token? tok = reader.Peek();
             if (tok.IsRelationalOperator())
             {
                 reader.Read();
-                Expression term = null;
+                Expression? term = null;
                 if (!this.ParseSimpleExpression(reader, out term))
                 {
                     return false;
                 }
 
-                result = new RelationalExpression(start, firstTerm, ((KeywordToken)tok).Value, term);
+                result = new RelationalExpression(start!, firstTerm!, ((KeywordToken)tok!).Value, term!);
             }
             else
             {
@@ -671,14 +674,14 @@ namespace TEAC
             return true;
         }
 
-        private bool ParseReferenceExpression(TokenReader reader, out ReferenceExpression result)
+        private bool ParseReferenceExpression(TokenReader reader, out ReferenceExpression? result)
         {
-            ReferenceExpression inner = null;
-            Token tok = reader.Peek();
-            string identifier = null;
+            ReferenceExpression? inner = null;
+            Token? tok = reader.Peek();
+            string? identifier = null;
             if (tok.Is(Keyword.Inherited))
             {
-                inner = new InheritedReferenceExpression(tok);
+                inner = new InheritedReferenceExpression(tok!);
                 reader.Read();
             }
             else
@@ -689,7 +692,7 @@ namespace TEAC
                     return false;
                 }
 
-                inner = new NamedReferenceExpression(tok, identifier);
+                inner = new NamedReferenceExpression(tok!, identifier!);
             }
 
             tok = reader.Peek();
@@ -698,19 +701,19 @@ namespace TEAC
                 if (tok.Is(Keyword.LeftParen))
                 {
                     reader.Read();
-                    CallReferenceExpression callExpr = new CallReferenceExpression(tok, inner);
+                    CallReferenceExpression callExpr = new CallReferenceExpression(tok!, inner!);
                     inner = callExpr;
                     tok = reader.Peek();
                     if (!tok.Is(Keyword.RightParen))
                     {
-                        Expression arg = null;
+                        Expression? arg = null;
                         if (!this.ParseExpression(reader, out arg))
                         {
                             result = null;
                             return false;
                         }
 
-                        callExpr.AddArgument(arg);
+                        callExpr.AddArgument(arg!);
 
                         tok = reader.Peek();
                         while (tok.Is(Keyword.Comma))
@@ -722,7 +725,7 @@ namespace TEAC
                                 return false;
                             }
 
-                            callExpr.AddArgument(arg);
+                            callExpr.AddArgument(arg!);
 
                             tok = reader.Peek();
                         }
@@ -737,7 +740,7 @@ namespace TEAC
                 else if (tok.Is(Keyword.LeftBracket))
                 {
                     reader.Read();
-                    Expression index = null;
+                    Expression? index = null;
                     if (!this.ParseExpression(reader, out index))
                     {
                         result = null;
@@ -750,7 +753,7 @@ namespace TEAC
                         return false;
                     }
 
-                    inner = new ArrayIndexReferenceExpression(tok, inner, index);
+                    inner = new ArrayIndexReferenceExpression(tok!, inner!, index!);
                 }
                 else if (tok.Is(Keyword.Dot))
                 {
@@ -761,12 +764,12 @@ namespace TEAC
                         return false;
                     }
 
-                    inner = new MemberReferenceExpression(tok, inner, identifier);
+                    inner = new MemberReferenceExpression(tok!, inner!, identifier!);
                 }
                 else if (tok.Is(Keyword.Pointer))
                 {
                     reader.Read();
-                    inner = new DereferenceExpression(tok, inner);
+                    inner = new DereferenceExpression(tok!, inner!);
                 }
                 else
                 {
@@ -780,27 +783,27 @@ namespace TEAC
             return true;
         }
 
-        private bool ParseSimpleExpression(TokenReader reader, out Expression result)
+        private bool ParseSimpleExpression(TokenReader reader, out Expression? result)
         {
-            Token start = reader.Peek();
+            Token? start = reader.Peek();
             result = null;
-            Expression outer = null;
+            Expression? outer = null;
             if (!this.ParseTermExpression(reader, out outer))
             {
                 return false;
             }
 
-            Token tok = reader.Peek();
+            Token? tok = reader.Peek();
             while (tok.Is(Keyword.Plus) || tok.Is(Keyword.Minus) || tok.Is(Keyword.Or))
             {
                 reader.Read();
-                Expression term = null;
+                Expression? term = null;
                 if (!this.ParseTermExpression(reader, out term))
                 {
                     return false;
                 }
 
-                outer = new SimpleExpression(start, outer, ((KeywordToken)tok).Value, term);
+                outer = new SimpleExpression(start!, outer!, ((KeywordToken)tok!).Value, term!);
 
                 tok = reader.Peek();
             }
@@ -809,27 +812,27 @@ namespace TEAC
             return true;
         }
 
-        private bool ParseTermExpression(TokenReader reader, out Expression result)
+        private bool ParseTermExpression(TokenReader reader, out Expression? result)
         {
             result = null;
-            Token start = reader.Peek();
-            Expression outer = null;
+            Token? start = reader.Peek();
+            Expression? outer = null;
             if (!this.ParseFactorExpression(reader, out outer))
             {
                 return false;
             }
 
-            Token tok = reader.Peek();
+            Token? tok = reader.Peek();
             while (tok.Is(Keyword.Star) || tok.Is(Keyword.Slash) || tok.Is(Keyword.Div) || tok.Is(Keyword.And) || tok.Is(Keyword.Mod))
             {
                 reader.Read();
-                Expression factor = null;
+                Expression? factor = null;
                 if (!this.ParseFactorExpression(reader, out factor))
                 {
                     return false;
                 }
 
-                outer = new TermExpression(start, outer, ((KeywordToken)tok).Value, factor);
+                outer = new TermExpression(start!, outer!, ((KeywordToken)tok!).Value, factor!);
                 tok = reader.Peek();
             }
 
@@ -837,9 +840,9 @@ namespace TEAC
             return true;
         }
 
-        private bool ParseFactorExpression(TokenReader reader, out Expression result)
+        private bool ParseFactorExpression(TokenReader reader, out Expression? result)
         {
-            Token tok = reader.Peek();
+            Token? tok = reader.Peek();
             if (tok.Is(Keyword.LeftParen))
             {
                 reader.Read();
@@ -874,28 +877,28 @@ namespace TEAC
             if (tok.Is(Keyword.Nil))
             {
                 reader.Read();
-                result = new LiteralExpression(tok, null);
+                result = new LiteralExpression(tok!, null);
                 return true;
             }
 
             if (tok.Is(Keyword.True))
             {
                 reader.Read();
-                result = new LiteralExpression(tok, true);
+                result = new LiteralExpression(tok!, true);
                 return true;
             }
 
             if (tok.Is(Keyword.False))
             {
                 reader.Read();
-                result = new LiteralExpression(tok, false);
+                result = new LiteralExpression(tok!, false);
                 return true;
             }
 
-            LiteralToken literalTok = tok as LiteralToken;
+            LiteralToken? literalTok = tok as LiteralToken;
             if (literalTok != null)
             {
-                result = new LiteralExpression(tok, literalTok.Value);
+                result = new LiteralExpression(tok!, literalTok!.Value);
                 reader.Read();
                 return true;
             }
@@ -907,7 +910,7 @@ namespace TEAC
 
             if (tok is IdentifierToken || tok.Is(Keyword.Inherited))
             {
-                ReferenceExpression refExpr = null;
+                ReferenceExpression? refExpr = null;
                 if (!this.ParseReferenceExpression(reader, out refExpr))
                 {
                     result = null;
@@ -927,93 +930,93 @@ namespace TEAC
             return false;
         }
 
-        private bool ParseNotExpression(TokenReader reader, out Expression expression)
+        private bool ParseNotExpression(TokenReader reader, out Expression? expression)
         {
             expression = null;
-            Token start = reader.Peek();
+            Token? start = reader.Peek();
             if (!this.Expect(reader, Keyword.Not))
             {
                 return false;
             }
 
-            Expression inner = null;
+            Expression? inner = null;
             if (!this.ParseFactorExpression(reader, out inner))
             {
                 return false;
             }
 
-            expression = new NotExpression(start, inner);
+            expression = new NotExpression(start!, inner!);
             return true;
         }
 
-        private bool ParseNegativeExpression(TokenReader reader, out Expression expression)
+        private bool ParseNegativeExpression(TokenReader reader, out Expression? expression)
         {
             expression = null;
-            Token start = reader.Peek();
+            Token? start = reader.Peek();
             if (!this.Expect(reader, Keyword.Minus))
             {
                 return false;
             }
 
-            Expression inner = null;
+            Expression? inner = null;
             if (!this.ParseFactorExpression(reader, out inner))
             {
                 return false;
             }
 
-            expression = new NegativeExpression(start, inner);
+            expression = new NegativeExpression(start!, inner!);
             return true;
         }
 
-        private bool ParseAddressExpression(TokenReader reader, out Expression expression)
+        private bool ParseAddressExpression(TokenReader reader, out Expression? expression)
         {
             expression = null;
-            Token tok = reader.Peek();
+            Token? tok = reader.Peek();
             if (!this.Expect(reader, Keyword.Address))
             {
                 return false;
             }
 
-            ReferenceExpression refExpr = null;
+            ReferenceExpression? refExpr = null;
             if (!this.ParseReferenceExpression(reader, out refExpr))
             {
                 return false;
             }
 
-            expression = new AddressExpression(tok, refExpr);
+            expression = new AddressExpression(tok!, refExpr!);
             return true;
         }
 
-        private bool ParseNewExpression(TokenReader reader, out Expression expression)
+        private bool ParseNewExpression(TokenReader reader, out Expression? expression)
         {
             expression = null;
-            Token start = reader.Peek();
+            Token? start = reader.Peek();
             if (!this.Expect(reader, Keyword.New))
             {
                 return false;
             }
 
-            TypeReference typeRef = null;
+            TypeReference? typeRef = null;
             if (!this.ParseTypeReference(reader, out typeRef))
             {
                 return false;
             }
 
             List<Expression> args = new List<Expression>();
-            Token tok = reader.Peek();
+            Token? tok = reader.Peek();
             if (tok.Is(Keyword.LeftParen))
             {
                 reader.Read();
                 tok = reader.Peek();
                 while (tok != null && !tok.Is(Keyword.RightParen))
                 {
-                    Expression arg = null;
+                    Expression? arg = null;
                     if (!this.ParseExpression(reader, out arg))
                     {
                         return false;
                     }
 
-                    args.Add(arg);
+                    args.Add(arg!);
                     tok = reader.Peek();
                     if (!tok.Is(Keyword.Comma))
                     {
@@ -1031,7 +1034,7 @@ namespace TEAC
                 }
             }
 
-            expression = new NewExpression(start, typeRef, args);
+            expression = new NewExpression(start!, typeRef!, args);
             return true;
         }
 
@@ -1042,11 +1045,11 @@ namespace TEAC
                 return false;
             }
 
-            IdentifierToken typeName = reader.Peek() as IdentifierToken;
+            IdentifierToken? typeName = reader.Peek() as IdentifierToken;
             while (typeName != null)
             {
                 reader.Read();
-                TypeDeclaration type = null;
+                TypeDeclaration? type = null;
 
                 if (!this.Expect(reader, Keyword.Equals))
                 {
@@ -1054,7 +1057,7 @@ namespace TEAC
                 }
 
                 bool isPublic = false;
-                Token tok = reader.Peek();
+                Token? tok = reader.Peek();
                 if (tok.Is(Keyword.Public))
                 {
                     isPublic = true;
@@ -1091,8 +1094,8 @@ namespace TEAC
                     }
                 }
 
-                type.IsPublic = isPublic;
-                program.AddType(type);
+                type!.IsPublic = isPublic;
+                program.AddType(type!);
                 if (!this.Expect(reader, Keyword.SemiColon))
                 {
                     return false;
@@ -1104,7 +1107,7 @@ namespace TEAC
             return true;
         }
 
-        private bool ParseInterfaceDeclaration(IdentifierToken typeName, TokenReader reader, out TypeDeclaration type)
+        private bool ParseInterfaceDeclaration(IdentifierToken typeName, TokenReader reader, out TypeDeclaration? type)
         {
             InterfaceDeclaration interfaceDecl = new InterfaceDeclaration(typeName, typeName.Value);
             type = null;
@@ -1114,11 +1117,11 @@ namespace TEAC
                 return false;
             }
 
-            Token tok = reader.Peek();
+            Token? tok = reader.Peek();
             if (tok.Is(Keyword.LeftParen))
             {
                 reader.Read();
-                string baseInterfaceName = null;
+                string? baseInterfaceName = null;
                 if (!this.ParseFullNameDeclaration(reader, out baseInterfaceName))
                 {
                     return false;
@@ -1135,13 +1138,13 @@ namespace TEAC
             tok = reader.Peek();
             while (tok != null && (tok.Is(Keyword.Function) || tok.Is(Keyword.Procedure)))
             {
-                MethodDeclaration method = null;
+                MethodDeclaration? method = null;
                 if (!this.ParseMethodDeclaration(reader, out method))
                 {
                     return false;
                 }
 
-                interfaceDecl.Methods.Add(method);
+                interfaceDecl.Methods.Add(method!);
                 if (!this.Expect(reader, Keyword.SemiColon))
                 {
                     return false;
@@ -1159,13 +1162,13 @@ namespace TEAC
             return true;
         }
 
-        private bool ParseMethodTypeDeclaration(IdentifierToken typeName, TokenReader reader, out TypeDeclaration type)
+        private bool ParseMethodTypeDeclaration(IdentifierToken typeName, TokenReader reader, out TypeDeclaration? type)
         {
             MethodTypeDeclaration methodDecl = new MethodTypeDeclaration(typeName, typeName.Value);
             type = null;
             bool isFunction = false;
 
-            Token tok = reader.Peek();
+            Token? tok = reader.Peek();
             if (tok.Is(Keyword.Function))
             {
                 isFunction = true;
@@ -1177,7 +1180,7 @@ namespace TEAC
             if (tok.Is(Keyword.Of))
             {
                 reader.Read();
-                TypeReference implicitArgType = null;
+                TypeReference? implicitArgType = null;
                 if (!this.ParseTypeReference(reader, out implicitArgType))
                 {
                     return false;
@@ -1194,13 +1197,13 @@ namespace TEAC
             tok = reader.Peek();
             while (!tok.Is(Keyword.RightParen))
             {
-                ParameterDeclaration parameter = null;
+                ParameterDeclaration? parameter = null;
                 if (!this.ParseParameterDeclaration(reader, out parameter))
                 {
                     return false;
                 }
 
-                methodDecl.AddParameter(parameter);
+                methodDecl.AddParameter(parameter!);
 
                 tok = reader.Peek();
                 if (tok.Is(Keyword.SemiColon))
@@ -1222,7 +1225,7 @@ namespace TEAC
                     return false;
                 }
 
-                TypeReference returnType = null;
+                TypeReference? returnType = null;
                 if (!this.ParseTypeReference(reader, out returnType))
                 {
                     return false;
@@ -1235,7 +1238,7 @@ namespace TEAC
             return true;
         }
 
-        private bool ParseEnumDeclaration(IdentifierToken typeName, TokenReader reader, out TypeDeclaration type)
+        private bool ParseEnumDeclaration(IdentifierToken typeName, TokenReader reader, out TypeDeclaration? type)
         {
             EnumDeclaration enumDecl = new EnumDeclaration(typeName, typeName.Value);
             type = null;
@@ -1244,15 +1247,15 @@ namespace TEAC
                 return false;
             }
 
-            string name = null;
+            string? name = null;
             if (!this.ExpectIdentifier(reader, out name))
             {
                 return false;
             }
 
-            enumDecl.AddValue(name);
+            enumDecl.AddValue(name!);
 
-            Token tok = reader.Peek();
+            Token? tok = reader.Peek();
             while (tok.Is(Keyword.Comma))
             {
                 reader.Read();
@@ -1261,7 +1264,7 @@ namespace TEAC
                     return false;
                 }
 
-                enumDecl.AddValue(name);
+                enumDecl.AddValue(name!);
 
                 tok = reader.Peek();
             }
@@ -1275,10 +1278,10 @@ namespace TEAC
             return true;
         }
 
-        public bool ParseClassDeclaration(IdentifierToken typeName, TokenReader reader, out TypeDeclaration type)
+        public bool ParseClassDeclaration(IdentifierToken typeName, TokenReader reader, out TypeDeclaration? type)
         {
             type = null;
-            Token tok = reader.Peek();
+            Token? tok = reader.Peek();
             bool isStatic = false;
             if (tok.Is(Keyword.Static))
             {
@@ -1292,7 +1295,7 @@ namespace TEAC
                 return false;
             }
 
-            string baseType = null;
+            string? baseType = null;
             tok = reader.Peek();
             if (tok.Is(Keyword.LeftParen))
             {
@@ -1324,13 +1327,13 @@ namespace TEAC
                     return false;
                 }
 
-                string interfaceName = null;
+                string? interfaceName = null;
                 if (!ParseFullNameDeclaration(reader, out interfaceName))
                 {
                     return false;
                 }
 
-                classDecl.AddInterface(interfaceName);
+                classDecl.AddInterface(interfaceName!);
                 tok = reader.Peek();
                 while (tok.Is(Keyword.Comma))
                 {
@@ -1340,7 +1343,7 @@ namespace TEAC
                         return false;
                     }
 
-                    classDecl.AddInterface(interfaceName);
+                    classDecl.AddInterface(interfaceName!);
                     tok = reader.Peek();
                 }
 
@@ -1364,13 +1367,13 @@ namespace TEAC
                     tok.Is(Keyword.Constructor) ||
                     tok.Is(Keyword.Destructor))
                 {
-                    MethodDeclaration methodDecl = null;
+                    MethodDeclaration? methodDecl = null;
                     if (!this.ParseMethodDeclaration(reader, out methodDecl))
                     {
                         return false;
                     }
 
-                    classDecl.AddPublicMethod(methodDecl);
+                    classDecl.AddPublicMethod(methodDecl!);
                     if (!this.Expect(reader, Keyword.SemiColon))
                     {
                         return false;
@@ -1394,13 +1397,13 @@ namespace TEAC
                     tok.Is(Keyword.Constructor) ||
                     tok.Is(Keyword.Destructor))
                 {
-                    MethodDeclaration methodDecl = null;
+                    MethodDeclaration? methodDecl = null;
                     if (!this.ParseMethodDeclaration(reader, out methodDecl))
                     {
                         return false;
                     }
 
-                    classDecl.AddProtectedMethod(methodDecl);
+                    classDecl.AddProtectedMethod(methodDecl!);
                     if (!this.Expect(reader, Keyword.SemiColon))
                     {
                         return false;
@@ -1422,13 +1425,13 @@ namespace TEAC
                     tok.Is(Keyword.Constructor) ||
                     tok.Is(Keyword.Destructor))
                 {
-                    MethodDeclaration methodDecl = null;
+                    MethodDeclaration? methodDecl = null;
                     if (!this.ParseMethodDeclaration(reader, out methodDecl))
                     {
                         return false;
                     }
 
-                    classDecl.AddPrivateMethod(methodDecl);
+                    classDecl.AddPrivateMethod(methodDecl!);
                     if (!this.Expect(reader, Keyword.SemiColon))
                     {
                         return false;
@@ -1441,7 +1444,7 @@ namespace TEAC
             tok = reader.Peek();
             if (tok.Is(Keyword.Var))
             {
-                VarBlock varBlock = null;
+                VarBlock? varBlock = null;
                 if (!this.ParseVarBlock(reader, false, out varBlock))
                 {
                     return false;
@@ -1459,11 +1462,11 @@ namespace TEAC
             return true;
         }
 
-        private bool ParseMethodDeclaration(TokenReader reader, out MethodDeclaration method)
+        private bool ParseMethodDeclaration(TokenReader reader, out MethodDeclaration? method)
         {
             method = null;
-            Token tok = reader.Peek();
-            Token start = tok;
+            Token? tok = reader.Peek();
+            Token? start = tok;
             if (tok.Is(Keyword.Constructor))
             {
                 return this.ParseConstructorDeclaration(reader, out method);
@@ -1520,15 +1523,15 @@ namespace TEAC
                 }
             }
 
-            string methodName = null;
+            string? methodName = null;
             if (!this.ExpectIdentifier(reader, out methodName))
             {
                 return false;
             }
 
             MethodDeclaration methodDecl = new MethodDeclaration(
-                start,
-                methodName,
+                start!,
+                methodName!,
                 isStatic,
                 isVirtual,
                 isAbstract);
@@ -1541,13 +1544,13 @@ namespace TEAC
             tok = reader.Peek();
             while (!tok.Is(Keyword.RightParen))
             {
-                ParameterDeclaration parameter = null;
+                ParameterDeclaration? parameter = null;
                 if (!this.ParseParameterDeclaration(reader, out parameter))
                 {
                     return false;
                 }
 
-                methodDecl.AddParameter(parameter);
+                methodDecl.AddParameter(parameter!);
 
                 tok = reader.Peek();
                 if (tok.Is(Keyword.SemiColon))
@@ -1569,7 +1572,7 @@ namespace TEAC
                     return false;
                 }
 
-                TypeReference returnType = null;
+                TypeReference? returnType = null;
                 if (!this.ParseTypeReference(reader, out returnType))
                 {
                     return false;
@@ -1582,9 +1585,9 @@ namespace TEAC
             return true;
         }
 
-        private bool ParseConstructorDeclaration(TokenReader reader, out MethodDeclaration method)
+        private bool ParseConstructorDeclaration(TokenReader reader, out MethodDeclaration? method)
         {
-            Token start = reader.Peek();
+            Token? start = reader.Peek();
             if (!this.Expect(reader, Keyword.Constructor))
             {
                 method = null;
@@ -1593,7 +1596,7 @@ namespace TEAC
 
             method = null;
             MethodDeclaration methodDecl = new MethodDeclaration(
-                start,
+                start!,
                 "constructor",
                 false,
                 false,
@@ -1604,16 +1607,16 @@ namespace TEAC
                 return false;
             }
 
-            Token tok = reader.Peek();
+            Token? tok = reader.Peek();
             while (!tok.Is(Keyword.RightParen))
             {
-                ParameterDeclaration parameter = null;
+                ParameterDeclaration? parameter = null;
                 if (!this.ParseParameterDeclaration(reader, out parameter))
                 {
                     return false;
                 }
 
-                methodDecl.AddParameter(parameter);
+                methodDecl.AddParameter(parameter!);
 
                 tok = reader.Peek();
                 if (tok.Is(Keyword.SemiColon))
@@ -1635,9 +1638,9 @@ namespace TEAC
         private bool ParseDestructorDeclaration(
             TokenReader reader, 
             bool isVirtual, 
-            out MethodDeclaration method)
+            out MethodDeclaration? method)
         {
-            Token tok = reader.Peek();
+            Token? tok = reader.Peek();
             if (!this.Expect(reader, Keyword.Destructor))
             {
                 method = null;
@@ -1657,7 +1660,7 @@ namespace TEAC
             }
 
             method = new MethodDeclaration(
-                tok, 
+                tok!, 
                 "destructor", 
                 false,
                 isVirtual,
@@ -1665,29 +1668,29 @@ namespace TEAC
             return true;
         }
 
-        private bool ParseTypeReference(TokenReader reader, out TypeReference type)
+        private bool ParseTypeReference(TokenReader reader, out TypeReference? type)
         {
-            Token tok = reader.Peek();
-            Token start = tok;
+            Token? tok = reader.Peek();
+            Token? start = tok;
             type = null;
 
             if (tok.Is(Keyword.Pointer))
             {
                 reader.Read();
-                TypeReference elementType = null;
+                TypeReference? elementType = null;
                 if (!this.ParseTypeReference(reader, out elementType))
                 {
                     return false;
                 }
 
-                type = new PointerTypeReference(start, elementType);
+                type = new PointerTypeReference(start!, elementType!);
                 return true;
             }
             else if (tok.Is(Keyword.Array))
             {
                 reader.Read();
                 tok = reader.Peek();
-                Expression elementCount = null;
+                Expression? elementCount = null;
                 if (tok.Is(Keyword.LeftBracket))
                 {
                     reader.Read();
@@ -1709,41 +1712,41 @@ namespace TEAC
                     return false;
                 }
 
-                TypeReference elementType = null;
+                TypeReference? elementType = null;
                 if (!this.ParseTypeReference(reader, out elementType))
                 {
                     return false;
                 }
 
-                type = new ArrayTypeReference(start, elementCount, elementType);
+                type = new ArrayTypeReference(start!, elementCount!, elementType!);
                 return true;
             }
             else
             {
-                string typeName = null;
+                string? typeName = null;
                 if (!this.ParseFullNameDeclaration(reader, out typeName))
                 {
                     return false;
                 }
 
-                type = new NamedTypeReference(start, typeName);
+                type = new NamedTypeReference(start!, typeName);
                 return true;
             }
         }
 
-        private bool ParseParameterDeclaration(TokenReader reader, out ParameterDeclaration parameter)
+        private bool ParseParameterDeclaration(TokenReader reader, out ParameterDeclaration? parameter)
         {
             List<string> parameterNames = new List<string>();
             parameter = null;
-            Token start = reader.Peek();
-            string parameterName = null;
+            Token? start = reader.Peek();
+            string? parameterName = null;
             if (!this.ExpectIdentifier(reader, out parameterName))
             {
                 return false;
             }
 
-            parameterNames.Add(parameterName);
-            Token tok = reader.Peek();
+            parameterNames.Add(parameterName!);
+            Token? tok = reader.Peek();
             while (tok.Is(Keyword.Comma))
             {
                 reader.Read();
@@ -1752,7 +1755,7 @@ namespace TEAC
                     return false;
                 }
 
-                parameterNames.Add(parameterName);
+                parameterNames.Add(parameterName!);
                 tok = reader.Peek();
             }
 
@@ -1761,34 +1764,34 @@ namespace TEAC
                 return false;
             }
 
-            TypeReference type = null;
+            TypeReference? type = null;
             if (!this.ParseTypeReference(reader, out type))
             {
                 return false;
             }
 
             ParameterDeclaration parameterDecl = new ParameterDeclaration(
-                start, 
+                start!, 
                 parameterNames,
-                type);
+                type!);
 
             parameter = parameterDecl;
             return true;
         }
 
-        private bool ParseVariableDeclaration(TokenReader reader, bool allowInitializer, out VariableDeclaration variable)
+        private bool ParseVariableDeclaration(TokenReader reader, bool allowInitializer, out VariableDeclaration? variable)
         {
             List<string> variableNames = new List<string>();
             variable = null;
-            Token start = reader.Peek();
-            string variableName = null;
+            Token? start = reader.Peek();
+            string? variableName = null;
             if (!this.ExpectIdentifier(reader, out variableName))
             {
                 return false;
             }
 
-            variableNames.Add(variableName);
-            Token tok = reader.Peek();
+            variableNames.Add(variableName!);
+            Token? tok = reader.Peek();
             while (tok.Is(Keyword.Comma))
             {
                 reader.Read();
@@ -1797,7 +1800,7 @@ namespace TEAC
                     return false;
                 }
 
-                variableNames.Add(variableName);
+                variableNames.Add(variableName!);
                 tok = reader.Peek();
             }
 
@@ -1806,13 +1809,13 @@ namespace TEAC
                 return false;
             }
 
-            TypeReference type = null;
+            TypeReference? type = null;
             if (!this.ParseTypeReference(reader, out type))
             {
                 return false;
             }
 
-            Expression initExpr = null;
+            Expression? initExpr = null;
             if (allowInitializer)
             {
                 tok = reader.Peek();
@@ -1827,9 +1830,9 @@ namespace TEAC
             }
 
             VariableDeclaration variableDecl = new VariableDeclaration(
-                start,
+                start!,
                 variableNames,
-                type,
+                type!,
                 initExpr);
 
             variable = variableDecl;
@@ -1839,19 +1842,19 @@ namespace TEAC
         private bool ParseVarBlock(
             TokenReader reader,
             bool allowInitializers,
-            out VarBlock value)
+            out VarBlock? value)
         {
-            VarBlock varBlock = new VarBlock(reader.Peek());
+            VarBlock? varBlock = new VarBlock(reader.Peek()!);
             value = null;
             if (!this.Expect(reader, Keyword.Var))
             {
                 return false;
             }
 
-            Token tok = reader.Peek();
+            Token? tok = reader.Peek();
             while (tok != null && tok is IdentifierToken)
             {
-                VariableDeclaration varDecl = null;
+                VariableDeclaration? varDecl = null;
                 if (!this.ParseVariableDeclaration(reader, allowInitializers, out varDecl))
                 {
                     return false;
@@ -1862,7 +1865,7 @@ namespace TEAC
                     return false;
                 }
 
-                varBlock.Variables.Add(varDecl);
+                varBlock.Variables.Add(varDecl!);
                 tok = reader.Peek();
             }
 
@@ -1872,16 +1875,16 @@ namespace TEAC
 
         private bool ParseFullNameDeclaration(TokenReader reader, out string value)
         {
-            value = null;
+            value = string.Empty;
             StringBuilder sb = new StringBuilder();
-            string identifier = null;
+            string? identifier = null;
             if (!this.ExpectIdentifier(reader, out identifier))
             {
                 return false;
             }
 
             sb.Append(identifier);
-            Token tok = reader.Peek();
+            Token? tok = reader.Peek();
             while (tok.Is(Keyword.Dot))
             {
                 reader.Read();
@@ -1901,7 +1904,7 @@ namespace TEAC
 
         private bool ExpectEndOfFile(TokenReader reader)
         {
-            Token tok = reader.Read();
+            Token? tok = reader.Read();
             if (tok != null)
             {
                 this.log.Write(new Message(
@@ -1916,10 +1919,10 @@ namespace TEAC
             return true;
         }
 
-        private bool ExpectIdentifier(TokenReader reader, out string value)
+        private bool ExpectIdentifier(TokenReader reader, out string? value)
         {
             value = null;
-            Token token = reader.Read();
+            Token? token = reader.Read();
             if (token == null)
             {
                 string message = string.Format(
@@ -1930,7 +1933,7 @@ namespace TEAC
                 return false;
             }
 
-            IdentifierToken idTok = token as IdentifierToken;
+            IdentifierToken? idTok = token as IdentifierToken;
             if (idTok == null)
             {
                 string message = string.Format(
@@ -1947,7 +1950,7 @@ namespace TEAC
 
         private bool Expect(TokenReader reader, Keyword keyword)
         {
-            Token token = reader.Read();
+            Token? token = reader.Read();
             if (token == null)
             {
                 string message = string.Format(
@@ -1959,7 +1962,7 @@ namespace TEAC
                 return false;
             }
 
-            KeywordToken keyToken = token as KeywordToken;
+            KeywordToken? keyToken = token as KeywordToken;
             if (keyToken == null || keyToken.Value != keyword)
             {
                 string message = string.Format(

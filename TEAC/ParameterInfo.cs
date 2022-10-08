@@ -8,7 +8,7 @@
 
     internal class ParameterInfo
     {
-        public string Name { get; set; }
-        public TypeDefinition Type { get; set; }
+        public string? Name { get; set; }
+        public TypeDefinition? Type { get; set; }
     }
 }

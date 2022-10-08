@@ -14,6 +14,6 @@
             this.Inner = inner;
         }
 
-        public Expression Inner { get; private set; }
+        public Expression Inner { get; }
     }
 }

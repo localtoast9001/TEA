@@ -13,8 +13,8 @@ namespace TEAC
         {
         }
 
-        public Expression Condition { get; set; }
+        public Expression? Condition { get; set; }
 
-        public Statement BodyStatement { get; set; }
+        public Statement? BodyStatement { get; set; }
     }
 }

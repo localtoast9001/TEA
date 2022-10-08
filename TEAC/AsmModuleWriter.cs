@@ -41,7 +41,7 @@ namespace TEAC
                     writer.Write(dataEntry.Label);
                 }
 
-                for (int i = 0; i < dataEntry.Value.Length; i++)
+                for (int i = 0; i < dataEntry.Value?.Length; i++)
                 {
                     writer.Write("\t");
                     object val = dataEntry.Value[i];
@@ -68,16 +68,16 @@ namespace TEAC
 
             writer.WriteLine();
             writer.WriteLine(".code");
-            string mainMethod = null;
+            string? mainMethod = null;
             foreach (MethodImpl method in module.CodeSegment)
             {
-                if (method.Method.IsStatic &&
+                if ((method.Method?.IsStatic ?? false) &&
                    string.CompareOrdinal("Main", method.Method.Name) == 0 &&
                    method.Method.Parameters.Count == 2 &&
-                   string.CompareOrdinal(method.Method.Parameters[0].Type.FullName, "integer") == 0 &&
-                   string.CompareOrdinal(method.Method.Parameters[1].Type.FullName, "#0#0character") == 0)
+                   string.CompareOrdinal(method.Method?.Parameters[0].Type?.FullName, "integer") == 0 &&
+                   string.CompareOrdinal(method.Method?.Parameters[1].Type?.FullName, "#0#0character") == 0)
                 {
-                    mainMethod = method.Method.MangledName;
+                    mainMethod = method.Method?.MangledName;
                 }
 
                 foreach (string symbol in method.Symbols.Keys)
@@ -85,9 +85,9 @@ namespace TEAC
                     writer.WriteLine("{0}={1}", symbol, method.Symbols[symbol]);
                 }
 
-                writer.Write(method.Method.MangledName);
+                writer.Write(method.Method?.MangledName);
                 writer.Write(" PROC C");
-                if (method.Method.IsProtected || method.Method.IsPublic)
+                if (method.Method!.IsProtected || method.Method!.IsPublic)
                 {
                     writer.Write(" EXPORT");
                 }

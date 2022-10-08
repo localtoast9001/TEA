@@ -13,8 +13,7 @@
         {
             try
             {
-                Arguments arguments = null;
-                if (!Arguments.TryParse(args, out arguments))
+                if (!Arguments.TryParse(args, out Arguments? arguments))
                 {
                     Console.Error.WriteLine(Properties.Resources.Usage);
                     return 1;
@@ -22,23 +21,23 @@
 
                 MessageLog log = new MessageLog();
                 CompilerContext context = new CompilerContext();
-                context.AddIncludePaths(arguments.Includes);
+                context.AddIncludePaths(arguments!.Includes);
                 using (TokenReader reader = new TokenReader(arguments.InputFile, log))
                 {
                     Parser parser = new Parser(log);
-                    ProgramUnit programUnit = null;
+                    ProgramUnit? programUnit = null;
 
                     // parsing pass.
                     if (parser.TryParse(reader, out programUnit))
                     {
                         // code generation pass.
                         CodeGenerator codeGen = new CodeGenerator(log);
-                        if (codeGen.CreateTypes(context, programUnit))
+                        if (codeGen.CreateTypes(context, programUnit!))
                         {
-                            Module module = null;
-                            if (codeGen.CreateModule(context, programUnit, out module))
+                            Module? module = null;
+                            if (codeGen.CreateModule(context, programUnit!, out module))
                             {
-                                using (AsmModuleWriter moduleWriter = new AsmModuleWriter(arguments.OutputListing))
+                                using (AsmModuleWriter moduleWriter = new AsmModuleWriter(arguments!.OutputListing))
                                 {
                                     moduleWriter.Write(module);
                                 }

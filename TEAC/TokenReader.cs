@@ -66,7 +66,7 @@ namespace TEAC
         private StreamReader inner;
         private int line;
         private int column;
-        private Token next;
+        private Token? next;
         private MessageLog log;
 
         public TokenReader(string path, MessageLog log)
@@ -92,19 +92,19 @@ namespace TEAC
             this.inner.Dispose();
         }
 
-        public Token Read()
+        public Token? Read()
         {
             if (this.next == null)
             {
                 this.Peek();
             }
 
-            Token result = this.next;
+            Token? result = this.next;
             this.next = null;
             return result;
         }
 
-        public Token Peek()
+        public Token? Peek()
         {
             if (this.next == null)
             {
@@ -114,9 +114,9 @@ namespace TEAC
             return this.next;
         }
 
-        private Token InnerRead()
+        private Token? InnerRead()
         {
-            Token token = this.EatCommentsAndWhiteSpace();
+            Token? token = this.EatCommentsAndWhiteSpace();
             if (token != null)
             {
                 return token;
@@ -325,7 +325,7 @@ namespace TEAC
             return result;
         }
 
-        private Token ReadStringLiteral()
+        private Token? ReadStringLiteral()
         {
             StringBuilder sb = new StringBuilder();
             int startLine = this.line;
@@ -433,7 +433,7 @@ namespace TEAC
             }
         }
 
-        private Token EatCommentsAndWhiteSpace()
+        private Token? EatCommentsAndWhiteSpace()
         {
             while (true)
             {

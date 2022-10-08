@@ -16,7 +16,7 @@ namespace TEAC
             Token start, 
             IEnumerable<string> variableNames, 
             TypeReference type,
-            Expression initExpression)
+            Expression? initExpression)
             : base(start)
         {
             this.type = type;
@@ -25,7 +25,7 @@ namespace TEAC
         }
 
         public TypeReference Type { get { return this.type; } }
-        public Expression InitExpression { get; private set; }
+        public Expression? InitExpression { get; private set; }
         public IEnumerable<string> VariableNames { get { return this.variableNames; } }
     }
 

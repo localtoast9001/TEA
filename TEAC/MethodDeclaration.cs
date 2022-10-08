@@ -24,7 +24,7 @@ namespace TEAC
             this.IsAbstract = isAbstract;
         }
 
-        public TypeReference ReturnType { get; set; }
+        public TypeReference? ReturnType { get; set; }
 
         public string MethodName { get; private set; }
 

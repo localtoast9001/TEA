@@ -17,7 +17,7 @@ namespace TEAC
         {
         }
 
-        public string BaseInterfaceType { get; set; }
+        public string? BaseInterfaceType { get; set; }
         public IList<MethodDeclaration> Methods { get { return this.methods; } }
     }
 }

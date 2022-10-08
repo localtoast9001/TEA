@@ -17,9 +17,9 @@ namespace TEAC
 
         public int ParameterOffset { get { return this.ParameterOffset; } }
 
-        public LocalVariable ReturnVariable { get; set; }
+        public LocalVariable? ReturnVariable { get; set; }
 
-        public ParameterVariable LargeReturnVariable { get; set; }
+        public ParameterVariable? LargeReturnVariable { get; set; }
 
         public LocalVariable DefineTempVariable(TypeDefinition type)
         {
@@ -61,7 +61,7 @@ namespace TEAC
             return p;
         }
 
-        public bool TryLookup(string symbol, out SymbolEntry value)
+        public bool TryLookup(string symbol, out SymbolEntry? value)
         {
             return this.symbols.TryGetValue(symbol, out value);
         }
@@ -71,7 +71,7 @@ namespace TEAC
             foreach (string symbolName in this.symbols.Keys)
             {
                 var symbol = symbols[symbolName];
-                LocalVariable localVar = symbol as LocalVariable;
+                LocalVariable? localVar = symbol as LocalVariable;
                 if (localVar != null)
                 {
                     dictionary.Add("_" + symbolName + "$", -localVar.Offset);

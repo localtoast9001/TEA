@@ -8,8 +8,8 @@
 
     internal class FieldInfo
     {
-        public string Name { get; set; }
-        public TypeDefinition Type { get; set; }
+        public string? Name { get; set; }
+        public TypeDefinition? Type { get; set; }
         public bool IsStatic { get; set; }
         public bool IsPublic { get; set; }
         public bool IsProtected { get; set; }

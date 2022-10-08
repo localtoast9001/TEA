@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace TEAC
 {
+    /// <summary>
+    /// Program Arguments
+    /// </summary>
     internal class Arguments
     {
         /// <summary>
@@ -19,11 +22,11 @@ namespace TEAC
 
         public IList<string> Includes { get { return this.includes; } }
 
-        public static bool TryParse(string[] args, out Arguments result)
+        public static bool TryParse(string[] args, out Arguments? result)
         {
             result = null;
-            string inputFile = null;
-            string outputListing = null;
+            string? inputFile = null;
+            string? outputListing = null;
             List<string> includes = new List<string>();
             if (args.Length < 1)
             {

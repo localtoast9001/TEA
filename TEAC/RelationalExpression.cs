@@ -20,10 +20,10 @@ namespace TEAC
             this.Right = right;
         }
 
-        public Expression Left { get; private set; }
+        public Expression Left { get; }
 
-        public Keyword Operator { get; private set; }
+        public Keyword Operator { get; }
 
-        public Expression Right { get; private set; }
+        public Expression Right { get; }
     }
 }
