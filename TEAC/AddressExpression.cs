@@ -14,6 +14,6 @@ namespace TEAC
             this.Inner = inner;
         }
 
-        public ReferenceExpression Inner { get; private set; }
+        public ReferenceExpression Inner { get; }
     }
 }

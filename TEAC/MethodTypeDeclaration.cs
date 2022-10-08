@@ -10,8 +10,8 @@ namespace TEAC
     {
         private List<ParameterDeclaration> parameters = new List<ParameterDeclaration>();
 
-        public TypeReference ReturnType { get; set; }
-        public TypeReference ImplicitArgType { get; set; }
+        public TypeReference? ReturnType { get; set; }
+        public TypeReference? ImplicitArgType { get; set; }
         public IEnumerable<ParameterDeclaration> Parameters { get { return this.parameters; } } 
         public MethodTypeDeclaration(Token start, string name)
             : base(start, name)

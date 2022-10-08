@@ -8,12 +8,12 @@ namespace TEAC
 {
     class LiteralExpression : Expression
     {
-        public LiteralExpression(Token start, object value)
+        public LiteralExpression(Token start, object? value)
             :base(start)
         {
             this.Value = value;
         }
 
-        public object Value { get; private set; }
+        public object? Value { get; }
     }
 }

@@ -14,6 +14,6 @@ namespace TEAC
             this.Expression = callExpression;
         }
 
-        public ReferenceExpression Expression { get; private set; }
+        public ReferenceExpression Expression { get; }
     }
 }

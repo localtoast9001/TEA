@@ -103,7 +103,7 @@ namespace TEAC
 
                 List<string> entries = new List<string>();
                 Stack<TypeDefinition> typeStack = new Stack<TypeDefinition>();
-                TypeDefinition t = pair.Key;
+                TypeDefinition? t = pair.Key;
                 while (t != null)
                 {
                     typeStack.Push(t);
@@ -115,9 +115,9 @@ namespace TEAC
                     t = typeStack.Pop();
                     foreach (MethodInfo m in t.Methods)
                     {
-                        MethodInfo implMethod = type.FindMethod(
-                            m.Name,
-                            m.Parameters.Select(e => e.Type).ToList());
+                        MethodInfo? implMethod = type.FindMethod(
+                            m.Name!,
+                            m.Parameters.Select(e => e.Type!).ToList());
                         if (implMethod == null)
                         {
                             throw new NotSupportedException();
@@ -133,13 +133,13 @@ namespace TEAC
 
                         MethodInfo jumpMethod = new MethodInfo(type);
                         jumpMethod.Parameters.AddRange(m.Parameters);
-                        jumpMethod.Name = t.FullName.Replace('.', '_') + "_" + m.Name;
+                        jumpMethod.Name = t.FullName!.Replace('.', '_') + "_" + m.Name;
 
                         this.AddProto(implMethod);
                         this.AddProto(jumpMethod);
                         entries[m.VTableIndex] = jumpMethod.MangledName;
 
-                        if (!this.CodeSegment.Any(e => string.CompareOrdinal(e.Method.MangledName, jumpMethod.MangledName) == 0))
+                        if (!this.CodeSegment.Any(e => string.CompareOrdinal(e.Method!.MangledName, jumpMethod.MangledName) == 0))
                         {
                             MethodImpl jumpMethodImpl = new MethodImpl(this);
                             jumpMethodImpl.Method = jumpMethod;
@@ -167,17 +167,17 @@ namespace TEAC
 
             string[] entries = new string[0];
             Stack<TypeDefinition> typeStack = new Stack<TypeDefinition>();
-            TypeDefinition t = type;
+            TypeDefinition? t = type;
             while (t != null)
             {
-                typeStack.Push(t);
+                typeStack.Push(t!);
                 t = t.BaseClass;
             }
 
             while (typeStack.Count > 0)
             {
                 t = typeStack.Pop();
-                foreach (MethodInfo m in t.Methods)
+                foreach (MethodInfo m in t!.Methods)
                 {
                     if (m.IsVirtual)
                     {
@@ -207,14 +207,14 @@ namespace TEAC
 
     internal class DataEntry
     {
-        public string Label { get; set; }
-        public object[] Value { get; set; }
+        public string? Label { get; set; }
+        public object[]? Value { get; set; }
     }
 
     internal class AsmStatement
     {
-        public string Label { get; set; }
-        public string Instruction { get; set; }
+        public string? Label { get; set; }
+        public string? Instruction { get; set; }
     }
 
     internal class MethodImpl
@@ -229,7 +229,7 @@ namespace TEAC
 
         public List<AsmStatement> Statements { get { return this.statements; } }
         public IDictionary<string, int> Symbols { get { return this.symbols; } }
-        public MethodInfo Method { get; set; }
-        public Module Module { get; private set; }
+        public MethodInfo? Method { get; set; }
+        public Module? Module { get; private set; }
     }
 }

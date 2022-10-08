@@ -16,7 +16,7 @@ namespace TEAC
         public ClassDeclaration(
             Token start, 
             string name, 
-            string baseType,
+            string? baseType,
             bool isStatic)
             : base(start, name)
         {
@@ -24,11 +24,11 @@ namespace TEAC
             this.BaseType = baseType;
         }
 
-        public bool IsStatic { get; private set; }
+        public bool IsStatic { get; }
 
-        public string BaseType { get; private set; }
+        public string? BaseType { get; }
 
-        public VarBlock Fields { get; set; }
+        public VarBlock? Fields { get; set; }
 
         public IEnumerable<MethodDeclaration> PublicMethods { get { return this.publicMethods; } }
         public IEnumerable<MethodDeclaration> ProtectedMethods { get { return this.protectedMethods; } }

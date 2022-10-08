@@ -101,7 +101,7 @@ namespace TEAC
             types.Add(genericPointerType.FullName, genericPointerType);
         }
 
-        public string Namespace { get; set; }
+        public string? Namespace { get; set; }
         
         public IEnumerable<string> Uses { get { return this.uses; } }
 
@@ -127,7 +127,7 @@ namespace TEAC
             uses.Add(ns);
         }
 
-        public bool TryFindTypeByName(string nameRef, out TypeDefinition type)
+        public bool TryFindTypeByName(string nameRef, out TypeDefinition? type)
         {
             if (types.TryGetValue(nameRef, out type))
             {
@@ -154,7 +154,7 @@ namespace TEAC
         public bool TryFindConstructor(
             TypeDefinition objectType,
             IList<TypeDefinition> parameterTypes,
-            out MethodInfo methodInfo)
+            out MethodInfo? methodInfo)
         {
             methodInfo = null;
             foreach (MethodInfo constructor in objectType.Methods.Where(e => string.CompareOrdinal("constructor", e.Name) == 0))
@@ -167,7 +167,7 @@ namespace TEAC
                 bool match = true;
                 for (int i = 0; i < parameterTypes.Count; i++)
                 {
-                    if (string.CompareOrdinal(constructor.Parameters[i].Type.FullName, parameterTypes[i].FullName) != 0)
+                    if (string.CompareOrdinal(constructor.Parameters[i].Type?.FullName, parameterTypes[i].FullName) != 0)
                     {
                         match = false;
                         break;
@@ -187,8 +187,8 @@ namespace TEAC
         public bool TryFindMethodAndType(
             string methodNameRef, 
             IList<TypeDefinition> parameterTypes,
-            out TypeDefinition type, 
-            out MethodInfo methodInfo)
+            out TypeDefinition? type, 
+            out MethodInfo? methodInfo)
         {
             type = null;
             methodInfo = null;
@@ -205,7 +205,7 @@ namespace TEAC
                 return false;
             }
 
-            foreach (var test in type.Methods)
+            foreach (var test in type?.Methods ?? new List<MethodInfo>())
             {
                 if (string.CompareOrdinal(test.Name, methodName) == 0)
                 {
@@ -217,7 +217,7 @@ namespace TEAC
 
                     for (int i = 0; i < test.Parameters.Count; i++)
                     {
-                        if (string.CompareOrdinal(test.Parameters[i].Type.FullName, parameterTypes[i].FullName) != 0)
+                        if (string.CompareOrdinal(test.Parameters[i].Type?.FullName, parameterTypes[i].FullName) != 0)
                         {
                             match = false;
                             break;
@@ -239,7 +239,7 @@ namespace TEAC
 
         public TypeDefinition GetPointerType(TypeDefinition elementType)
         {
-            TypeDefinition result = null;
+            TypeDefinition? result = null;
             string fullName = "^" + elementType.FullName;
             if (!this.types.TryGetValue(fullName, out result))
             {
@@ -256,7 +256,7 @@ namespace TEAC
 
         public TypeDefinition GetArrayType(TypeDefinition elementType, int elementCount)
         {
-            TypeDefinition result = null;
+            TypeDefinition? result = null;
             string fullName = "#" + elementCount.ToString() + elementType.FullName;
             if (!this.types.TryGetValue(fullName, out result))
             {
@@ -278,7 +278,7 @@ namespace TEAC
         public bool TryDeclareType(string name, out TypeDefinition typeDef)
         {
             string fullName = this.Namespace + "." + name;
-            TypeDefinition existing = null;
+            TypeDefinition? existing = null;
             if (this.types.TryGetValue(fullName, out existing))
             {
                 typeDef = existing;
@@ -299,7 +299,7 @@ namespace TEAC
             Scope scope = new Scope();
             if (method.ReturnType != null)
             {
-                LocalVariable returnVar = scope.DefineLocalVariable(method.Name, method.ReturnType);
+                LocalVariable returnVar = scope.DefineLocalVariable(method.Name!, method.ReturnType!);
                 scope.ReturnVariable = returnVar;
                 if (method.ReturnType.Size > 8 && !method.ReturnType.IsFloatingPoint || method.ReturnType.IsClass)
                 {
@@ -311,12 +311,12 @@ namespace TEAC
 
             if (!method.IsStatic)
             {
-                scope.DefineParameter("this", this.GetPointerType(method.Type));
+                scope.DefineParameter("this", this.GetPointerType(method.Type!));
             }
 
             foreach (ParameterInfo parameterInfo in method.Parameters)
             {
-                scope.DefineParameter(parameterInfo.Name, parameterInfo.Type);
+                scope.DefineParameter(parameterInfo.Name!, parameterInfo.Type!);
             }
 
             return scope;
@@ -339,7 +339,7 @@ namespace TEAC
             bool firstArg = true;
             if (!calleeMethod.IsStatic)
             {
-                sb.Append(calleeMethod.Type.FullName);
+                sb.Append(calleeMethod.Type?.FullName);
                 firstArg = false;
             }
 
@@ -352,7 +352,7 @@ namespace TEAC
                         sb.Append(",");
                     }
 
-                    sb.Append(parameter.Type.FullName);
+                    sb.Append(parameter.Type!.FullName!);
 
                     firstArg = false;
                 }
@@ -361,7 +361,7 @@ namespace TEAC
             sb.Append(")");
 
             string fullName = sb.ToString();
-            TypeDefinition methodType = null;
+            TypeDefinition? methodType = null;
             if (!types.TryGetValue(fullName, out methodType))
             {
                 methodType = new TypeDefinition();
@@ -376,7 +376,7 @@ namespace TEAC
 
                 foreach (var p in calleeMethod.Parameters)
                 {
-                    methodType.MethodParamTypes.Add(p.Type);
+                    methodType.MethodParamTypes.Add(p.Type!);
                 }
 
                 types.Add(methodType.FullName, methodType);

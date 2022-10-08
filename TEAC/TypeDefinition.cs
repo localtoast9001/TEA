@@ -22,7 +22,7 @@
         public List<TypeDefinition> MethodParamTypes { get { return this.methodParamTypes; } }
         public List<KeyValuePair<TypeDefinition, int>> Interfaces { get { return this.interfaces; } }
 
-        public string FullName { get; set; }
+        public string? FullName { get; set; }
         public int Size { get; set; }
         public int ArrayElementCount { get; set; }
         public bool IsPointer { get; set; }
@@ -35,11 +35,11 @@
         public bool IsInterface { get; set; }
         public bool IsEnum { get; set; }
         public bool IsMethod { get; set; }
-        public TypeDefinition InnerType { get; set; }
-        public TypeDefinition BaseClass { get; set; }
-        public TypeDefinition MethodReturnType { get; set; }
-        public TypeDefinition MethodImplicitArgType { get; set; }
-        public string SpecialMangledName { get; set; }
+        public TypeDefinition? InnerType { get; set; }
+        public TypeDefinition? BaseClass { get; set; }
+        public TypeDefinition? MethodReturnType { get; set; }
+        public TypeDefinition? MethodImplicitArgType { get; set; }
+        public string? SpecialMangledName { get; set; }
         public string MangledName
         {
             get
@@ -51,17 +51,17 @@
 
                 if (this.IsPointer)
                 {
-                    return "P" + this.InnerType.MangledName;
+                    return "P" + this.InnerType?.MangledName ?? string.Empty;
                 }
 
                 if (this.IsArray)
                 {
-                    return "A" + this.InnerType.MangledName;
+                    return "A" + this.InnerType?.MangledName ?? string.Empty;
                 }
 
                 StringBuilder sb = new StringBuilder();
                 sb.Append("_ZN");
-                foreach (string part in this.FullName.Split('.'))
+                foreach (string part in this.FullName?.Split('.') ?? new string[0])
                 {
                     sb.AppendFormat("{0}{1}", part.Length, part);
                 }
@@ -74,7 +74,7 @@
         {
             Dictionary<string, KeyValuePair<TypeDefinition, int>> allInterfaces = 
                 new Dictionary<string, KeyValuePair<TypeDefinition, int>>();
-            TypeDefinition classType = this;
+            TypeDefinition? classType = this;
             while (classType != null)
             {
                 foreach (var pair in classType.Interfaces)
@@ -91,7 +91,7 @@
             return allInterfaces.Values;
         }
 
-        public MethodInfo GetDestructor()
+        public MethodInfo? GetDestructor()
         {
             foreach (MethodInfo method in this.Methods)
             {
@@ -104,7 +104,7 @@
             return null;
         }
 
-        public MethodInfo GetDefaultConstructor()
+        public MethodInfo? GetDefaultConstructor()
         {
             foreach (MethodInfo method in this.Methods)
             {
@@ -122,39 +122,39 @@
             return null;
         }
 
-        public MethodInfo FindMethod(string name)
+        public MethodInfo? FindMethod(string name)
         {
             return FindMethod(name, null, false);
         }
 
-        public MethodInfo FindMethod(string name, IList<TypeDefinition> argTypes)
+        public MethodInfo? FindMethod(string name, IList<TypeDefinition>? argTypes)
         {
             return FindMethod(name, argTypes, true);
         }
 
-        private MethodInfo FindMethod(string name, IList<TypeDefinition> argTypes, bool matchArgs)
+        private MethodInfo? FindMethod(string name, IList<TypeDefinition>? argTypes, bool matchArgs)
         {
-            TypeDefinition type = this;
+            TypeDefinition? type = this;
             while (type != null)
             {
-                foreach (MethodInfo method in type.Methods)
+                foreach (MethodInfo method in type?.Methods ?? new List<MethodInfo>())
                 {
                     if (string.CompareOrdinal(name, method.Name) == 0)
                     {
-                        if (!matchArgs || MatchArgs(method, argTypes))
+                        if (!matchArgs || MatchArgs(method, argTypes!))
                         {
                             return method;
                         }
                     }
                 }
 
-                type = type.BaseClass;
+                type = type!.BaseClass;
             }
 
             return null;
         }
 
-        public MethodInfo FindConstructor(IList<TypeDefinition> argTypes)
+        public MethodInfo? FindConstructor(IList<TypeDefinition> argTypes)
         {
             foreach (MethodInfo method in this.Methods)
             {
@@ -197,7 +197,7 @@
             bool match = true;
             for (int i = 0; i < method.Parameters.Count; i++)
             {
-                if (string.CompareOrdinal(method.Parameters[i].Type.FullName, argTypes[i].FullName) != 0)
+                if (string.CompareOrdinal(method.Parameters[i].Type?.FullName, argTypes[i].FullName) != 0)
                 {
                     match = false;
                     break;
@@ -207,7 +207,7 @@
             return match;
         }
 
-        public MethodInfo GetCopyConstructor(CompilerContext context)
+        public MethodInfo? GetCopyConstructor(CompilerContext context)
         {
             List<TypeDefinition> argTypes = new List<TypeDefinition>();
             argTypes.Add(context.GetPointerType(this));
@@ -219,20 +219,20 @@
             this.interfaces.Add(new KeyValuePair<TypeDefinition,int>(interfaceType, offset));
         }
 
-        public FieldInfo GetInterfaceTablePointer(TypeDefinition interfaceType)
+        public FieldInfo? GetInterfaceTablePointer(TypeDefinition interfaceType)
         {
             return GetTablePointer(VTablePointerFieldName + interfaceType.MangledName);
         }
 
-        public FieldInfo GetVTablePointer()
+        public FieldInfo? GetVTablePointer()
         {
             return GetTablePointer(VTablePointerFieldName);
         }
 
-        private FieldInfo GetTablePointer(string fieldName)
+        private FieldInfo? GetTablePointer(string fieldName)
         {
             Stack<TypeDefinition> typeHierarchy = new Stack<TypeDefinition>();
-            TypeDefinition type = this;
+            TypeDefinition? type = this;
             while (type != null)
             {
                 typeHierarchy.Push(type);
@@ -271,14 +271,14 @@
 
         private FieldInfo AddTablePointer(CompilerContext context, int offset, string name)
         {
-            TypeDefinition ptrType = null;
+            TypeDefinition? ptrType = null;
             context.TryFindTypeByName("^", out ptrType);
             FieldInfo field = new FieldInfo
             {
                 Name = name, 
                 IsPublic = true,
                 Offset = offset,
-                Type = context.GetArrayType(ptrType, 0)
+                Type = context.GetArrayType(ptrType!, 0)
             };
 
             this.fields.Add(field);

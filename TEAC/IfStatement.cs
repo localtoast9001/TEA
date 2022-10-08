@@ -13,10 +13,10 @@ namespace TEAC
         {
         }
 
-        public Expression Condition { get; set; }
+        public Expression? Condition { get; set; }
 
-        public Statement TrueStatement { get; set; }
+        public Statement? TrueStatement { get; set; }
 
-        public Statement FalseStatement { get; set; }
+        public Statement? FalseStatement { get; set; }
     }
 }

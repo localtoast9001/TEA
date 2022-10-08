@@ -14,6 +14,6 @@ namespace TEAC
             this.Value = value;
         }
 
-        public Expression Value { get; private set; }
+        public Expression Value { get; }
     }
 }

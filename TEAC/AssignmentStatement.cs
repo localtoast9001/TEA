@@ -15,7 +15,7 @@ namespace TEAC
             this.Storage = storage;
         }
 
-        public Expression Value { get; private set; }
-        public ReferenceExpression Storage { get; private set; }
+        public Expression Value { get; }
+        public ReferenceExpression Storage { get; }
     }
 }

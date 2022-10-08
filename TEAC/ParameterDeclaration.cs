@@ -8,9 +8,9 @@ namespace TEAC
 {
     internal class ParameterDeclaration : ParseNode
     {
-        private List<string> parameterNames = new List<string>();
+        private readonly List<string> parameterNames = new List<string>();
 
-        private TypeReference type;
+        private readonly TypeReference type;
 
         public ParameterDeclaration(Token start, IEnumerable<string> parameterNames, TypeReference type)
             : base(start)

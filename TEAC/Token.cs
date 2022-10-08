@@ -22,9 +22,9 @@ namespace TEAC
 
     internal static class TokenUtility
     {
-        public static bool Is(this Token token, Keyword keyword)
+        public static bool Is(this Token? token, Keyword keyword)
         {
-            KeywordToken keyTok = token as KeywordToken;
+            KeywordToken? keyTok = token as KeywordToken;
             if (keyTok == null)
             {
                 return false;
@@ -33,7 +33,7 @@ namespace TEAC
             return keyTok.Value == keyword;
         }
 
-        public static bool IsRelationalOperator(this Token token)
+        public static bool IsRelationalOperator(this Token? token)
         {
             return token.Is(Keyword.GreaterThan) ||
                 token.Is(Keyword.GreaterThanOrEquals) ||
@@ -170,7 +170,7 @@ namespace TEAC
 
         public override string ToString()
         {
-            return this.value.ToString();
+            return this.value?.ToString() ?? string.Empty;
         }
     }
 }

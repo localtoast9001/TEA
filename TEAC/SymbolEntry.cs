@@ -13,7 +13,7 @@
             this.Name = name;
         }
 
-        public string Name { get; private set; }
-        public TypeDefinition Type { get; set; }
+        public string Name { get; }
+        public TypeDefinition? Type { get; set; }
     }
 }

@@ -42,7 +42,7 @@ namespace TEAC
             get { return this.typeList; }
         }
 
-        public VarBlock Variables { get; set; }
+        public VarBlock? Variables { get; set; }
 
         public IEnumerable<MethodDefinition> Methods { get { return this.methods; } }
 

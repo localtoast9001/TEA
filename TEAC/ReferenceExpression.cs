@@ -30,7 +30,7 @@ namespace TEAC
             this.Identifier = identifier;
         }
 
-        public string Identifier { get; private set; }
+        public string Identifier { get; }
     }
 
     class InheritedReferenceExpression : ReferenceExpression
@@ -58,9 +58,9 @@ namespace TEAC
             this.Inner = inner;
         }
 
-        public string MemberName { get; private set; }
+        public string MemberName { get; }
 
-        public ReferenceExpression Inner { get; private set; }
+        public ReferenceExpression Inner { get; }
 
         public override bool UseVirtualDispatch
         {
@@ -81,7 +81,7 @@ namespace TEAC
             this.Inner = inner;
         }
 
-        public ReferenceExpression Inner { get; private set; }
+        public ReferenceExpression Inner { get; }
         public IEnumerable<Expression> Arguments { get { return this.arguments; } }
 
         public void AddArgument(Expression arg)
@@ -99,8 +99,8 @@ namespace TEAC
             this.Index = index;
         }
 
-        public ReferenceExpression Inner { get; private set; }
-        public Expression Index { get; private set; }
+        public ReferenceExpression Inner { get; }
+        public Expression Index { get; }
     }
 
     class DereferenceExpression : ReferenceExpression
@@ -111,6 +111,6 @@ namespace TEAC
             this.Inner = inner;
         }
 
-        public ReferenceExpression Inner { get; private set; }
+        public ReferenceExpression Inner { get; }
     }
 }
