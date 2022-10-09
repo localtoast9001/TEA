@@ -1,4 +1,9 @@
-﻿using System;
+﻿//-----------------------------------------------------------------------
+// <copyright file="MethodTypeDeclaration.cs" company="Jon Rowlett">
+//     Copyright (C) Jon Rowlett. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,7 +17,7 @@ namespace TEAC
 
         public TypeReference? ReturnType { get; set; }
         public TypeReference? ImplicitArgType { get; set; }
-        public IEnumerable<ParameterDeclaration> Parameters { get { return this.parameters; } } 
+        public IEnumerable<ParameterDeclaration> Parameters { get { return this.parameters; } }
         public MethodTypeDeclaration(Token start, string name)
             : base(start, name)
         {

@@ -1,4 +1,9 @@
-﻿using System;
+﻿//-----------------------------------------------------------------------
+// <copyright file="LiteralExpression.cs" company="Jon Rowlett">
+//     Copyright (C) Jon Rowlett. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,7 +14,7 @@ namespace TEAC
     class LiteralExpression : Expression
     {
         public LiteralExpression(Token start, object? value)
-            :base(start)
+            : base(start)
         {
             this.Value = value;
         }

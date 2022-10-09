@@ -1,4 +1,9 @@
-﻿using System;
+﻿//-----------------------------------------------------------------------
+// <copyright file="CompilerContext.cs" company="Jon Rowlett">
+//     Copyright (C) Jon Rowlett. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -35,7 +40,7 @@ namespace TEAC
                 Size = 8,
                 SpecialMangledName = "i8"
             };
-            
+
             TypeDefinition charType = new TypeDefinition
             {
                 FullName = "character",
@@ -64,7 +69,7 @@ namespace TEAC
                 SpecialMangledName = "s",
                 IsFloatingPoint = true
             };
-            
+
             TypeDefinition doubleType = new TypeDefinition
             {
                 FullName = "double",
@@ -89,20 +94,20 @@ namespace TEAC
                 IsPointer = true
             };
 
-            types.Add(intType.FullName, intType);
-            types.Add(shortType.FullName, shortType);
-            types.Add(longType.FullName, longType);
-            types.Add(charType.FullName, charType);
-            types.Add(singleType.FullName, singleType);
-            types.Add(doubleType.FullName, doubleType);
-            types.Add(extendedType.FullName, extendedType);
-            types.Add(boolType.FullName, boolType);
-            types.Add(byteType.FullName, byteType);
-            types.Add(genericPointerType.FullName, genericPointerType);
+            this.types.Add(intType.FullName, intType);
+            this.types.Add(shortType.FullName, shortType);
+            this.types.Add(longType.FullName, longType);
+            this.types.Add(charType.FullName, charType);
+            this.types.Add(singleType.FullName, singleType);
+            this.types.Add(doubleType.FullName, doubleType);
+            this.types.Add(extendedType.FullName, extendedType);
+            this.types.Add(boolType.FullName, boolType);
+            this.types.Add(byteType.FullName, byteType);
+            this.types.Add(genericPointerType.FullName, genericPointerType);
         }
 
         public string? Namespace { get; set; }
-        
+
         public IEnumerable<string> Uses { get { return this.uses; } }
 
         public IEnumerable<string> Includes { get { return this.includes; } }
@@ -185,9 +190,9 @@ namespace TEAC
         }
 
         public bool TryFindMethodAndType(
-            string methodNameRef, 
+            string methodNameRef,
             IList<TypeDefinition> parameterTypes,
-            out TypeDefinition? type, 
+            out TypeDefinition? type,
             out MethodInfo? methodInfo)
         {
             type = null;
@@ -266,7 +271,7 @@ namespace TEAC
                     IsArray = true,
                     Size = elementCount > 0 ? elementType.Size * elementCount : 4,
                     ArrayElementCount = elementCount,
-                    InnerType = elementType
+                    InnerType = elementType,
                 };
 
                 this.types.Add(fullName, result);
@@ -304,7 +309,7 @@ namespace TEAC
                 if (method.ReturnType.Size > 8 && !method.ReturnType.IsFloatingPoint || method.ReturnType.IsClass)
                 {
                     scope.LargeReturnVariable = scope.DefineParameter(
-                        "$result", 
+                        "$result",
                         this.GetPointerType(method.ReturnType));
                 }
             }
@@ -362,7 +367,7 @@ namespace TEAC
 
             string fullName = sb.ToString();
             TypeDefinition? methodType = null;
-            if (!types.TryGetValue(fullName, out methodType))
+            if (!this.types.TryGetValue(fullName, out methodType))
             {
                 methodType = new TypeDefinition();
                 methodType.IsMethod = true;

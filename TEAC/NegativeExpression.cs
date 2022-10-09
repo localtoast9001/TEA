@@ -1,12 +1,11 @@
-﻿
+﻿//-----------------------------------------------------------------------
+// <copyright file="NegativeExpression.cs" company="Jon Rowlett">
+//     Copyright (C) Jon Rowlett. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
+
 namespace TEAC
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
-
     internal class NegativeExpression : Expression
     {
         public NegativeExpression(Token start, Expression inner)

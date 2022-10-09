@@ -1,4 +1,9 @@
-﻿using System;
+﻿//-----------------------------------------------------------------------
+// <copyright file="AsmModuleWriter.cs" company="Jon Rowlett">
+//     Copyright (C) Jon Rowlett. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -43,31 +48,31 @@ namespace TEAC
 
                 for (int i = 0; i < dataEntry.Value?.Length; i++)
                 {
-                    writer.Write("\t");
+                    this.writer.Write("\t");
                     object val = dataEntry.Value[i];
                     if (val is byte)
                     {
-                        writer.Write("db");
+                        this.writer.Write("db");
                     }
                     else if (val is ushort)
                     {
-                        writer.Write("dw");
+                        this.writer.Write("dw");
                     }
                     else
                     {
-                        writer.Write("dd");
+                        this.writer.Write("dd");
                     }
 
-                    writer.Write("\t");
+                    this.writer.Write("\t");
 
-                    writer.WriteLine(val);
+                    this.writer.WriteLine(val);
                 }
 
-                writer.WriteLine();
+                this.writer.WriteLine();
             }
 
-            writer.WriteLine();
-            writer.WriteLine(".code");
+            this.writer.WriteLine();
+            this.writer.WriteLine(".code");
             string? mainMethod = null;
             foreach (MethodImpl method in module.CodeSegment)
             {
@@ -82,58 +87,61 @@ namespace TEAC
 
                 foreach (string symbol in method.Symbols.Keys)
                 {
-                    writer.WriteLine("{0}={1}", symbol, method.Symbols[symbol]);
+                    this.writer.WriteLine("{0}={1}", symbol, method.Symbols[symbol]);
                 }
 
-                writer.Write(method.Method?.MangledName);
-                writer.Write(" PROC C");
+                this.writer.Write(method.Method?.MangledName);
+                this.writer.Write(" PROC C");
                 if (method.Method!.IsProtected || method.Method!.IsPublic)
                 {
-                    writer.Write(" EXPORT");
+                    this.writer.Write(" EXPORT");
                 }
 
-                writer.WriteLine();
+                this.writer.WriteLine();
 
                 foreach (var statement in method.Statements)
                 {
                     if (!string.IsNullOrEmpty(statement.Label))
                     {
-                        writer.Write("{0}:", statement.Label);
+                        this.writer.Write("{0}:", statement.Label);
                     }
 
-                    writer.Write("\t");
-                    writer.WriteLine(statement.Instruction);
+                    this.writer.Write("\t");
+                    this.writer.WriteLine(statement.Instruction);
                 }
 
-                writer.Write(method.Method.MangledName);
-                writer.WriteLine(" ENDP");
+                this.writer.Write(method.Method.MangledName);
+                this.writer.WriteLine(" ENDP");
             }
 
             if (!string.IsNullOrEmpty(mainMethod))
             {
                 string methodText = @"wmain PROC C EXPORT
-	push ebp
-	mov ebp,esp    
+    push ebp
+    mov ebp,esp    
     push [ebp+12]
     push [ebp+8]
     call {0}
     add esp,8
-	mov esp,ebp
-	pop ebp
+    mov esp,ebp
+    pop ebp
     ret
 wmain ENDP";
 
-                writer.WriteLine(methodText, mainMethod);
+                this.writer.WriteLine(methodText, mainMethod);
             }
 
-            writer.WriteLine("END");
+            this.writer.WriteLine("END");
             return true;
         }
 
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);
-            writer.Dispose();
+            if (disposing)
+            {
+                this.writer.Dispose();
+            }
         }
     }
 }

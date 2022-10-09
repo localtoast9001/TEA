@@ -1,11 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿//-----------------------------------------------------------------------
+// <copyright file="CodeGenerator.cs" company="Jon Rowlett">
+//     Copyright (C) Jon Rowlett. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
 
 namespace TEAC
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+
     internal class CodeGenerator
     {
         private MessageLog log;
@@ -457,9 +462,9 @@ namespace TEAC
                 }
 
                 if (!context.TryFindMethodAndType(
-                    methodDef.MethodNameReference, 
+                    methodDef.MethodNameReference,
                     parameterTypes,
-                    out type, 
+                    out type,
                     out methodInfo))
                 {
                     string message = string.Format(
@@ -533,7 +538,7 @@ namespace TEAC
                                 return false;
                             }
 
-                            PushResult(method, valueType!);
+                            this.PushResult(method, valueType!);
                             argSize += ((valueType!.Size + 3) / 4) * 4;
                             argTypes.Insert(0, valueType!);
                         }
@@ -545,7 +550,7 @@ namespace TEAC
                                 System.Globalization.CultureInfo.CurrentCulture,
                                 Properties.Resources.CodeGenerator_CannotFindConstructor,
                                 method.Method.Type.BaseClass);
-                            log.Write(new Message(
+                            this.log.Write(new Message(
                                 methodDef.Start.Path,
                                 methodDef.Start.Line,
                                 methodDef.Start.Column,
@@ -648,7 +653,7 @@ namespace TEAC
                                 continue;
                             }
 
-                            if (varType!.IsPointer || varType!.IsArray && varType!.ArrayElementCount == 0)
+                            if (varType!.IsPointer || (varType!.IsArray && varType!.ArrayElementCount == 0))
                             {
                                 method.Statements.Add(new AsmStatement { Instruction = string.Format("mov _{0}$[ebp],eax", localVar.Name) });
                             }
@@ -1057,7 +1062,7 @@ namespace TEAC
                 return true;
             }
 
-            log.Write(new Message(
+            this.log.Write(new Message(
                 deleteStatement.Start.Path,
                 deleteStatement.Start.Line,
                 deleteStatement.Start.Column,
@@ -1070,7 +1075,7 @@ namespace TEAC
         {
             if (!context.TryFindTypeByName("System.Memory", out memoryType))
             {
-                log.Write(new Message(
+                this.log.Write(new Message(
                     start.Path,
                     start.Line,
                     start.Column,
@@ -1093,7 +1098,7 @@ namespace TEAC
             MethodInfo? freeMethod = memoryType!.Methods.FirstOrDefault(e => string.CompareOrdinal(e.Name, "Free") == 0);
             if (freeMethod == null)
             {
-                log.Write(new Message(
+                this.log.Write(new Message(
                     start.Path,
                     start.Line,
                     start.Column,
@@ -1255,15 +1260,21 @@ namespace TEAC
                     case 1:
                         {
                             method.Statements.Add(new AsmStatement { Instruction = string.Format("mov byte ptr {0},al", location) });
-                        } break;
+                        }
+
+                        break;
                     case 2:
                         {
                             method.Statements.Add(new AsmStatement { Instruction = string.Format("mov word ptr {0},ax", location) });
-                        } break;
+                        }
+
+                        break;
                     default:
                         {
                             method.Statements.Add(new AsmStatement { Instruction = string.Format("mov {0},eax", location) });
-                        } break;
+                        }
+
+                        break;
                 }
             }
             else
@@ -1365,7 +1376,8 @@ namespace TEAC
                     canCast = true;
                     if (valueType.MethodReturnType != null)
                     {
-                        canCast = string.CompareOrdinal(storageType.MethodReturnType?.MangledName,
+                        canCast = string.CompareOrdinal(
+                            storageType.MethodReturnType?.MangledName,
                             valueType.MethodReturnType?.MangledName) == 0;
                     }
                 }
@@ -1501,10 +1513,10 @@ namespace TEAC
         }
 
         private bool TryEmitExpression(
-            Expression expression, 
-            CompilerContext context, 
-            Scope scope, 
-            MethodImpl method, 
+            Expression expression,
+            CompilerContext context,
+            Scope scope,
+            MethodImpl method,
             out TypeDefinition? valueType)
         {
             LiteralExpression? literalExpr = expression as LiteralExpression;
@@ -1577,7 +1589,7 @@ namespace TEAC
                                 System.Globalization.CultureInfo.CurrentCulture,
                                 Properties.Resources.CodeGenerator_CannotFindConstructor,
                                 storageType.FullName);
-                            log.Write(new Message(
+                            this.log.Write(new Message(
                                 callExpr.Start.Path,
                                 callExpr.Start.Line,
                                 callExpr.Start.Column,
@@ -1606,9 +1618,12 @@ namespace TEAC
                         method.Statements.Insert(argStatementStart, resultPush);
 
                         // push the ref to the storage for the class on the stack.
-                        method.Statements.Add(new AsmStatement { Instruction = string.Format(
-                            "lea ebx,[esp+{0}]", 
-                            calleeMethod!.IsStatic ? argSize : argSize + 4) });
+                        method.Statements.Add(new AsmStatement 
+                            { 
+                                Instruction = string.Format(
+                                    "lea ebx,[esp+{0}]",
+                                    calleeMethod!.IsStatic ? argSize : argSize + 4)
+                            });
                         method.Statements.Add(new AsmStatement { Instruction = "push ebx" });
                         argSize += 4;
                     }
@@ -1690,7 +1705,7 @@ namespace TEAC
                             {
                                 if (storageType!.Size > 4)
                                 {
-                                    method.Statements.Add(new AsmStatement { Instruction = "mov dword ptr [esp+" + (argSize + 4 ) + "],edx" });
+                                    method.Statements.Add(new AsmStatement { Instruction = "mov dword ptr [esp+" + (argSize + 4) + "],edx" });
                                 }
 
                                 switch (storageType!.Size % 4)
@@ -1709,7 +1724,6 @@ namespace TEAC
                                         break;
                                 }
                             }
-
                         }
 
                         if (!calleeMethod!.IsStatic)
@@ -1976,10 +1990,10 @@ namespace TEAC
         }
 
         private bool TryEmitNegativeExpression(
-            NegativeExpression expression, 
-            CompilerContext context, 
-            Scope scope, 
-            MethodImpl method, 
+            NegativeExpression expression,
+            CompilerContext context,
+            Scope scope,
+            MethodImpl method,
             out TypeDefinition? valueType)
         {
             if (!this.TryEmitExpression(expression.Inner!, context, scope, method, out valueType))
@@ -2125,7 +2139,7 @@ namespace TEAC
                             System.Globalization.CultureInfo.CurrentCulture,
                             Properties.Resources.CodeGenerator_CannotFindConstructor,
                             objectType.FullName);
-                        log.Write(new Message(
+                        this.log.Write(new Message(
                             newExpr.Start.Path,
                             newExpr.Start.Line,
                             newExpr.Start.Column,
@@ -2153,7 +2167,6 @@ namespace TEAC
                 }
             }
 
-
             return true;
         }
 
@@ -2168,7 +2181,7 @@ namespace TEAC
             MethodInfo? allocMethod = memoryType!.Methods.FirstOrDefault(e => string.CompareOrdinal("Alloc", e.Name) == 0);
             if (allocMethod == null)
             {
-                log.Write(new Message(
+                this.log.Write(new Message(
                     start.Path,
                     start.Line,
                     start.Column,
@@ -2253,27 +2266,39 @@ namespace TEAC
                         case Keyword.Equals:
                             {
                                 method.Statements.Add(new AsmStatement { Instruction = "sete al" });
-                            } break;
+                            }
+
+                            break;
                         case Keyword.LessThan:
                             {
                                 method.Statements.Add(new AsmStatement { Instruction = "seta al" });
-                            } break;
+                            }
+
+                            break;
                         case Keyword.LessThanOrEquals:
                             {
                                 method.Statements.Add(new AsmStatement { Instruction = "setae al" });
-                            } break;
+                            }
+
+                            break;
                         case Keyword.GreaterThan:
                             {
                                 method.Statements.Add(new AsmStatement { Instruction = "setb al" });
-                            } break;
+                            }
+
+                            break;
                         case Keyword.GreaterThanOrEquals:
                             {
                                 method.Statements.Add(new AsmStatement { Instruction = "setbe al" });
-                            } break;
+                            }
+
+                            break;
                         case Keyword.NotEqual:
                             {
                                 method.Statements.Add(new AsmStatement { Instruction = "setne al" });
-                            } break;
+                            }
+
+                            break;
                     }
                 }
                 else
@@ -2318,27 +2343,39 @@ namespace TEAC
                         case Keyword.Equals:
                             {
                                 method.Statements.Add(new AsmStatement { Instruction = "sete al" });
-                            } break;
+                            }
+
+                            break;
                         case Keyword.LessThan:
                             {
                                 method.Statements.Add(new AsmStatement { Instruction = "setl al" });
-                            } break;
+                            }
+
+                            break;
                         case Keyword.LessThanOrEquals:
                             { 
                                 method.Statements.Add(new AsmStatement { Instruction = "setle al" });
-                            } break;
+                            }
+
+                            break;
                         case Keyword.GreaterThan:
                             {
                                 method.Statements.Add(new AsmStatement { Instruction = "setg al" });
-                            } break;
+                            }
+
+                            break;
                         case Keyword.GreaterThanOrEquals:
                             {
                                 method.Statements.Add(new AsmStatement { Instruction = "setge al" });
-                            } break;
+                            }
+
+                            break;
                         case Keyword.NotEqual:
                             {
                                 method.Statements.Add(new AsmStatement { Instruction = "setne al" });
-                            } break;
+                            }
+
+                            break;
                     }
                 }
             }
@@ -2434,11 +2471,15 @@ namespace TEAC
                     case Keyword.Plus:
                         {
                             method.Statements.Add(new AsmStatement { Instruction = "faddp" });
-                        } break;
+                        }
+
+                        break;
                     case Keyword.Minus:
                         {
                             method.Statements.Add(new AsmStatement { Instruction = "fsubp" });
-                        } break;
+                        }
+
+                        break;
                 }
             }
             else if (leftSideType!.Size <= 4)
@@ -2457,15 +2498,21 @@ namespace TEAC
                                 }
 
                                 method.Statements.Add(new AsmStatement { Instruction = "add eax,ecx" });
-                            } break;
+                            }
+
+                            break;
                         case Keyword.Minus:
                             {
                                 method.Statements.Add(new AsmStatement { Instruction = "sub eax,ecx" });
-                            } break;
+                            }
+
+                            break;
                         case Keyword.Or:
                             {
                                 method.Statements.Add(new AsmStatement { Instruction = "or eax,ecx" });
-                            } break;
+                            }
+
+                            break;
                     }
                 }
             }
@@ -2522,11 +2569,15 @@ namespace TEAC
                     case Keyword.Star:
                         {
                             method.Statements.Add(new AsmStatement { Instruction = "fmulp" });
-                        } break;
+                        }
+
+                        break;
                     case Keyword.Slash:
                         {
                             method.Statements.Add(new AsmStatement { Instruction = "fdivp" });
-                        } break;
+                        }
+
+                        break;
                 }
             }
             else if (leftSideType!.Size <= 4)
@@ -2539,22 +2590,30 @@ namespace TEAC
                         case Keyword.Star:
                             {
                                 method.Statements.Add(new AsmStatement { Instruction = "imul eax,ecx" });
-                            } break;
+                            }
+
+                            break;
                         case Keyword.Mod:
                             {
                                 method.Statements.Add(new AsmStatement { Instruction = "xor edx,edx" });
                                 method.Statements.Add(new AsmStatement { Instruction = "idiv ecx" });
                                 method.Statements.Add(new AsmStatement { Instruction = "mov eax,edx" });
-                            } break;
+                            }
+
+                            break;
                         case Keyword.And:
                             {
                                 method.Statements.Add(new AsmStatement { Instruction = "and eax,ecx" });
-                            } break;
+                            }
+
+                            break;
                         case Keyword.Div:
                             {
                                 method.Statements.Add(new AsmStatement { Instruction = "xor edx,edx" });
                                 method.Statements.Add(new AsmStatement { Instruction = "idiv ecx" });
-                            } break;
+                            }
+
+                            break;
                     }
                 }
             }
@@ -2611,9 +2670,9 @@ namespace TEAC
                         }
 
                         method.Statements.Add(
-                            new AsmStatement 
-                            { 
-                                Instruction = "mov ecx,_this$[ebp]"
+                            new AsmStatement
+                            {
+                                Instruction = "mov ecx,_this$[ebp]",
                             });
                         if (field.Offset > 0)
                         {
@@ -2644,7 +2703,7 @@ namespace TEAC
                         method.Statements.Add(
                             new AsmStatement
                             {
-                                Instruction = "mov ecx,_this$[ebp]"
+                                Instruction = "mov ecx,_this$[ebp]",
                             });
 
                         method.Statements.Add(new AsmStatement { Instruction = "push ecx" });
@@ -2673,7 +2732,7 @@ namespace TEAC
                 message = string.Format(
                     Properties.Resources.CodeGenerator_UndeclaredIdentifier,
                     namedRef.Identifier);
-                log.Write(new Message(
+                this.log.Write(new Message(
                     namedRef.Start.Path,
                     namedRef.Start.Line,
                     namedRef.Start.Column,
@@ -2723,7 +2782,7 @@ namespace TEAC
                             method.Statements.Add(
                                 new AsmStatement
                                 {
-                                    Instruction = string.Format("lea ecx,{0}", innerLoc)
+                                    Instruction = string.Format("lea ecx,{0}", innerLoc),
                                 });
                             if (field.Offset > 0)
                             {
@@ -2765,7 +2824,7 @@ namespace TEAC
                         Properties.Resources.CodeGenerator_UndeclaredMember,
                         memberRef.MemberName,
                         innerType.FullName);
-                    log.Write(new Message(
+                    this.log.Write(new Message(
                         memberRef.Start.Path,
                         memberRef.Start.Line,
                         memberRef.Start.Column,
@@ -2830,7 +2889,7 @@ namespace TEAC
 
                 if (!innerType!.IsArray)
                 {
-                    log.Write(new Message(
+                    this.log.Write(new Message(
                         arrayIndexExpr.Inner.Start.Path,
                         arrayIndexExpr.Inner.Start.Line,
                         arrayIndexExpr.Inner.Start.Column,
@@ -2899,12 +2958,12 @@ namespace TEAC
                 TypeDefinition? innerType = null;
                 MethodInfo? innerCall = null;
                 if (!this.TryEmitReference(
-                    derefExpr.Inner, 
-                    context, 
-                    scope, 
-                    method, 
-                    out innerLoc, 
-                    out innerType, 
+                    derefExpr.Inner,
+                    context,
+                    scope,
+                    method,
+                    out innerLoc,
+                    out innerType,
                     out innerCall))
                 {
                     location = null;
@@ -2914,7 +2973,7 @@ namespace TEAC
 
                 if (!innerType!.IsPointer)
                 {
-                    log.Write(new Message(
+                    this.log.Write(new Message(
                         derefExpr.Start.Path,
                         derefExpr.Start.Line,
                         derefExpr.Start.Column,
@@ -2971,17 +3030,17 @@ namespace TEAC
         }
 
         private bool TryCreateMethod(
-            CompilerContext context, 
+            CompilerContext context,
             TypeDefinition type,
-            MethodDeclaration methodDecl, 
+            MethodDeclaration methodDecl,
             out MethodInfo? methodInfo)
         {
             methodInfo = new MethodInfo(type)
             {
-                Name = methodDecl.MethodName, 
+                Name = methodDecl.MethodName,
                 IsStatic = methodDecl.IsStatic,
                 IsVirtual = methodDecl.IsVirtual || methodDecl.IsAbstract || type.IsInterface,
-                IsAbstract = methodDecl.IsAbstract || type.IsInterface
+                IsAbstract = methodDecl.IsAbstract || type.IsInterface,
             };
 
             TypeDefinition? returnType = null;
@@ -3008,7 +3067,7 @@ namespace TEAC
                     ParameterInfo paramInfo = new ParameterInfo
                     {
                         Name = name,
-                        Type = paramDef
+                        Type = paramDef,
                     };
 
                     methodInfo.Parameters.Add(paramInfo);
@@ -3024,8 +3083,8 @@ namespace TEAC
         }
 
         private bool TryResolveTypeReference(
-            CompilerContext context, 
-            TypeReference typeRef, 
+            CompilerContext context,
+            TypeReference typeRef,
             out TypeDefinition? typeDef)
         {
             NamedTypeReference? namedType = typeRef as NamedTypeReference;
@@ -3078,7 +3137,7 @@ namespace TEAC
                     LiteralExpression? litElementCount = arrayType.ElementCount as LiteralExpression;
                     if (litElementCount == null || !(litElementCount.Value is int))
                     {
-                        log.Write(new Message(
+                        this.log.Write(new Message(
                             arrayType.ElementCount.Start.Path,
                             arrayType.ElementCount.Start.Line,
                             arrayType.ElementCount.Start.Column,

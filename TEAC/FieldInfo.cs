@@ -1,4 +1,10 @@
-﻿namespace TEAC
+﻿//-----------------------------------------------------------------------
+// <copyright file="FieldInfo.cs" company="Jon Rowlett">
+//     Copyright (C) Jon Rowlett. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
+
+namespace TEAC
 {
     using System;
     using System.Collections.Generic;
@@ -9,10 +15,15 @@
     internal class FieldInfo
     {
         public string? Name { get; set; }
+
         public TypeDefinition? Type { get; set; }
+
         public bool IsStatic { get; set; }
+
         public bool IsPublic { get; set; }
+
         public bool IsProtected { get; set; }
+
         public int Offset { get; set; }
     }
 }

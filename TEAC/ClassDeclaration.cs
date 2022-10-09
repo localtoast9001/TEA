@@ -1,8 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿//-----------------------------------------------------------------------
+// <copyright file="ClassDeclaration.cs" company="Jon Rowlett">
+//     Copyright (C) Jon Rowlett. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
 
 namespace TEAC
 {
@@ -14,8 +14,8 @@ namespace TEAC
         private List<string> interfaces = new List<string>();
 
         public ClassDeclaration(
-            Token start, 
-            string name, 
+            Token start,
+            string name,
             string? baseType,
             bool isStatic)
             : base(start, name)

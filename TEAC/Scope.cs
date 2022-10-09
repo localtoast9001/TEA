@@ -1,4 +1,9 @@
-﻿using System;
+﻿//-----------------------------------------------------------------------
+// <copyright file="Scope.cs" company="Jon Rowlett">
+//     Copyright (C) Jon Rowlett. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -25,25 +30,25 @@ namespace TEAC
         {
             string name = "$temp" + (this.tempVariableIndex++).ToString();
             this.DefineLocalVariable(name, type);
-            return (LocalVariable)symbols[name];
+            return (LocalVariable)this.symbols[name];
         }
 
         public LocalVariable DefineLocalVariable(string name, TypeDefinition type)
         {
-            int alignFix = localOffset % type.Size;
+            int alignFix = this.localOffset % type.Size;
             if (alignFix > 0)
             {
-                localOffset += type.Size - alignFix;
+                this.localOffset += type.Size - alignFix;
             }
 
-            localOffset += type.Size;
+            this.localOffset += type.Size;
             LocalVariable l = new LocalVariable(name)
             {
                 Offset = this.localOffset,
-                Type = type
+                Type = type,
             };
 
-            symbols.Add(name, l);
+            this.symbols.Add(name, l);
             return l;
         }
 
@@ -52,11 +57,11 @@ namespace TEAC
             ParameterVariable p = new ParameterVariable(name)
             {
                 Offset = this.parameterOffset,
-                Type = type
+                Type = type,
             };
 
-            parameterOffset += ((p.Type.Size + 3) / 4) * 4;
-            symbols.Add(name, p);
+            this.parameterOffset += ((p.Type.Size + 3) / 4) * 4;
+            this.symbols.Add(name, p);
 
             return p;
         }
@@ -70,7 +75,7 @@ namespace TEAC
         {
             foreach (string symbolName in this.symbols.Keys)
             {
-                var symbol = symbols[symbolName];
+                var symbol = this.symbols[symbolName];
                 LocalVariable? localVar = symbol as LocalVariable;
                 if (localVar != null)
                 {

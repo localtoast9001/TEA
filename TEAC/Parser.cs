@@ -1,4 +1,9 @@
-﻿using System;
+﻿//-----------------------------------------------------------------------
+// <copyright file="Parser.cs" company="Jon Rowlett">
+//     Copyright (C) Jon Rowlett. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,7 +21,7 @@ namespace TEAC
         }
 
         public bool TryParse(
-            TokenReader reader, 
+            TokenReader reader,
             out ProgramUnit? result)
         {
             result = null;
@@ -96,9 +101,9 @@ namespace TEAC
 
             tok = reader.Peek();
             while (
-                tok.Is(Keyword.Function) || 
-                tok.Is(Keyword.Procedure) || 
-                tok.Is(Keyword.Constructor) || 
+                tok.Is(Keyword.Function) ||
+                tok.Is(Keyword.Procedure) ||
+                tok.Is(Keyword.Constructor) ||
                 tok.Is(Keyword.Destructor))
             {
                 if (!this.ParseMethodDefinition(reader, out MethodDefinition? methodDef))
@@ -568,7 +573,7 @@ namespace TEAC
         {
             Token? start = reader.Peek();
             statement = null;
-            
+
             if (!this.Expect(reader, Keyword.If))
             {
                 return false;
@@ -1153,7 +1158,7 @@ namespace TEAC
                 tok = reader.Peek();
             }
 
-            if (!Expect(reader, Keyword.End))
+            if (!this.Expect(reader, Keyword.End))
             {
                 return false;
             }
@@ -1313,7 +1318,7 @@ namespace TEAC
             }
 
             ClassDeclaration classDecl = new ClassDeclaration(
-                typeName, 
+                typeName,
                 typeName.Value,
                 baseType,
                 isStatic);
@@ -1322,13 +1327,13 @@ namespace TEAC
             if (tok.Is(Keyword.Interface))
             {
                 reader.Read();
-                if (!Expect(reader, Keyword.LeftParen))
+                if (!this.Expect(reader, Keyword.LeftParen))
                 {
                     return false;
                 }
 
                 string? interfaceName = null;
-                if (!ParseFullNameDeclaration(reader, out interfaceName))
+                if (!this.ParseFullNameDeclaration(reader, out interfaceName))
                 {
                     return false;
                 }
@@ -1338,7 +1343,7 @@ namespace TEAC
                 while (tok.Is(Keyword.Comma))
                 {
                     reader.Read();
-                    if (!ParseFullNameDeclaration(reader, out interfaceName))
+                    if (!this.ParseFullNameDeclaration(reader, out interfaceName))
                     {
                         return false;
                     }
@@ -1347,7 +1352,7 @@ namespace TEAC
                     tok = reader.Peek();
                 }
 
-                if (!Expect(reader, Keyword.RightParen))
+                if (!this.Expect(reader, Keyword.RightParen))
                 {
                     return false;
                 }
@@ -1359,8 +1364,8 @@ namespace TEAC
                 reader.Read();
                 tok = reader.Peek();
                 while (
-                    tok.Is(Keyword.Procedure) || 
-                    tok.Is(Keyword.Function) || 
+                    tok.Is(Keyword.Procedure) ||
+                    tok.Is(Keyword.Function) ||
                     tok.Is(Keyword.Static) ||
                     tok.Is(Keyword.Virtual) ||
                     tok.Is(Keyword.Abstract) ||
@@ -1515,7 +1520,7 @@ namespace TEAC
                 isFunction = true;
                 reader.Read();
             }
-            else 
+            else
             {
                 if (!this.Expect(reader, Keyword.Procedure))
                 {
@@ -1636,8 +1641,8 @@ namespace TEAC
         }
 
         private bool ParseDestructorDeclaration(
-            TokenReader reader, 
-            bool isVirtual, 
+            TokenReader reader,
+            bool isVirtual,
             out MethodDeclaration? method)
         {
             Token? tok = reader.Peek();
@@ -1660,8 +1665,8 @@ namespace TEAC
             }
 
             method = new MethodDeclaration(
-                tok!, 
-                "destructor", 
+                tok!,
+                "destructor",
                 false,
                 isVirtual,
                 false);
@@ -1771,7 +1776,7 @@ namespace TEAC
             }
 
             ParameterDeclaration parameterDecl = new ParameterDeclaration(
-                start!, 
+                start!,
                 parameterNames,
                 type!);
 
@@ -1844,7 +1849,7 @@ namespace TEAC
             bool allowInitializers,
             out VarBlock? value)
         {
-            VarBlock? varBlock = new VarBlock(reader.Peek()!);
+            VarBlock varBlock = new VarBlock(reader.Peek()!);
             value = null;
             if (!this.Expect(reader, Keyword.Var))
             {

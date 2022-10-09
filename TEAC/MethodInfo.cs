@@ -1,4 +1,9 @@
-﻿namespace TEAC
+﻿//-----------------------------------------------------------------------
+// <copyright file="MethodInfo.cs" company="Jon Rowlett">
+//     Copyright (C) Jon Rowlett. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
+namespace TEAC
 {
     using System;
     using System.Collections.Generic;
@@ -33,7 +38,7 @@
 
         public void AssignVTableIndex()
         {
-            if (!IsVirtual)
+            if (!this.IsVirtual)
             {
                 return;
             }

@@ -1,11 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿//-----------------------------------------------------------------------
+// <copyright file="ProgramUnit.cs" company="Jon Rowlett">
+//     Copyright (C) Jon Rowlett. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
 namespace TEAC
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+
     internal class ProgramUnit : ParseNode
     {
         private Dictionary<string, TypeDeclaration> types = new Dictionary<string, TypeDeclaration>();
@@ -53,13 +57,13 @@ namespace TEAC
 
         public void AddType(TypeDeclaration type)
         {
-            types.Add(type.Name, type);
-            typeList.Add(type);
+            this.types.Add(type.Name, type);
+            this.typeList.Add(type);
         }
 
         public void AddMethod(MethodDefinition method)
         {
-            methods.Add(method);
+            this.methods.Add(method);
         }
     }
 }

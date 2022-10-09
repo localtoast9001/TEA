@@ -1,4 +1,9 @@
-﻿namespace TEAC
+﻿//-----------------------------------------------------------------------
+// <copyright file="ParameterInfo.cs" company="Jon Rowlett">
+//     Copyright (C) Jon Rowlett. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
+namespace TEAC
 {
     using System;
     using System.Collections.Generic;

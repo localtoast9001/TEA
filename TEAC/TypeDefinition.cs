@@ -1,4 +1,9 @@
-﻿namespace TEAC
+﻿//-----------------------------------------------------------------------
+// <copyright file="TypeDefinition.cs" company="Jon Rowlett">
+//     Copyright (C) Jon Rowlett. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
+namespace TEAC
 {
     using System;
     using System.Collections.Generic;
@@ -72,7 +77,7 @@
 
         public IEnumerable<KeyValuePair<TypeDefinition, int>> GetAllInterfaces()
         {
-            Dictionary<string, KeyValuePair<TypeDefinition, int>> allInterfaces = 
+            Dictionary<string, KeyValuePair<TypeDefinition, int>> allInterfaces =
                 new Dictionary<string, KeyValuePair<TypeDefinition, int>>();
             TypeDefinition? classType = this;
             while (classType != null)
@@ -211,22 +216,22 @@
         {
             List<TypeDefinition> argTypes = new List<TypeDefinition>();
             argTypes.Add(context.GetPointerType(this));
-            return FindConstructor(argTypes);
+            return this.FindConstructor(argTypes);
         }
 
         public void AddInterface(TypeDefinition interfaceType, int offset)
         {
-            this.interfaces.Add(new KeyValuePair<TypeDefinition,int>(interfaceType, offset));
+            this.interfaces.Add(new KeyValuePair<TypeDefinition, int>(interfaceType, offset));
         }
 
         public FieldInfo? GetInterfaceTablePointer(TypeDefinition interfaceType)
         {
-            return GetTablePointer(VTablePointerFieldName + interfaceType.MangledName);
+            return this.GetTablePointer(VTablePointerFieldName + interfaceType.MangledName);
         }
 
         public FieldInfo? GetVTablePointer()
         {
-            return GetTablePointer(VTablePointerFieldName);
+            return this.GetTablePointer(VTablePointerFieldName);
         }
 
         private FieldInfo? GetTablePointer(string fieldName)
@@ -258,7 +263,7 @@
 
         public FieldInfo AddInterfaceTablePointer(CompilerContext context, int offset, TypeDefinition interfaceType)
         {
-            return AddTablePointer(
+            return this.AddTablePointer(
                 context,
                 offset,
                 VTablePointerFieldName + interfaceType.MangledName);
@@ -266,7 +271,7 @@
 
         public FieldInfo AddVTablePointer(CompilerContext context, int offset)
         {
-            return AddTablePointer(context, offset, VTablePointerFieldName);
+            return this.AddTablePointer(context, offset, VTablePointerFieldName);
         }
 
         private FieldInfo AddTablePointer(CompilerContext context, int offset, string name)
@@ -275,7 +280,7 @@
             context.TryFindTypeByName("^", out ptrType);
             FieldInfo field = new FieldInfo
             {
-                Name = name, 
+                Name = name,
                 IsPublic = true,
                 Offset = offset,
                 Type = context.GetArrayType(ptrType!, 0)

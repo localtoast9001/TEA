@@ -1,26 +1,28 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿//-----------------------------------------------------------------------
+// <copyright file="EnumDeclaration.cs" company="Jon Rowlett">
+//     Copyright (C) Jon Rowlett. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
 
 namespace TEAC
 {
+    using System.Collections.Generic;
+
     internal class EnumDeclaration : TypeDeclaration
     {
-        private List<string> values = new List<string>();
+        private readonly List<string> values = new List<string>();
 
         public EnumDeclaration(Token start, string name)
             : base(start, name)
         {
         }
 
-        public IEnumerable<string> Values 
-        { 
-            get 
-            { 
-                return this.values; 
-            } 
+        public IEnumerable<string> Values
+        {
+            get
+            {
+                return this.values;
+            }
         }
 
         public void AddValue(string name)

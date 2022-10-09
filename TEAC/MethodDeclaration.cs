@@ -1,4 +1,9 @@
-﻿using System;
+﻿//-----------------------------------------------------------------------
+// <copyright file="MethodDeclaration.cs" company="Jon Rowlett">
+//     Copyright (C) Jon Rowlett. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,9 +16,9 @@ namespace TEAC
         private List<ParameterDeclaration> parameters = new List<ParameterDeclaration>();
 
         public MethodDeclaration(
-            Token start, 
-            string name, 
-            bool isStatic, 
+            Token start,
+            string name,
+            bool isStatic,
             bool isVirtual,
             bool isAbstract)
             : base(start)
