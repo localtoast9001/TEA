@@ -3,14 +3,17 @@
 //     Copyright (C) Jon Rowlett. All rights reserved.
 // </copyright>
 //-----------------------------------------------------------------------
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TEAC
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+
+    /// <summary>
+    /// Expression to reference the address of something.
+    /// </summary>
     internal class AddressExpression : Expression
     {
         public AddressExpression(Token start, ReferenceExpression inner)

@@ -9,7 +9,7 @@ namespace TEAC
     /// <summary>
     /// Parse node for a while statement.
     /// </summary>
-    class WhileStatement : Statement
+    internal class WhileStatement : Statement
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="WhileStatement"/> class.

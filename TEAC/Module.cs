@@ -3,14 +3,14 @@
 //     Copyright (C) Jon Rowlett. All rights reserved.
 // </copyright>
 //-----------------------------------------------------------------------
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TEAC
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+
     internal class Module
     {
         private List<DataEntry> dataSeg = new List<DataEntry>();
@@ -24,7 +24,10 @@ namespace TEAC
         public List<DataEntry> DataSegment { get { return this.dataSeg; } }
         public List<MethodImpl> CodeSegment { get { return this.codeSeg; } }
         public List<MethodInfo> ProtoList { get { return this.protoList; } }
-        public List<string> ExternList { get { return this.externList; } }
+        public List<string> ExternList
+        {
+            get { return this.externList; }
+        }
 
         public void AddProto(MethodInfo proto)
         {

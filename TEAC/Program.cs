@@ -21,6 +21,7 @@ namespace TEAC
         /// Main program entry routine.
         /// </summary>
         /// <param name="args">Program arguments.</param>
+        /// <returns>Program exit code.</returns>
         public static int Main(string[] args)
         {
             try

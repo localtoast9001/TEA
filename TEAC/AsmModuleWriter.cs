@@ -3,47 +3,47 @@
 //     Copyright (C) Jon Rowlett. All rights reserved.
 // </copyright>
 //-----------------------------------------------------------------------
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TEAC
 {
-    class AsmModuleWriter : ModuleWriter
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Text;
+
+    internal class AsmModuleWriter : ModuleWriter
     {
-        private StreamWriter writer;
+        private readonly StreamWriter writer;
 
         public AsmModuleWriter(string fileName)
         {
-            writer = new StreamWriter(fileName);
+            this.writer = new StreamWriter(fileName);
         }
 
         public override bool Write(Module module)
         {
-            writer.WriteLine(".model flat,C");
-            writer.WriteLine();
+            this.writer.WriteLine(".model flat,C");
+            this.writer.WriteLine();
             foreach (MethodInfo method in module.ProtoList)
             {
-                writer.Write(method.MangledName);
-                writer.WriteLine(" PROTO C");
+                this.writer.Write(method.MangledName);
+                this.writer.WriteLine(" PROTO C");
             }
 
             foreach (string externSymbol in module.ExternList)
             {
-                writer.Write(externSymbol);
-                writer.WriteLine(" PROTO C");
+                this.writer.Write(externSymbol);
+                this.writer.WriteLine(" PROTO C");
             }
 
-            writer.WriteLine();
-            writer.WriteLine(".data");
+            this.writer.WriteLine();
+            this.writer.WriteLine(".data");
             foreach (DataEntry dataEntry in module.DataSegment)
             {
                 if (!string.IsNullOrEmpty(dataEntry.Label))
                 {
-                    writer.Write(dataEntry.Label);
+                    this.writer.Write(dataEntry.Label);
                 }
 
                 for (int i = 0; i < dataEntry.Value?.Length; i++)

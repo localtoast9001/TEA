@@ -6,7 +6,7 @@
 
 namespace TEAC
 {
-    class DereferenceExpression : ReferenceExpression
+    internal class DereferenceExpression : ReferenceExpression
     {
         public DereferenceExpression(Token start, ReferenceExpression inner)
             : base(start)

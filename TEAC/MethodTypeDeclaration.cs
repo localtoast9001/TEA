@@ -3,17 +3,17 @@
 //     Copyright (C) Jon Rowlett. All rights reserved.
 // </copyright>
 //-----------------------------------------------------------------------
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TEAC
 {
-    class MethodTypeDeclaration : TypeDeclaration
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+
+    internal class MethodTypeDeclaration : TypeDeclaration
     {
-        private List<ParameterDeclaration> parameters = new List<ParameterDeclaration>();
+        private readonly List<ParameterDeclaration> parameters = new List<ParameterDeclaration>();
 
         public TypeReference? ReturnType { get; set; }
         public TypeReference? ImplicitArgType { get; set; }

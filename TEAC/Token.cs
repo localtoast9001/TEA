@@ -16,12 +16,27 @@ namespace TEAC
     /// </summary>
     internal abstract class Token
     {
-        public string Path { get; private set; }
+        /// <summary>
+        /// Gets the path to the source file.
+        /// </summary>
+        public string Path { get; }
 
-        public int Line { get; private set; }
+        /// <summary>
+        /// Gets the line of the start of the token.
+        /// </summary>
+        public int Line { get; }
 
-        public int Column { get; private set; }
+        /// <summary>
+        /// Gets the column for the first character in the token.
+        /// </summary>
+        public int Column { get; }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Token"/> class.
+        /// </summary>
+        /// <param name="path">The source file path.</param>
+        /// <param name="line">The line where the token starts.</param>
+        /// <param name="column">The first column where the token starts.</param>
         protected Token(string path, int line, int column)
         {
             this.Path = path;

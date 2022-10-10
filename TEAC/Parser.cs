@@ -3,14 +3,14 @@
 //     Copyright (C) Jon Rowlett. All rights reserved.
 // </copyright>
 //-----------------------------------------------------------------------
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TEAC
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+
     internal class Parser
     {
         private MessageLog log;
@@ -120,7 +120,7 @@ namespace TEAC
                 tok = reader.Peek();
             }
 
-            bool passed = ExpectEndOfFile(reader);
+            bool passed = this.ExpectEndOfFile(reader);
             if (passed)
             {
                 result = programUnit;

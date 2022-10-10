@@ -3,15 +3,18 @@
 //     Copyright (C) Jon Rowlett. All rights reserved.
 // </copyright>
 //-----------------------------------------------------------------------
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TEAC
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Text;
+
+    /// <summary>
+    /// Tokenizes an input stream.
+    /// </summary>
     internal class TokenReader : IDisposable
     {
         private static readonly Dictionary<string, Keyword> IdentifierKeywordMap = new Dictionary<string, Keyword>(StringComparer.Ordinal)
@@ -395,7 +398,7 @@ namespace TEAC
                     int charValue = 0;
                     if (ch <= 0 || !char.IsDigit((char)ch))
                     {
-                        log.Write(new Message(
+                        this.log.Write(new Message(
                             this.path, this.line, this.column, Severity.Error, Properties.Resources.TokenReader_NoDigitAfterHash));
                         return null;
                     }

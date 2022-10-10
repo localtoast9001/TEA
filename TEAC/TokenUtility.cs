@@ -14,9 +14,9 @@ namespace TEAC
         /// <summary>
         /// Checks if the token is the given keyword.
         /// </summary>
-        /// <param name="value">The token to check.</param>
+        /// <param name="token">The token to check.</param>
         /// <param name="keyword">The expected keyword.</param>
-        /// <returns>True if a match; otherwise, false.</param>
+        /// <returns>True if a match; otherwise, false.</returns>
         public static bool Is(this Token? token, Keyword keyword)
         {
             KeywordToken? keyTok = token as KeywordToken;

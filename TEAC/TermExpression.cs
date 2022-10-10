@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace TEAC
 {
-    class TermExpression : Expression
+    internal class TermExpression : Expression
     {
         public TermExpression(
             Token start,

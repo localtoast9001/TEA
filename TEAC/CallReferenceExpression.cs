@@ -5,7 +5,7 @@
 //-----------------------------------------------------------------------
 namespace TEAC
 {
-    class CallReferenceExpression : ReferenceExpression
+    internal class CallReferenceExpression : ReferenceExpression
     {
         private List<Expression> arguments = new List<Expression>();
 

@@ -77,7 +77,7 @@ namespace TEAC
                     string message = string.Format(
                         Properties.Resources.CodeGenerator_TypeAlreadyDeclared,
                         typeDecl.Name);
-                    log.Write(new Message(
+                    this.log.Write(new Message(
                         typeDecl.Start.Path,
                         typeDecl.Start.Line,
                         typeDecl.Start.Column,
@@ -374,7 +374,7 @@ namespace TEAC
                                         typeDef.FullName,
                                         intf.FullName,
                                         meth.Name);
-                                    log.Write(new Message(
+                                    this.log.Write(new Message(
                                         classDecl.Start.Path,
                                         classDecl.Start.Line,
                                         classDecl.Start.Column,
@@ -588,7 +588,7 @@ namespace TEAC
                     method.Statements.Add(new AsmStatement { Instruction = "mov [ecx],eax" });
                 }
 
-                foreach(TypeDefinition intf in method.Method!.Type!.GetAllInterfaces().Select(e => e.Key))
+                foreach (TypeDefinition intf in method.Method!.Type!.GetAllInterfaces().Select(e => e.Key))
                 {
                     FieldInfo? intfTable = method.Method.Type.GetInterfaceTablePointer(intf);
                     string tableSymbol = "$Vtbl_" + intf.MangledName + "_" + method.Method!.Type!.MangledName;
@@ -795,7 +795,7 @@ namespace TEAC
                 {
                     method.Statements.Add(
                         new AsmStatement { Instruction = string.Format("mov edx, _{0}$[ebp]", scope.LargeReturnVariable!.Name) });
-                    if (!TryEmitCopy(
+                    if (!this.TryEmitCopy(
                         string.Format("_{0}$[ebp]", returnVar.Name),
                         "[edx]",
                         returnVar!.Type!,
@@ -888,7 +888,7 @@ namespace TEAC
         {
             if (string.CompareOrdinal("[ebx]", sourceLocation) != 0)
             {
-                method.Statements.Add(new AsmStatement { Instruction = string.Format("lea ebx,{0}", sourceLocation) }); 
+                method.Statements.Add(new AsmStatement { Instruction = string.Format("lea ebx,{0}", sourceLocation) });
             }
 
             if (string.CompareOrdinal("[edx]", targetLocation) != 0)
@@ -951,42 +951,42 @@ namespace TEAC
             AssignmentStatement? assignmentStatement = statement as AssignmentStatement;
             if (assignmentStatement != null)
             {
-                return TryEmitAssignment(assignmentStatement, context, scope, method);
+                return this.TryEmitAssignment(assignmentStatement, context, scope, method);
             }
             else
             {
                 CallStatement? callStatement = statement as CallStatement;
                 if (callStatement != null)
                 {
-                    return TryEmitCall(callStatement, context, scope, method);
+                    return this.TryEmitCall(callStatement, context, scope, method);
                 }
                 else
                 {
                     IfStatement? ifStatement = statement as IfStatement;
                     if (ifStatement != null)
                     {
-                        return TryEmitIfStatement(ifStatement, context, scope, method);
+                        return this.TryEmitIfStatement(ifStatement, context, scope, method);
                     }
                     else
                     {
                         WhileStatement? whileStatement = statement as WhileStatement;
                         if (whileStatement != null)
                         {
-                            return TryEmitWhileStatement(whileStatement, context, scope, method);
+                            return this.TryEmitWhileStatement(whileStatement, context, scope, method);
                         }
                         else
                         {
                             BlockStatement? blockStatement = statement as BlockStatement;
                             if (blockStatement != null)
                             {
-                                return TryEmitBlockStatement(blockStatement, context, scope, method);
+                                return this.TryEmitBlockStatement(blockStatement, context, scope, method);
                             }
                             else
                             {
                                 DeleteStatement? deleteStatement = statement as DeleteStatement;
                                 if (deleteStatement != null)
                                 {
-                                    return TryEmitDeleteStatement(deleteStatement, context, scope, method);
+                                    return this.TryEmitDeleteStatement(deleteStatement, context, scope, method);
                                 }
                             }
                         }
@@ -1042,7 +1042,7 @@ namespace TEAC
                                 method.Statements.Add(new AsmStatement { Instruction = string.Format("add ecx,{0}", destructor.VTableIndex * 4) });
                             }
 
-                            method.Statements.Add(new AsmStatement { Instruction = "call dword ptr [ecx]" });                     
+                            method.Statements.Add(new AsmStatement { Instruction = "call dword ptr [ecx]" });
                         }
                         else
                         {
@@ -1211,9 +1211,9 @@ namespace TEAC
         }
 
         private bool TryEmitAssignment(
-            AssignmentStatement assignmentStatement, 
-            CompilerContext context, 
-            Scope scope, 
+            AssignmentStatement assignmentStatement,
+            CompilerContext context,
+            Scope scope,
             MethodImpl method)
         {
             string? location = null;
@@ -1319,7 +1319,7 @@ namespace TEAC
                 {
                     canCast = valueType.InnerType == null ||
                         string.CompareOrdinal(storageType.InnerType!.MangledName, "b") == 0 ||
-                        string.CompareOrdinal(valueType.InnerType!.MangledName, "b") == 0 || 
+                        string.CompareOrdinal(valueType.InnerType!.MangledName, "b") == 0 ||
                         this.ValidateCanCast(node, storageType.InnerType!, valueType.InnerType!, out offset);
                 }
             }
@@ -1338,8 +1338,8 @@ namespace TEAC
                             offset = intfTable!.Offset;
                         }
                     }
-                    else if (valueType.InnerType!.IsClass && storageType.InnerType!.IsClass ||
-                        valueType.InnerType!.IsInterface && storageType.InnerType!.IsInterface)
+                    else if ((valueType.InnerType!.IsClass && storageType.InnerType!.IsClass) ||
+                        (valueType.InnerType!.IsInterface && storageType.InnerType!.IsInterface))
                     {
                         TypeDefinition? testClass = valueType.InnerType;
                         while (!canCast && testClass != null)
@@ -1357,7 +1357,7 @@ namespace TEAC
                     else
                     {
                         canCast = string.CompareOrdinal(storageType.InnerType!.MangledName, "b") == 0 ||
-                            string.CompareOrdinal(valueType.InnerType!.MangledName, "b") == 0 || 
+                            string.CompareOrdinal(valueType.InnerType!.MangledName, "b") == 0 ||
                             this.ValidateCanCast(node, storageType.InnerType!, valueType.InnerType!, out offset);
                     }
                 }
@@ -1389,8 +1389,8 @@ namespace TEAC
                         if (valueType.MethodImplicitArgType != null)
                         {
                             canCast = this.ValidateCanCast(
-                                node, 
-                                valueType.MethodImplicitArgType!, 
+                                node,
+                                valueType.MethodImplicitArgType!,
                                 storageType.MethodImplicitArgType!,
                                 out offset);
                         }
@@ -1405,7 +1405,7 @@ namespace TEAC
                         for (int i = 0; i < storageType.MethodParamTypes.Count; i++)
                         {
                             if (string.CompareOrdinal(
-                                storageType.MethodParamTypes[i].MangledName, 
+                                storageType.MethodParamTypes[i].MangledName,
                                 valueType.MethodParamTypes[i].MangledName) != 0)
                             {
                                 canCast = false;
@@ -1490,6 +1490,7 @@ namespace TEAC
                     string label = method.Module!.DefineConstant((double)exprValue);
                     method.Statements.Add(new AsmStatement { Instruction = string.Format("fld qword ptr [{0}]", label) });
                 }
+
                 return context.TryFindTypeByName("double", out valueType);
             }
 
@@ -1611,18 +1612,18 @@ namespace TEAC
                         method.Statements.Add(new AsmStatement { Instruction = string.Format("lea eax,[esp+{0}]", argSize) });
                         method.Statements.Add(new AsmStatement { Instruction = "push eax" });
                     }
-                    else if (storageType.IsClass || !storageType.IsFloatingPoint && storageType.Size > 8)
+                    else if (storageType.IsClass || (!storageType.IsFloatingPoint && storageType.Size > 8))
                     {
                         // create room on the stack for the result.
                         AsmStatement resultPush = new AsmStatement { Instruction = string.Format("sub esp,{0}", storageType.Size) };
                         method.Statements.Insert(argStatementStart, resultPush);
 
                         // push the ref to the storage for the class on the stack.
-                        method.Statements.Add(new AsmStatement 
-                            { 
+                        method.Statements.Add(new AsmStatement
+                            {
                                 Instruction = string.Format(
                                     "lea ebx,[esp+{0}]",
-                                    calleeMethod!.IsStatic ? argSize : argSize + 4)
+                                    calleeMethod!.IsStatic ? argSize : argSize + 4),
                             });
                         method.Statements.Add(new AsmStatement { Instruction = "push ebx" });
                         argSize += 4;
@@ -1772,7 +1773,8 @@ namespace TEAC
                                     method.Statements.Add(new AsmStatement { Instruction = "pop eax" });
                                     method.Statements.Add(new AsmStatement { Instruction = "pop edx" });
                                 }
-                                else{
+                                else
+                                {
                                     switch (storageType!.Size)
                                     {
                                         case 4:
@@ -1816,7 +1818,7 @@ namespace TEAC
                     return false;
                 }
 
-                bool argsValid = true; 
+                bool argsValid = true;
                 for (int i = 0; i < calleeMethod!.Parameters.Count; i++)
                 {
                     int pointerCastOffset = 0;
@@ -2028,10 +2030,10 @@ namespace TEAC
         }
 
         private bool TryEmitNotExpression(
-            NotExpression expression, 
-            CompilerContext context, 
-            Scope scope, 
-            MethodImpl method, 
+            NotExpression expression,
+            CompilerContext context,
+            Scope scope,
+            MethodImpl method,
             out TypeDefinition? valueType)
         {
             if (!this.TryEmitExpression(expression.Inner!, context, scope, method, out valueType))
@@ -2079,10 +2081,10 @@ namespace TEAC
         }
 
         private bool TryEmitNewExpression(
-            NewExpression newExpr, 
-            CompilerContext context, 
-            Scope scope, 
-            MethodImpl method, 
+            NewExpression newExpr,
+            CompilerContext context,
+            Scope scope,
+            MethodImpl method,
             out TypeDefinition? valueType)
         {
             valueType = null;
@@ -2095,7 +2097,7 @@ namespace TEAC
 
             if (!objectType!.IsClass && newExpr.ConstructorArguments.Count() > 0)
             {
-                log.Write(new Message(
+                this.log.Write(new Message(
                     newExpr.Start.Path,
                     newExpr.Start.Line,
                     newExpr.Start.Column,
@@ -2220,10 +2222,10 @@ namespace TEAC
         }
 
         private bool TryEmitRelationExpresion(
-            RelationalExpression relExpr, 
-            CompilerContext context, 
-            Scope scope, 
-            MethodImpl method, 
+            RelationalExpression relExpr,
+            CompilerContext context,
+            Scope scope,
+            MethodImpl method,
             out TypeDefinition? valueType)
         {
             context.TryFindTypeByName("boolean", out valueType);
@@ -2310,14 +2312,14 @@ namespace TEAC
                         rightSideType!.FullName);
                     this.log.Write(new Message(
                         relExpr.Start.Path,
-                        relExpr.Start.Line, 
+                        relExpr.Start.Line,
                         relExpr.Start.Column,
                         Severity.Error,
                         message));
                     return false;
                 }
-            } 
-            else if(leftSideType!.IsFloatingPoint)
+            }
+            else if (leftSideType!.IsFloatingPoint)
             {
                 string message = string.Format(
                     System.Globalization.CultureInfo.InvariantCulture,
@@ -2334,10 +2336,10 @@ namespace TEAC
             }
             else
             {
-                if(leftSideType!.Size <= 4 && rightSideType!.Size <= 4)
+                if (leftSideType!.Size <= 4 && rightSideType!.Size <= 4)
                 {
-                    method.Statements.Add(new AsmStatement { Instruction = "pop ecx"});
-                    method.Statements.Add(new AsmStatement { Instruction = "cmp eax,ecx"});
+                    method.Statements.Add(new AsmStatement { Instruction = "pop ecx" });
+                    method.Statements.Add(new AsmStatement { Instruction = "cmp eax,ecx" });
                     switch (relExpr.Operator)
                     {
                         case Keyword.Equals:
@@ -2353,7 +2355,7 @@ namespace TEAC
 
                             break;
                         case Keyword.LessThanOrEquals:
-                            { 
+                            {
                                 method.Statements.Add(new AsmStatement { Instruction = "setle al" });
                             }
 
@@ -2415,7 +2417,7 @@ namespace TEAC
                 {
                     method.Statements.Add(new AsmStatement { Instruction = "push eax" });
                 }
-                else if(type.Size == 8)
+                else if (type.Size == 8)
                 {
                     method.Statements.Add(new AsmStatement { Instruction = "push edx" });
                     method.Statements.Add(new AsmStatement { Instruction = "push eax" });
@@ -2662,7 +2664,7 @@ namespace TEAC
                     if (string.CompareOrdinal(field.Name, namedRef.Identifier) == 0)
                     {
                         SymbolEntry? symThis = null;
-                        if(!scope.TryLookup("this", out symThis))
+                        if (!scope.TryLookup("this", out symThis))
                         {
                             storageType = null;
                             location = null;
@@ -2911,10 +2913,10 @@ namespace TEAC
 
                 method.Statements.Add(new AsmStatement { Instruction = "pop eax" });
                 int elementSize = innerType!.InnerType!.Size;
-                if(elementSize > 1)
+                if (elementSize > 1)
                 {
                     int shiftSize = 0;
-                    switch(elementSize)
+                    switch (elementSize)
                     {
                         case 2:
                             shiftSize = 1;
@@ -3147,7 +3149,7 @@ namespace TEAC
                         return false;
                     }
 
-                    elementCount = (int)(litElementCount.Value);
+                    elementCount = (int)litElementCount.Value;
                 }
 
                 typeDef = context.GetArrayType(innerType!, elementCount);

@@ -11,40 +11,152 @@ namespace TEAC
     using System.Text;
     using System.Threading.Tasks;
 
+    /// <summary>
+    /// Type definition intermediate structure.
+    /// </summary>
     internal class TypeDefinition
     {
         private const string VTablePointerFieldName = "?vtblptr";
 
-        private List<MethodInfo> methods = new List<MethodInfo>();
-        private List<FieldInfo> fields = new List<FieldInfo>();
-        private Dictionary<string, int> enumValues = new Dictionary<string, int>();
-        private List<TypeDefinition> methodParamTypes = new List<TypeDefinition>();
-        private List<KeyValuePair<TypeDefinition, int>> interfaces = new List<KeyValuePair<TypeDefinition, int>>();
+        private readonly List<MethodInfo> methods = new List<MethodInfo>();
+        private readonly List<FieldInfo> fields = new List<FieldInfo>();
+        private readonly Dictionary<string, int> enumValues = new Dictionary<string, int>();
+        private readonly List<TypeDefinition> methodParamTypes = new List<TypeDefinition>();
+        private readonly List<KeyValuePair<TypeDefinition, int>> interfaces = new List<KeyValuePair<TypeDefinition, int>>();
 
-        public List<FieldInfo> Fields { get { return this.fields; } }
-        public List<MethodInfo> Methods { get { return this.methods; } }
-        public IDictionary<string, int> EnumValues { get { return this.enumValues; } }
-        public List<TypeDefinition> MethodParamTypes { get { return this.methodParamTypes; } }
-        public List<KeyValuePair<TypeDefinition, int>> Interfaces { get { return this.interfaces; } }
+        /// <summary>
+        /// Gets the fields.
+        /// </summary>
+        public List<FieldInfo> Fields
+        {
+            get { return this.fields; }
+        }
 
+        /// <summary>
+        /// Gets the methods.
+        /// </summary>
+        public List<MethodInfo> Methods
+        {
+            get { return this.methods; }
+        }
+
+        /// <summary>
+        /// Gets the enum values.
+        /// </summary>
+        public IDictionary<string, int> EnumValues
+        {
+            get { return this.enumValues; }
+        }
+
+        /// <summary>
+        /// Gets the method parameter types for a method type.
+        /// </summary>
+        public List<TypeDefinition> MethodParamTypes
+        {
+            get { return this.methodParamTypes; }
+        }
+
+        /// <summary>
+        /// Gets the interfaces.
+        /// </summary>
+        public List<KeyValuePair<TypeDefinition, int>> Interfaces
+        {
+            get { return this.interfaces; }
+        }
+
+        /// <summary>
+        /// Gets or sets the full name.
+        /// </summary>
         public string? FullName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the size of each instance of the type.
+        /// </summary>
         public int Size { get; set; }
+
+        /// <summary>
+        /// Gets or sets the array element count.
+        /// </summary>
         public int ArrayElementCount { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether this is a pointer type.
+        /// </summary>
         public bool IsPointer { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether this is an array type.
+        /// </summary>
         public bool IsArray { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether this is a class type.
+        /// </summary>
         public bool IsClass { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether this is a floating point type.
+        /// </summary>
         public bool IsFloatingPoint { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether this type is public.
+        /// </summary>
         public bool IsPublic { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether this type is a static class.
+        /// </summary>
         public bool IsStaticClass { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether this type is an abstract class.
+        /// </summary>
         public bool IsAbstractClass { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether this type is an interface.
+        /// </summary>
         public bool IsInterface { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether this type in an enum.
+        /// </summary>
         public bool IsEnum { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether this is a method type.
+        /// </summary>
         public bool IsMethod { get; set; }
+
+        /// <summary>
+        /// Gets or sets the inner type.
+        /// </summary>
         public TypeDefinition? InnerType { get; set; }
+
+        /// <summary>
+        /// Gets or sets the base class.
+        /// </summary>
         public TypeDefinition? BaseClass { get; set; }
+
+        /// <summary>
+        /// Gets or sets the method return type.
+        /// </summary>
         public TypeDefinition? MethodReturnType { get; set; }
+
+        /// <summary>
+        /// Gets or sets the method impplicit type.
+        /// </summary>
         public TypeDefinition? MethodImplicitArgType { get; set; }
+
+        /// <summary>
+        /// Gets or sets the special mangled name.
+        /// </summary>
         public string? SpecialMangledName { get; set; }
+
+        /// <summary>
+        /// Gets the mangled name.
+        /// </summary>
         public string MangledName
         {
             get
@@ -75,6 +187,10 @@ namespace TEAC
             }
         }
 
+        /// <summary>
+        /// Gets all interfaces the type implements.
+        /// </summary>
+        /// <returns>A set of interfaces with interface offsets in the type.</returns>
         public IEnumerable<KeyValuePair<TypeDefinition, int>> GetAllInterfaces()
         {
             Dictionary<string, KeyValuePair<TypeDefinition, int>> allInterfaces =
@@ -96,6 +212,10 @@ namespace TEAC
             return allInterfaces.Values;
         }
 
+        /// <summary>
+        /// Gets the destructor.
+        /// </summary>
+        /// <returns>The method info for the destructor or null if the type does not have one.</returns>
         public MethodInfo? GetDestructor()
         {
             foreach (MethodInfo method in this.Methods)
@@ -129,34 +249,12 @@ namespace TEAC
 
         public MethodInfo? FindMethod(string name)
         {
-            return FindMethod(name, null, false);
+            return this.FindMethod(name, null, false);
         }
 
         public MethodInfo? FindMethod(string name, IList<TypeDefinition>? argTypes)
         {
-            return FindMethod(name, argTypes, true);
-        }
-
-        private MethodInfo? FindMethod(string name, IList<TypeDefinition>? argTypes, bool matchArgs)
-        {
-            TypeDefinition? type = this;
-            while (type != null)
-            {
-                foreach (MethodInfo method in type?.Methods ?? new List<MethodInfo>())
-                {
-                    if (string.CompareOrdinal(name, method.Name) == 0)
-                    {
-                        if (!matchArgs || MatchArgs(method, argTypes!))
-                        {
-                            return method;
-                        }
-                    }
-                }
-
-                type = type!.BaseClass;
-            }
-
-            return null;
+            return this.FindMethod(name, argTypes, true);
         }
 
         public MethodInfo? FindConstructor(IList<TypeDefinition> argTypes)
@@ -192,26 +290,6 @@ namespace TEAC
             return meth;
         }
 
-        private static bool MatchArgs(MethodInfo method, IList<TypeDefinition> argTypes)
-        {
-            if (method.Parameters.Count != argTypes.Count)
-            {
-                return false;
-            }
-
-            bool match = true;
-            for (int i = 0; i < method.Parameters.Count; i++)
-            {
-                if (string.CompareOrdinal(method.Parameters[i].Type?.FullName, argTypes[i].FullName) != 0)
-                {
-                    match = false;
-                    break;
-                }
-            }
-
-            return match;
-        }
-
         public MethodInfo? GetCopyConstructor(CompilerContext context)
         {
             List<TypeDefinition> argTypes = new List<TypeDefinition>();
@@ -232,6 +310,61 @@ namespace TEAC
         public FieldInfo? GetVTablePointer()
         {
             return this.GetTablePointer(VTablePointerFieldName);
+        }
+
+        public FieldInfo AddInterfaceTablePointer(CompilerContext context, int offset, TypeDefinition interfaceType)
+        {
+            return this.AddTablePointer(
+                context,
+                offset,
+                VTablePointerFieldName + interfaceType.MangledName);
+        }
+
+        public FieldInfo AddVTablePointer(CompilerContext context, int offset)
+        {
+            return this.AddTablePointer(context, offset, VTablePointerFieldName);
+        }
+
+        private static bool MatchArgs(MethodInfo method, IList<TypeDefinition> argTypes)
+        {
+            if (method.Parameters.Count != argTypes.Count)
+            {
+                return false;
+            }
+
+            bool match = true;
+            for (int i = 0; i < method.Parameters.Count; i++)
+            {
+                if (string.CompareOrdinal(method.Parameters[i].Type?.FullName, argTypes[i].FullName) != 0)
+                {
+                    match = false;
+                    break;
+                }
+            }
+
+            return match;
+        }
+
+        private MethodInfo? FindMethod(string name, IList<TypeDefinition>? argTypes, bool matchArgs)
+        {
+            TypeDefinition? type = this;
+            while (type != null)
+            {
+                foreach (MethodInfo method in type?.Methods ?? new List<MethodInfo>())
+                {
+                    if (string.CompareOrdinal(name, method.Name) == 0)
+                    {
+                        if (!matchArgs || MatchArgs(method, argTypes!))
+                        {
+                            return method;
+                        }
+                    }
+                }
+
+                type = type!.BaseClass;
+            }
+
+            return null;
         }
 
         private FieldInfo? GetTablePointer(string fieldName)
@@ -261,19 +394,6 @@ namespace TEAC
             return null;
         }
 
-        public FieldInfo AddInterfaceTablePointer(CompilerContext context, int offset, TypeDefinition interfaceType)
-        {
-            return this.AddTablePointer(
-                context,
-                offset,
-                VTablePointerFieldName + interfaceType.MangledName);
-        }
-
-        public FieldInfo AddVTablePointer(CompilerContext context, int offset)
-        {
-            return this.AddTablePointer(context, offset, VTablePointerFieldName);
-        }
-
         private FieldInfo AddTablePointer(CompilerContext context, int offset, string name)
         {
             TypeDefinition? ptrType = null;
@@ -283,7 +403,7 @@ namespace TEAC
                 Name = name,
                 IsPublic = true,
                 Offset = offset,
-                Type = context.GetArrayType(ptrType!, 0)
+                Type = context.GetArrayType(ptrType!, 0),
             };
 
             this.fields.Add(field);
