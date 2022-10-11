@@ -12,15 +12,23 @@ namespace TEAC
     using System.Linq;
     using System.Text;
 
+    /// <summary>
+    /// Writer that writes a module to a ASM source file.
+    /// </summary>
     internal class AsmModuleWriter : ModuleWriter
     {
         private readonly StreamWriter writer;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AsmModuleWriter"/> class.
+        /// </summary>
+        /// <param name="fileName">Path to the output file.</param>
         public AsmModuleWriter(string fileName)
         {
             this.writer = new StreamWriter(fileName);
         }
 
+        /// <inheritdoc/>
         public override bool Write(Module module)
         {
             this.writer.WriteLine(".model flat,C");
@@ -135,6 +143,7 @@ wmain ENDP";
             return true;
         }
 
+        /// <inheritdoc/>
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);

@@ -9,33 +9,105 @@ namespace TEAC
     using System.Collections.Generic;
     using System.Linq;
     using System.Text;
-    using System.Threading.Tasks;
 
+    /// <summary>
+    /// Information about a method used in code generation.
+    /// </summary>
     internal class MethodInfo
     {
-        private List<ParameterInfo> parameters = new List<ParameterInfo>();
+        private readonly List<ParameterInfo> parameters = new List<ParameterInfo>();
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MethodInfo"/> class.
+        /// </summary>
+        /// <param name="type">The type on which the method is defined.</param>
         public MethodInfo(TypeDefinition? type)
         {
             this.Type = type;
         }
 
+        /// <summary>
+        /// Gets the type.
+        /// </summary>
         public TypeDefinition? Type { get; }
 
+        /// <summary>
+        /// Gets the parameters.
+        /// </summary>
         public List<ParameterInfo> Parameters
         {
             get { return this.parameters; }
         }
 
+        /// <summary>
+        /// Gets or sets the name.
+        /// </summary>
         public string? Name { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the method is static.
+        /// </summary>
         public bool IsStatic { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the method is virtual.
+        /// </summary>
         public bool IsVirtual { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the method is abstract.
+        /// </summary>
         public bool IsAbstract { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the method is public.
+        /// </summary>
         public bool IsPublic { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the method is protected.
+        /// </summary>
         public bool IsProtected { get; set; }
+
+        /// <summary>
+        /// Gets or sets a the return type.
+        /// </summary>
         public TypeDefinition? ReturnType { get; set; }
+
+        /// <summary>
+        /// Gets or sets the method's vtable index.
+        /// </summary>
         public int VTableIndex { get; set; }
 
+        /// <summary>
+        /// Gets the mangled name.
+        /// </summary>
+        public string MangledName
+        {
+            get
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.Append(this.Type?.MangledName ?? string.Empty);
+                sb.AppendFormat("{0}{1}E", this.Name?.Length, this.Name ?? string.Empty);
+                if (this.Parameters.Count > 0)
+                {
+                    foreach (var parameter in this.Parameters)
+                    {
+                        sb.Append(parameter.Type?.MangledName ?? string.Empty);
+                    }
+                }
+                else
+                {
+                    sb.Append("v");
+                }
+
+                return sb.ToString();
+            }
+        }
+
+        /// <summary>
+        /// Assigns the Vtable index.
+        /// </summary>
         public void AssignVTableIndex()
         {
             if (!this.IsVirtual)
@@ -99,29 +171,6 @@ namespace TEAC
             }
 
             this.VTableIndex = maxIndex + 1;
-        }
-
-        public string MangledName
-        {
-            get
-            {
-                StringBuilder sb = new StringBuilder();
-                sb.Append(this.Type?.MangledName ?? string.Empty);
-                sb.AppendFormat("{0}{1}E", this.Name?.Length, this.Name ?? string.Empty);
-                if (this.Parameters.Count > 0)
-                {
-                    foreach (var parameter in this.Parameters)
-                    {
-                        sb.Append(parameter.Type?.MangledName ?? string.Empty);
-                    }
-                }
-                else
-                {
-                    sb.Append("v");
-                }
-
-                return sb.ToString();
-            }
         }
     }
 }

@@ -120,12 +120,18 @@ namespace TEAC
         /// <summary>
         /// Gets the uses namespaces.
         /// </summary>
-        public IEnumerable<string> Uses { get { return this.uses; } }
+        public IEnumerable<string> Uses
+        {
+            get { return this.uses; }
+        }
 
         /// <summary>
         /// Gets the include paths.
         /// </summary>
-        public IEnumerable<string> Includes { get { return this.includes; } }
+        public IEnumerable<string> Includes
+        {
+            get { return this.includes; }
+        }
 
         /// <summary>
         /// Adds include search paths to the context.
@@ -346,7 +352,7 @@ namespace TEAC
             {
                 LocalVariable returnVar = scope.DefineLocalVariable(method.Name!, method.ReturnType!);
                 scope.ReturnVariable = returnVar;
-                if (method.ReturnType.Size > 8 && !method.ReturnType.IsFloatingPoint || method.ReturnType.IsClass)
+                if ((method.ReturnType.Size > 8 && !method.ReturnType.IsFloatingPoint) || method.ReturnType.IsClass)
                 {
                     scope.LargeReturnVariable = scope.DefineParameter(
                         "$result",

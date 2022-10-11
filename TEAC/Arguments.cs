@@ -12,7 +12,7 @@ namespace TEAC
     using System.Text;
 
     /// <summary>
-    /// Program Arguments
+    /// Program Arguments.
     /// </summary>
     internal class Arguments
     {
@@ -21,12 +21,37 @@ namespace TEAC
         /// </summary>
         private List<string> includes = new List<string>();
 
-        public string InputFile { get; private set; }
+        private Arguments(string inputFile, string outputListing, IEnumerable<string> includeDirs)
+        {
+            this.InputFile = inputFile;
+            this.OutputListing = outputListing;
+            this.includes.AddRange(includeDirs);
+        }
 
-        public string OutputListing { get; private set; }
+        /// <summary>
+        /// Gets the input file.
+        /// </summary>
+        public string InputFile { get; }
 
-        public IList<string> Includes { get { return this.includes; } }
+        /// <summary>
+        /// Gets the output listing path.
+        /// </summary>
+        public string OutputListing { get; }
 
+        /// <summary>
+        /// Gets the list of include search paths.
+        /// </summary>
+        public IList<string> Includes
+        {
+            get { return this.includes; }
+        }
+
+        /// <summary>
+        /// Tries to parse the program arguments.
+        /// </summary>
+        /// <param name="args">The program arguments.</param>
+        /// <param name="result">On success, receives the parsed arguments.</param>
+        /// <returns>True if parsed; otherwise, false.</returns>
         public static bool TryParse(string[] args, out Arguments? result)
         {
             result = null;
@@ -88,13 +113,6 @@ namespace TEAC
 
             result = new Arguments(inputFile, outputListing, includes);
             return true;
-        }
-
-        private Arguments(string inputFile, string outputListing, IEnumerable<string> includeDirs)
-        {
-            this.InputFile = inputFile;
-            this.OutputListing = outputListing;
-            this.includes.AddRange(includeDirs);
         }
     }
 }

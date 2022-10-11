@@ -359,6 +359,6 @@ namespace TEAC
         /// <summary>
         /// The while keyword.
         /// </summary>
-        While
+        While,
     }
 }

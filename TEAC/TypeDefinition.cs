@@ -276,7 +276,7 @@ namespace TEAC
         public MethodInfo CreateMethodInfoForMethodType()
         {
             MethodInfo meth = new MethodInfo(this.MethodImplicitArgType);
-            meth.IsStatic = (this.MethodImplicitArgType == null);
+            meth.IsStatic = this.MethodImplicitArgType == null;
 
             meth.ReturnType = this.MethodReturnType;
             meth.Name = "???";

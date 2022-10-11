@@ -63,14 +63,17 @@ namespace TEAC
         }
 
         /// <summary>
-        /// Gets the variables.
+        /// Gets or sets the variables.
         /// </summary>
         public VarBlock? Variables { get; set; }
 
         /// <summary>
         /// Gets the methods.
         /// </summary>
-        public IEnumerable<MethodDefinition> Methods { get { return this.methods; } }
+        public IEnumerable<MethodDefinition> Methods
+        {
+            get { return this.methods; }
+        }
 
         /// <summary>
         /// Adds a uses reference.

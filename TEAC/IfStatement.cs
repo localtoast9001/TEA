@@ -12,7 +12,7 @@ namespace TEAC
     internal class IfStatement : Statement
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="IfStatement"/> claass.
+        /// Initializes a new instance of the <see cref="IfStatement"/> class.
         /// </summary>
         /// <param name="start">The first token in the parse node.</param>
         public IfStatement(Token start)

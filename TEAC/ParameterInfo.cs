@@ -9,11 +9,20 @@ namespace TEAC
     using System.Collections.Generic;
     using System.Linq;
     using System.Text;
-    using System.Threading.Tasks;
 
+    /// <summary>
+    /// Defines a parameter that is used inside <see cref="MethodInfo"/>.
+    /// </summary>
     internal class ParameterInfo
     {
+        /// <summary>
+        /// Gets or sets the name.
+        /// </summary>
         public string? Name { get; set; }
+
+        /// <summary>
+        /// Gets or sets the type.
+        /// </summary>
         public TypeDefinition? Type { get; set; }
     }
 }
