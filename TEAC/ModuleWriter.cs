@@ -1,12 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿//-----------------------------------------------------------------------
+// <copyright file="ModuleWriter.cs" company="Jon Rowlett">
+//     Copyright (C) Jon Rowlett. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
 
 namespace TEAC
 {
-    abstract class ModuleWriter : IDisposable
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+
+    abstract internal class ModuleWriter : IDisposable
     {
         ~ModuleWriter()
         {

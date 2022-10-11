@@ -1,18 +1,28 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿//-----------------------------------------------------------------------
+// <copyright file="ReferenceExpression.cs" company="Jon Rowlett">
+//     Copyright (C) Jon Rowlett. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
 
 namespace TEAC
 {
+    /// <summary>
+    /// Parse node for a reference.
+    /// </summary>
     abstract class ReferenceExpression : Expression
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ReferenceExpression"/> class.
+        /// </summary>
+        /// <param name="start">The first token in the parse node.</param>
         protected ReferenceExpression(Token start)
             : base(start)
         {
         }
 
+        /// <summary>
+        /// Gets a value indicating whether or not to use virtual dispatch to traverse the reference.
+        /// </summary>
         public virtual bool UseVirtualDispatch
         {
             get
@@ -20,97 +30,5 @@ namespace TEAC
                 return true;
             }
         }
-    }
-
-    class NamedReferenceExpression : ReferenceExpression
-    {
-        public NamedReferenceExpression(Token start, string identifier)
-            : base(start)
-        {
-            this.Identifier = identifier;
-        }
-
-        public string Identifier { get; }
-    }
-
-    class InheritedReferenceExpression : ReferenceExpression
-    {
-        public InheritedReferenceExpression(Token start)
-            : base(start)
-        {
-        }
-
-        public override bool UseVirtualDispatch
-        {
-            get
-            {
-                return false;
-            }
-        }
-    }
-
-    class MemberReferenceExpression : ReferenceExpression
-    {
-        public MemberReferenceExpression(Token start, ReferenceExpression inner, string memberName)
-            : base(start)
-        {
-            this.MemberName = memberName;
-            this.Inner = inner;
-        }
-
-        public string MemberName { get; }
-
-        public ReferenceExpression Inner { get; }
-
-        public override bool UseVirtualDispatch
-        {
-            get
-            {
-                return this.Inner.UseVirtualDispatch;
-            }
-        }
-    }
-
-    class CallReferenceExpression : ReferenceExpression
-    {
-        private List<Expression> arguments = new List<Expression>();
-
-        public CallReferenceExpression(Token start, ReferenceExpression inner)
-            : base(start)
-        {
-            this.Inner = inner;
-        }
-
-        public ReferenceExpression Inner { get; }
-        public IEnumerable<Expression> Arguments { get { return this.arguments; } }
-
-        public void AddArgument(Expression arg)
-        {
-            this.arguments.Add(arg);
-        }
-    }
-
-    class ArrayIndexReferenceExpression : ReferenceExpression
-    {
-        public ArrayIndexReferenceExpression(Token start, ReferenceExpression inner, Expression index)
-            : base(start)
-        {
-            this.Inner = inner;
-            this.Index = index;
-        }
-
-        public ReferenceExpression Inner { get; }
-        public Expression Index { get; }
-    }
-
-    class DereferenceExpression : ReferenceExpression
-    {
-        public DereferenceExpression(Token start, ReferenceExpression inner)
-            : base(start)
-        {
-            this.Inner = inner;
-        }
-
-        public ReferenceExpression Inner { get; }
     }
 }

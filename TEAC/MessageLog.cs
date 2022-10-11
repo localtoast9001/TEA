@@ -1,21 +1,35 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿//-----------------------------------------------------------------------
+// <copyright file="MessageLog.cs" company="Jon Rowlett">
+//     Copyright (C) Jon Rowlett. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
 
 namespace TEAC
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+
+    /// <summary>
+    /// Stream for compiler log messages.
+    /// </summary>
     internal class MessageLog
     {
         private List<Message> messages = new List<Message>();
         private bool hasErrors;
 
+        /// <summary>
+        /// Gets a value indicating whether or not the log has any errors.
+        /// </summary>
         public bool HasErrors
         {
             get { return this.hasErrors; }
         }
 
+        /// <summary>
+        /// Gets the messages.
+        /// </summary>
         public IEnumerable<Message> Messages
         {
             get
@@ -24,6 +38,10 @@ namespace TEAC
             }
         }
 
+        /// <summary>
+        /// Writes a message.
+        /// </summary>
+        /// <param name="message">The message to write.</param>
         public void Write(Message message)
         {
             if (message.Severity == Severity.Error)

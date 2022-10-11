@@ -1,52 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿//-----------------------------------------------------------------------
+// <copyright file="TypeReference.cs" company="Jon Rowlett">
+//     Copyright (C) Jon Rowlett. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
 
 namespace TEAC
 {
-    internal class TypeReference : ParseNode
+    /// <summary>
+    /// Abstract type reference parse node.
+    /// </summary>
+    internal abstract class TypeReference : ParseNode
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TypeReference"/> class.
+        /// </summary>
+        /// <param name="start">The first token in the parse node.</param>
         protected TypeReference(Token start)
             : base(start)
         {
         }
-    }
-
-    internal class NamedTypeReference : TypeReference
-    {
-        public NamedTypeReference(Token start, string typeName)
-            : base(start)
-        {
-            this.TypeName = typeName;
-        }
-
-        public string TypeName { get; private set; }
-    }
-
-    internal class ArrayTypeReference : TypeReference
-    {
-        public ArrayTypeReference(Token start, Expression elementCount, TypeReference elementType)
-            : base(start)
-        {
-            this.ElementCount = elementCount;
-            this.ElementType = elementType;
-        }
-
-        public Expression ElementCount { get; private set; }
-
-        public TypeReference ElementType { get; private set; }
-    }
-
-    internal class PointerTypeReference : TypeReference
-    {
-        public PointerTypeReference(Token start, TypeReference elementType)
-            : base(start)
-        {
-            this.ElementType = elementType;
-        }
-
-        public TypeReference ElementType { get; private set; }
     }
 }

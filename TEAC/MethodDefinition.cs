@@ -1,11 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿//-----------------------------------------------------------------------
+// <copyright file="MethodDefinition.cs" company="Jon Rowlett">
+//     Copyright (C) Jon Rowlett. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
 
 namespace TEAC
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+
     internal class MethodDefinition : ParseNode
     {
         private List<ParameterDeclaration> parameters = new List<ParameterDeclaration>();

@@ -1,11 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿//-----------------------------------------------------------------------
+// <copyright file="Module.cs" company="Jon Rowlett">
+//     Copyright (C) Jon Rowlett. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
 
 namespace TEAC
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+
     internal class Module
     {
         private List<DataEntry> dataSeg = new List<DataEntry>();
@@ -19,7 +24,10 @@ namespace TEAC
         public List<DataEntry> DataSegment { get { return this.dataSeg; } }
         public List<MethodImpl> CodeSegment { get { return this.codeSeg; } }
         public List<MethodInfo> ProtoList { get { return this.protoList; } }
-        public List<string> ExternList { get { return this.externList; } }
+        public List<string> ExternList
+        {
+            get { return this.externList; }
+        }
 
         public void AddProto(MethodInfo proto)
         {
@@ -81,7 +89,7 @@ namespace TEAC
             object[] scrub = new object[rawData.Length - 2]; // strip out byte order
             for (int i = 0; i < scrub.Length; i++)
             {
-                scrub[i] = rawData[i+2];
+                scrub[i] = rawData[i + 2];
             }
 
             string symbolName = "$String_" + this.literalStringIndex.ToString();
@@ -203,33 +211,5 @@ namespace TEAC
 
             this.DataSegment.Add(new DataEntry { Label = label, Value = entries });
         }
-    }
-
-    internal class DataEntry
-    {
-        public string? Label { get; set; }
-        public object[]? Value { get; set; }
-    }
-
-    internal class AsmStatement
-    {
-        public string? Label { get; set; }
-        public string? Instruction { get; set; }
-    }
-
-    internal class MethodImpl
-    {
-        private List<AsmStatement> statements = new List<AsmStatement>();
-        private Dictionary<string, int> symbols = new Dictionary<string, int>();
-
-        public MethodImpl(Module module)
-        {
-            this.Module = module;
-        }
-
-        public List<AsmStatement> Statements { get { return this.statements; } }
-        public IDictionary<string, int> Symbols { get { return this.symbols; } }
-        public MethodInfo? Method { get; set; }
-        public Module? Module { get; private set; }
     }
 }

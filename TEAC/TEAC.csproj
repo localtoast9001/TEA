@@ -10,6 +10,15 @@
     <RootNamespace>TEAC</RootNamespace>
     <AssemblyName>TEAC</AssemblyName>
     <FileAlignment>512</FileAlignment>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="6.0.0" />
+    <PackageReference Include="StyleCop.Analyzers" Version="1.1.118" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="stylecop.json" />
+  </ItemGroup>
 
 </Project>

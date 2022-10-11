@@ -1,4 +1,9 @@
-﻿namespace TEAC
+﻿//-----------------------------------------------------------------------
+// <copyright file="Program.cs" company="Jon Rowlett">
+//     Copyright (C) Jon Rowlett. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
+namespace TEAC
 {
     using System;
     using System.Collections.Generic;
@@ -7,8 +12,16 @@
     using System.Text;
     using System.Threading.Tasks;
 
+    /// <summary>
+    /// Program entry point.
+    /// </summary>
     public static class Program
     {
+        /// <summary>
+        /// Main program entry routine.
+        /// </summary>
+        /// <param name="args">Program arguments.</param>
+        /// <returns>Program exit code.</returns>
         public static int Main(string[] args)
         {
             try

@@ -1,12 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿//-----------------------------------------------------------------------
+// <copyright file="TokenReader.cs" company="Jon Rowlett">
+//     Copyright (C) Jon Rowlett. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
 
 namespace TEAC
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Text;
+
+    /// <summary>
+    /// Tokenizes an input stream.
+    /// </summary>
     internal class TokenReader : IDisposable
     {
         private static readonly Dictionary<string, Keyword> IdentifierKeywordMap = new Dictionary<string, Keyword>(StringComparer.Ordinal)
@@ -47,7 +55,7 @@ namespace TEAC
             { "program", Keyword.Program },
             { "protected", Keyword.Protected },
             { "public", Keyword.Public },
-            { "record", Keyword.Record },	
+            { "record", Keyword.Record },
             { "repeat", Keyword.Repeat },
             { "set", Keyword.Set },
             { "static", Keyword.Static },
@@ -159,11 +167,13 @@ namespace TEAC
                                 return new KeywordToken(Keyword.Dot, this.path, lineStart, colStart);
                             }
                         }
+
                     case ';':
                         {
                             this.ReadChar();
                             return new KeywordToken(Keyword.SemiColon, this.path, lineStart, colStart);
                         }
+
                     case ':':
                         {
                             this.ReadChar();
@@ -176,16 +186,19 @@ namespace TEAC
 
                             return new KeywordToken(Keyword.Colon, this.path, lineStart, colStart);
                         }
+
                     case '=':
                         {
                             this.ReadChar();
                             return new KeywordToken(Keyword.Equals, this.path, lineStart, colStart);
-                        } 
+                        }
+
                     case ',':
                         {
                             this.ReadChar();
                             return new KeywordToken(Keyword.Comma, this.path, lineStart, colStart);
                         }
+
                     case '<':
                         {
                             this.ReadChar();
@@ -203,6 +216,7 @@ namespace TEAC
 
                             return new KeywordToken(Keyword.LessThan, this.path, lineStart, colStart);
                         }
+
                     case '>':
                         {
                             this.ReadChar();
@@ -215,51 +229,61 @@ namespace TEAC
 
                             return new KeywordToken(Keyword.GreaterThan, this.path, lineStart, colStart);
                         }
+
                     case '@':
                         {
                             this.ReadChar();
                             return new KeywordToken(Keyword.Address, this.path, lineStart, colStart);
                         }
+
                     case '*':
                         {
                             this.ReadChar();
                             return new KeywordToken(Keyword.Star, this.path, lineStart, colStart);
                         }
+
                     case '/':
                         {
                             this.ReadChar();
                             return new KeywordToken(Keyword.Slash, this.path, lineStart, colStart);
                         }
+
                     case '+':
                         {
                             this.ReadChar();
                             return new KeywordToken(Keyword.Plus, this.path, lineStart, colStart);
                         }
+
                     case '-':
                         {
                             this.ReadChar();
                             return new KeywordToken(Keyword.Minus, this.path, lineStart, colStart);
                         }
+
                     case '^':
                         {
                             this.ReadChar();
                             return new KeywordToken(Keyword.Pointer, this.path, lineStart, colStart);
                         }
+
                     case ')':
                         {
                             this.ReadChar();
                             return new KeywordToken(Keyword.RightParen, this.path, lineStart, colStart);
                         }
+
                     case '[':
                         {
                             this.ReadChar();
                             return new KeywordToken(Keyword.LeftBracket, this.path, lineStart, colStart);
                         }
+
                     case ']':
                         {
                             this.ReadChar();
                             return new KeywordToken(Keyword.RightBracket, this.path, lineStart, colStart);
                         }
+
                     default:
                         {
                             string message = string.Format(
@@ -359,10 +383,10 @@ namespace TEAC
                     {
                         this.log.Write(
                             new Message(
-                                this.path, 
-                                startLine, 
-                                startColumn, 
-                                Severity.Error, 
+                                this.path,
+                                startLine,
+                                startColumn,
+                                Severity.Error,
                                 Properties.Resources.TokenReader_StringNotTerminated));
                         return null;
                     }
@@ -374,7 +398,7 @@ namespace TEAC
                     int charValue = 0;
                     if (ch <= 0 || !char.IsDigit((char)ch))
                     {
-                        log.Write(new Message(
+                        this.log.Write(new Message(
                             this.path, this.line, this.column, Severity.Error, Properties.Resources.TokenReader_NoDigitAfterHash));
                         return null;
                     }
@@ -490,11 +514,11 @@ namespace TEAC
 
                 if (!terminated)
                 {
-                    log.Write(new Message(
-                        this.path, 
-                        lineStart, 
-                        columnStart, 
-                        Severity.Error, 
+                    this.log.Write(new Message(
+                        this.path,
+                        lineStart,
+                        columnStart,
+                        Severity.Error,
                         Properties.Resources.TokenReader_CommentNotTerminated));
                 }
             }
@@ -515,7 +539,7 @@ namespace TEAC
             int ch = this.inner.Read();
             if (ch > 0)
             {
-                if((char)ch == '\n')
+                if ((char)ch == '\n')
                 {
                     this.column = 0;
                     this.line++;

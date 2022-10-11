@@ -1,60 +1,71 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿//-----------------------------------------------------------------------
+// <copyright file="CompilerContext.cs" company="Jon Rowlett">
+//     Copyright (C) Jon Rowlett. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
 
 namespace TEAC
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+
+    /// <summary>
+    /// Modifiable state used by the compiler as it goes through parsing and code generation phases.
+    /// </summary>
     internal class CompilerContext
     {
-        private List<string> uses = new List<string>();
-        private List<string> includes = new List<string>();
-        private Dictionary<string, TypeDefinition> types = new Dictionary<string, TypeDefinition>();
-        private HashSet<string> alreadyUsed = new HashSet<string>();
+        private readonly List<string> uses = new List<string>();
+        private readonly List<string> includes = new List<string>();
+        private readonly Dictionary<string, TypeDefinition> types = new Dictionary<string, TypeDefinition>();
+        private readonly HashSet<string> alreadyUsed = new HashSet<string>();
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CompilerContext"/> class.
+        /// </summary>
         public CompilerContext()
         {
             TypeDefinition intType = new TypeDefinition
             {
                 FullName = "integer",
                 Size = 4,
-                SpecialMangledName = "i"
+                SpecialMangledName = "i",
             };
 
             TypeDefinition shortType = new TypeDefinition
             {
                 FullName = "short",
                 Size = 2,
-                SpecialMangledName = "i2"
+                SpecialMangledName = "i2",
             };
 
             TypeDefinition longType = new TypeDefinition
             {
                 FullName = "long",
                 Size = 8,
-                SpecialMangledName = "i8"
+                SpecialMangledName = "i8",
             };
-            
+
             TypeDefinition charType = new TypeDefinition
             {
                 FullName = "character",
                 Size = 2,
-                SpecialMangledName = "c"
+                SpecialMangledName = "c",
             };
 
             TypeDefinition boolType = new TypeDefinition
             {
                 FullName = "boolean",
                 Size = 1,
-                SpecialMangledName = "f"
+                SpecialMangledName = "f",
             };
 
             TypeDefinition byteType = new TypeDefinition
             {
                 FullName = "byte",
                 Size = 1,
-                SpecialMangledName = "b"
+                SpecialMangledName = "b",
             };
 
             TypeDefinition singleType = new TypeDefinition
@@ -62,15 +73,15 @@ namespace TEAC
                 FullName = "single",
                 Size = 4,
                 SpecialMangledName = "s",
-                IsFloatingPoint = true
+                IsFloatingPoint = true,
             };
-            
+
             TypeDefinition doubleType = new TypeDefinition
             {
                 FullName = "double",
                 Size = 8,
                 SpecialMangledName = "d",
-                IsFloatingPoint = true
+                IsFloatingPoint = true,
             };
 
             TypeDefinition extendedType = new TypeDefinition
@@ -78,7 +89,7 @@ namespace TEAC
                 FullName = "extended",
                 Size = 10,
                 SpecialMangledName = "e",
-                IsFloatingPoint = true
+                IsFloatingPoint = true,
             };
 
             TypeDefinition genericPointerType = new TypeDefinition
@@ -86,62 +97,99 @@ namespace TEAC
                 FullName = "^",
                 Size = 4,
                 SpecialMangledName = "p",
-                IsPointer = true
+                IsPointer = true,
             };
 
-            types.Add(intType.FullName, intType);
-            types.Add(shortType.FullName, shortType);
-            types.Add(longType.FullName, longType);
-            types.Add(charType.FullName, charType);
-            types.Add(singleType.FullName, singleType);
-            types.Add(doubleType.FullName, doubleType);
-            types.Add(extendedType.FullName, extendedType);
-            types.Add(boolType.FullName, boolType);
-            types.Add(byteType.FullName, byteType);
-            types.Add(genericPointerType.FullName, genericPointerType);
+            this.types.Add(intType.FullName, intType);
+            this.types.Add(shortType.FullName, shortType);
+            this.types.Add(longType.FullName, longType);
+            this.types.Add(charType.FullName, charType);
+            this.types.Add(singleType.FullName, singleType);
+            this.types.Add(doubleType.FullName, doubleType);
+            this.types.Add(extendedType.FullName, extendedType);
+            this.types.Add(boolType.FullName, boolType);
+            this.types.Add(byteType.FullName, byteType);
+            this.types.Add(genericPointerType.FullName, genericPointerType);
         }
 
+        /// <summary>
+        /// Gets or sets the namespace.
+        /// </summary>
         public string? Namespace { get; set; }
-        
-        public IEnumerable<string> Uses { get { return this.uses; } }
 
-        public IEnumerable<string> Includes { get { return this.includes; } }
+        /// <summary>
+        /// Gets the uses namespaces.
+        /// </summary>
+        public IEnumerable<string> Uses
+        {
+            get { return this.uses; }
+        }
 
+        /// <summary>
+        /// Gets the include paths.
+        /// </summary>
+        public IEnumerable<string> Includes
+        {
+            get { return this.includes; }
+        }
+
+        /// <summary>
+        /// Adds include search paths to the context.
+        /// </summary>
+        /// <param name="paths">The include search paths.</param>
         public void AddIncludePaths(IEnumerable<string> paths)
         {
             this.includes.AddRange(paths);
         }
 
+        /// <summary>
+        /// Tests if a namespace is already used.
+        /// </summary>
+        /// <param name="ns">The namespace.</param>
         public bool AlreadyUsed(string ns)
         {
             return this.alreadyUsed.Contains(ns);
         }
 
+        /// <summary>
+        /// Adds a namespace to the already used set.
+        /// </summary>
+        /// <param name="ns">The namespace.</param>
         public void AddAlreadyUsed(string ns)
         {
             this.alreadyUsed.Add(ns);
         }
 
+        /// <summary>
+        /// Adds a namespace to the uses set.
+        /// </summary>
+        /// <param name="ns">The namespace.</param>
         public void AddUses(string ns)
         {
-            uses.Add(ns);
+            this.uses.Add(ns);
         }
 
+        /// <summary>
+        /// Tries to find a type definition by name.
+        /// </summary>
+        /// <param name="nameRef">The name to search.</param>
+        /// <param name="type">On success, receives a reference to the matching type definition.</param>
+        /// <returns>True if the type is found; otherwise, false.</returns>
         public bool TryFindTypeByName(string nameRef, out TypeDefinition? type)
         {
-            if (types.TryGetValue(nameRef, out type))
+            if (this.types.TryGetValue(nameRef, out type))
             {
                 return true;
             }
 
-            if (types.TryGetValue(this.Namespace + "." + nameRef, out type))
+            if (this.types.TryGetValue(this.Namespace + "." + nameRef, out type))
             {
                 return true;
             }
 
             foreach (string ns in this.uses)
             {
-                if (types.TryGetValue(ns + "." + nameRef, out type))
+                if (this.types.TryGetValue(ns + "." + nameRef, out type))
                 {
                     return true;
                 }
@@ -185,9 +233,9 @@ namespace TEAC
         }
 
         public bool TryFindMethodAndType(
-            string methodNameRef, 
+            string methodNameRef,
             IList<TypeDefinition> parameterTypes,
-            out TypeDefinition? type, 
+            out TypeDefinition? type,
             out MethodInfo? methodInfo)
         {
             type = null;
@@ -200,7 +248,7 @@ namespace TEAC
 
             string methodName = methodNameRef.Substring(methodStart + 1);
             string typeName = methodNameRef.Substring(0, methodStart);
-            if (!TryFindTypeByName(typeName, out type))
+            if (!this.TryFindTypeByName(typeName, out type))
             {
                 return false;
             }
@@ -245,7 +293,10 @@ namespace TEAC
             {
                 result = new TypeDefinition
                 {
-                    FullName = fullName, IsPointer = true, Size = 4, InnerType = elementType
+                    FullName = fullName,
+                    IsPointer = true,
+                    Size = 4,
+                    InnerType = elementType,
                 };
 
                 this.types.Add(fullName, result);
@@ -266,7 +317,7 @@ namespace TEAC
                     IsArray = true,
                     Size = elementCount > 0 ? elementType.Size * elementCount : 4,
                     ArrayElementCount = elementCount,
-                    InnerType = elementType
+                    InnerType = elementType,
                 };
 
                 this.types.Add(fullName, result);
@@ -287,7 +338,7 @@ namespace TEAC
 
             typeDef = new TypeDefinition
             {
-                FullName = fullName
+                FullName = fullName,
             };
 
             this.types.Add(fullName, typeDef);
@@ -301,10 +352,10 @@ namespace TEAC
             {
                 LocalVariable returnVar = scope.DefineLocalVariable(method.Name!, method.ReturnType!);
                 scope.ReturnVariable = returnVar;
-                if (method.ReturnType.Size > 8 && !method.ReturnType.IsFloatingPoint || method.ReturnType.IsClass)
+                if ((method.ReturnType.Size > 8 && !method.ReturnType.IsFloatingPoint) || method.ReturnType.IsClass)
                 {
                     scope.LargeReturnVariable = scope.DefineParameter(
-                        "$result", 
+                        "$result",
                         this.GetPointerType(method.ReturnType));
                 }
             }
@@ -320,11 +371,6 @@ namespace TEAC
             }
 
             return scope;
-        }
-
-        internal void ClearUses()
-        {
-            this.uses.Clear();
         }
 
         public TypeDefinition GetMethodType(MethodInfo calleeMethod)
@@ -362,7 +408,7 @@ namespace TEAC
 
             string fullName = sb.ToString();
             TypeDefinition? methodType = null;
-            if (!types.TryGetValue(fullName, out methodType))
+            if (!this.types.TryGetValue(fullName, out methodType))
             {
                 methodType = new TypeDefinition();
                 methodType.IsMethod = true;
@@ -379,10 +425,15 @@ namespace TEAC
                     methodType.MethodParamTypes.Add(p.Type!);
                 }
 
-                types.Add(methodType.FullName, methodType);
+                this.types.Add(methodType.FullName, methodType);
             }
 
             return methodType;
+        }
+
+        internal void ClearUses()
+        {
+            this.uses.Clear();
         }
     }
 }

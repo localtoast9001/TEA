@@ -1,11 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿//-----------------------------------------------------------------------
+// <copyright file="Parser.cs" company="Jon Rowlett">
+//     Copyright (C) Jon Rowlett. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
 
 namespace TEAC
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+
     internal class Parser
     {
         private MessageLog log;
@@ -16,7 +21,7 @@ namespace TEAC
         }
 
         public bool TryParse(
-            TokenReader reader, 
+            TokenReader reader,
             out ProgramUnit? result)
         {
             result = null;
@@ -96,9 +101,9 @@ namespace TEAC
 
             tok = reader.Peek();
             while (
-                tok.Is(Keyword.Function) || 
-                tok.Is(Keyword.Procedure) || 
-                tok.Is(Keyword.Constructor) || 
+                tok.Is(Keyword.Function) ||
+                tok.Is(Keyword.Procedure) ||
+                tok.Is(Keyword.Constructor) ||
                 tok.Is(Keyword.Destructor))
             {
                 if (!this.ParseMethodDefinition(reader, out MethodDefinition? methodDef))
@@ -115,13 +120,197 @@ namespace TEAC
                 tok = reader.Peek();
             }
 
-            bool passed = ExpectEndOfFile(reader);
+            bool passed = this.ExpectEndOfFile(reader);
             if (passed)
             {
                 result = programUnit;
             }
 
             return passed;
+        }
+
+        private bool ParseClassDeclaration(IdentifierToken typeName, TokenReader reader, out TypeDeclaration? type)
+        {
+            type = null;
+            Token? tok = reader.Peek();
+            bool isStatic = false;
+            if (tok.Is(Keyword.Static))
+            {
+                isStatic = true;
+                reader.Read();
+                tok = reader.Peek();
+            }
+
+            if (!this.Expect(reader, Keyword.Class))
+            {
+                return false;
+            }
+
+            string? baseType = null;
+            tok = reader.Peek();
+            if (tok.Is(Keyword.LeftParen))
+            {
+                reader.Read();
+
+                if (!this.ParseFullNameDeclaration(reader, out baseType))
+                {
+                    return false;
+                }
+
+                if (!this.Expect(reader, Keyword.RightParen))
+                {
+                    return false;
+                }
+            }
+
+            ClassDeclaration classDecl = new ClassDeclaration(
+                typeName,
+                typeName.Value,
+                baseType,
+                isStatic);
+
+            tok = reader.Peek();
+            if (tok.Is(Keyword.Interface))
+            {
+                reader.Read();
+                if (!this.Expect(reader, Keyword.LeftParen))
+                {
+                    return false;
+                }
+
+                string? interfaceName = null;
+                if (!this.ParseFullNameDeclaration(reader, out interfaceName))
+                {
+                    return false;
+                }
+
+                classDecl.AddInterface(interfaceName!);
+                tok = reader.Peek();
+                while (tok.Is(Keyword.Comma))
+                {
+                    reader.Read();
+                    if (!this.ParseFullNameDeclaration(reader, out interfaceName))
+                    {
+                        return false;
+                    }
+
+                    classDecl.AddInterface(interfaceName!);
+                    tok = reader.Peek();
+                }
+
+                if (!this.Expect(reader, Keyword.RightParen))
+                {
+                    return false;
+                }
+            }
+
+            tok = reader.Peek();
+            if (tok.Is(Keyword.Public))
+            {
+                reader.Read();
+                tok = reader.Peek();
+                while (
+                    tok.Is(Keyword.Procedure) ||
+                    tok.Is(Keyword.Function) ||
+                    tok.Is(Keyword.Static) ||
+                    tok.Is(Keyword.Virtual) ||
+                    tok.Is(Keyword.Abstract) ||
+                    tok.Is(Keyword.Constructor) ||
+                    tok.Is(Keyword.Destructor))
+                {
+                    MethodDeclaration? methodDecl = null;
+                    if (!this.ParseMethodDeclaration(reader, out methodDecl))
+                    {
+                        return false;
+                    }
+
+                    classDecl.AddPublicMethod(methodDecl!);
+                    if (!this.Expect(reader, Keyword.SemiColon))
+                    {
+                        return false;
+                    }
+
+                    tok = reader.Peek();
+                }
+            }
+
+            tok = reader.Peek();
+            if (tok.Is(Keyword.Protected))
+            {
+                reader.Read();
+                tok = reader.Peek();
+                while (
+                    tok.Is(Keyword.Procedure) ||
+                    tok.Is(Keyword.Function) ||
+                    tok.Is(Keyword.Static) ||
+                    tok.Is(Keyword.Virtual) ||
+                    tok.Is(Keyword.Abstract) ||
+                    tok.Is(Keyword.Constructor) ||
+                    tok.Is(Keyword.Destructor))
+                {
+                    MethodDeclaration? methodDecl = null;
+                    if (!this.ParseMethodDeclaration(reader, out methodDecl))
+                    {
+                        return false;
+                    }
+
+                    classDecl.AddProtectedMethod(methodDecl!);
+                    if (!this.Expect(reader, Keyword.SemiColon))
+                    {
+                        return false;
+                    }
+
+                    tok = reader.Peek();
+                }
+            }
+
+            tok = reader.Peek();
+            if (tok.Is(Keyword.Private))
+            {
+                reader.Read();
+                tok = reader.Peek();
+                while (
+                    tok.Is(Keyword.Procedure) ||
+                    tok.Is(Keyword.Function) ||
+                    tok.Is(Keyword.Static) ||
+                    tok.Is(Keyword.Constructor) ||
+                    tok.Is(Keyword.Destructor))
+                {
+                    MethodDeclaration? methodDecl = null;
+                    if (!this.ParseMethodDeclaration(reader, out methodDecl))
+                    {
+                        return false;
+                    }
+
+                    classDecl.AddPrivateMethod(methodDecl!);
+                    if (!this.Expect(reader, Keyword.SemiColon))
+                    {
+                        return false;
+                    }
+
+                    tok = reader.Peek();
+                }
+            }
+
+            tok = reader.Peek();
+            if (tok.Is(Keyword.Var))
+            {
+                VarBlock? varBlock = null;
+                if (!this.ParseVarBlock(reader, false, out varBlock))
+                {
+                    return false;
+                }
+
+                classDecl.Fields = varBlock;
+            }
+
+            if (!this.Expect(reader, Keyword.End))
+            {
+                return false;
+            }
+
+            type = classDecl;
+            return true;
         }
 
         private bool ParseMethodDefinition(TokenReader reader, out MethodDefinition? method)
@@ -568,7 +757,7 @@ namespace TEAC
         {
             Token? start = reader.Peek();
             statement = null;
-            
+
             if (!this.Expect(reader, Keyword.If))
             {
                 return false;
@@ -1153,7 +1342,7 @@ namespace TEAC
                 tok = reader.Peek();
             }
 
-            if (!Expect(reader, Keyword.End))
+            if (!this.Expect(reader, Keyword.End))
             {
                 return false;
             }
@@ -1278,190 +1467,6 @@ namespace TEAC
             return true;
         }
 
-        public bool ParseClassDeclaration(IdentifierToken typeName, TokenReader reader, out TypeDeclaration? type)
-        {
-            type = null;
-            Token? tok = reader.Peek();
-            bool isStatic = false;
-            if (tok.Is(Keyword.Static))
-            {
-                isStatic = true;
-                reader.Read();
-                tok = reader.Peek();
-            }
-
-            if (!this.Expect(reader, Keyword.Class))
-            {
-                return false;
-            }
-
-            string? baseType = null;
-            tok = reader.Peek();
-            if (tok.Is(Keyword.LeftParen))
-            {
-                reader.Read();
-
-                if (!this.ParseFullNameDeclaration(reader, out baseType))
-                {
-                    return false;
-                }
-
-                if (!this.Expect(reader, Keyword.RightParen))
-                {
-                    return false;
-                }
-            }
-
-            ClassDeclaration classDecl = new ClassDeclaration(
-                typeName, 
-                typeName.Value,
-                baseType,
-                isStatic);
-
-            tok = reader.Peek();
-            if (tok.Is(Keyword.Interface))
-            {
-                reader.Read();
-                if (!Expect(reader, Keyword.LeftParen))
-                {
-                    return false;
-                }
-
-                string? interfaceName = null;
-                if (!ParseFullNameDeclaration(reader, out interfaceName))
-                {
-                    return false;
-                }
-
-                classDecl.AddInterface(interfaceName!);
-                tok = reader.Peek();
-                while (tok.Is(Keyword.Comma))
-                {
-                    reader.Read();
-                    if (!ParseFullNameDeclaration(reader, out interfaceName))
-                    {
-                        return false;
-                    }
-
-                    classDecl.AddInterface(interfaceName!);
-                    tok = reader.Peek();
-                }
-
-                if (!Expect(reader, Keyword.RightParen))
-                {
-                    return false;
-                }
-            }
-
-            tok = reader.Peek();
-            if (tok.Is(Keyword.Public))
-            {
-                reader.Read();
-                tok = reader.Peek();
-                while (
-                    tok.Is(Keyword.Procedure) || 
-                    tok.Is(Keyword.Function) || 
-                    tok.Is(Keyword.Static) ||
-                    tok.Is(Keyword.Virtual) ||
-                    tok.Is(Keyword.Abstract) ||
-                    tok.Is(Keyword.Constructor) ||
-                    tok.Is(Keyword.Destructor))
-                {
-                    MethodDeclaration? methodDecl = null;
-                    if (!this.ParseMethodDeclaration(reader, out methodDecl))
-                    {
-                        return false;
-                    }
-
-                    classDecl.AddPublicMethod(methodDecl!);
-                    if (!this.Expect(reader, Keyword.SemiColon))
-                    {
-                        return false;
-                    }
-
-                    tok = reader.Peek();
-                }
-            }
-
-            tok = reader.Peek();
-            if (tok.Is(Keyword.Protected))
-            {
-                reader.Read();
-                tok = reader.Peek();
-                while (
-                    tok.Is(Keyword.Procedure) ||
-                    tok.Is(Keyword.Function) ||
-                    tok.Is(Keyword.Static) ||
-                    tok.Is(Keyword.Virtual) ||
-                    tok.Is(Keyword.Abstract) ||
-                    tok.Is(Keyword.Constructor) ||
-                    tok.Is(Keyword.Destructor))
-                {
-                    MethodDeclaration? methodDecl = null;
-                    if (!this.ParseMethodDeclaration(reader, out methodDecl))
-                    {
-                        return false;
-                    }
-
-                    classDecl.AddProtectedMethod(methodDecl!);
-                    if (!this.Expect(reader, Keyword.SemiColon))
-                    {
-                        return false;
-                    }
-
-                    tok = reader.Peek();
-                }
-            }
-
-            tok = reader.Peek();
-            if (tok.Is(Keyword.Private))
-            {
-                reader.Read();
-                tok = reader.Peek();
-                while (
-                    tok.Is(Keyword.Procedure) ||
-                    tok.Is(Keyword.Function) ||
-                    tok.Is(Keyword.Static) ||
-                    tok.Is(Keyword.Constructor) ||
-                    tok.Is(Keyword.Destructor))
-                {
-                    MethodDeclaration? methodDecl = null;
-                    if (!this.ParseMethodDeclaration(reader, out methodDecl))
-                    {
-                        return false;
-                    }
-
-                    classDecl.AddPrivateMethod(methodDecl!);
-                    if (!this.Expect(reader, Keyword.SemiColon))
-                    {
-                        return false;
-                    }
-
-                    tok = reader.Peek();
-                }
-            }
-
-            tok = reader.Peek();
-            if (tok.Is(Keyword.Var))
-            {
-                VarBlock? varBlock = null;
-                if (!this.ParseVarBlock(reader, false, out varBlock))
-                {
-                    return false;
-                }
-
-                classDecl.Fields = varBlock;
-            }
-
-            if (!this.Expect(reader, Keyword.End))
-            {
-                return false;
-            }
-
-            type = classDecl;
-            return true;
-        }
-
         private bool ParseMethodDeclaration(TokenReader reader, out MethodDeclaration? method)
         {
             method = null;
@@ -1515,7 +1520,7 @@ namespace TEAC
                 isFunction = true;
                 reader.Read();
             }
-            else 
+            else
             {
                 if (!this.Expect(reader, Keyword.Procedure))
                 {
@@ -1636,8 +1641,8 @@ namespace TEAC
         }
 
         private bool ParseDestructorDeclaration(
-            TokenReader reader, 
-            bool isVirtual, 
+            TokenReader reader,
+            bool isVirtual,
             out MethodDeclaration? method)
         {
             Token? tok = reader.Peek();
@@ -1660,8 +1665,8 @@ namespace TEAC
             }
 
             method = new MethodDeclaration(
-                tok!, 
-                "destructor", 
+                tok!,
+                "destructor",
                 false,
                 isVirtual,
                 false);
@@ -1771,7 +1776,7 @@ namespace TEAC
             }
 
             ParameterDeclaration parameterDecl = new ParameterDeclaration(
-                start!, 
+                start!,
                 parameterNames,
                 type!);
 
@@ -1844,7 +1849,7 @@ namespace TEAC
             bool allowInitializers,
             out VarBlock? value)
         {
-            VarBlock? varBlock = new VarBlock(reader.Peek()!);
+            VarBlock varBlock = new VarBlock(reader.Peek()!);
             value = null;
             if (!this.Expect(reader, Keyword.Var))
             {

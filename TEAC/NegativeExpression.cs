@@ -1,20 +1,30 @@
-﻿
+﻿//-----------------------------------------------------------------------
+// <copyright file="NegativeExpression.cs" company="Jon Rowlett">
+//     Copyright (C) Jon Rowlett. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
+
 namespace TEAC
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
-
+    /// <summary>
+    /// Negative operator expression.
+    /// </summary>
     internal class NegativeExpression : Expression
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="NegativeExpression"/> class.
+        /// </summary>
+        /// <param name="start">The first token in the parse node.</param>
+        /// <param name="inner">The inner expression.</param>
         public NegativeExpression(Token start, Expression inner)
             : base(start)
         {
             this.Inner = inner;
         }
 
-        public Expression Inner { get; private set; }
+        /// <summary>
+        /// Gets the inner expression.
+        /// </summary>
+        public Expression Inner { get; }
     }
 }

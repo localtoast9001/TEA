@@ -1,42 +1,34 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿//-----------------------------------------------------------------------
+// <copyright file="VarBlock.cs" company="Jon Rowlett">
+//     Copyright (C) Jon Rowlett. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
 
 namespace TEAC
 {
-    internal class VariableDeclaration : ParseNode
-    {
-        private List<string> variableNames = new List<string>();
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
 
-        private TypeReference type;
-
-        public VariableDeclaration(
-            Token start, 
-            IEnumerable<string> variableNames, 
-            TypeReference type,
-            Expression? initExpression)
-            : base(start)
-        {
-            this.type = type;
-            this.variableNames.AddRange(variableNames);
-            this.InitExpression = initExpression;
-        }
-
-        public TypeReference Type { get { return this.type; } }
-        public Expression? InitExpression { get; private set; }
-        public IEnumerable<string> VariableNames { get { return this.variableNames; } }
-    }
-
+    /// <summary>
+    /// Parse node for a variable block..
+    /// </summary>
     internal class VarBlock : ParseNode
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="VarBlock"/> class.
+        /// </summary>
+        /// <param name="start">The first token in the parse node.</param>
         public VarBlock(Token start)
             : base(start)
         {
             this.Variables = new List<VariableDeclaration>();
         }
 
-        public IList<VariableDeclaration> Variables { get; private set; }
+        /// <summary>
+        /// Gets the list of variables.
+        /// </summary>
+        public IList<VariableDeclaration> Variables { get; }
     }
 }

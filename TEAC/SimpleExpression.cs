@@ -1,13 +1,28 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿//-----------------------------------------------------------------------
+// <copyright file="SimpleExpression.cs" company="Jon Rowlett">
+//     Copyright (C) Jon Rowlett. All rights reserved.
+// </copyright>
+//-----------------------------------------------------------------------
 
 namespace TEAC
 {
-    class SimpleExpression : Expression
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+
+    /// <summary>
+    /// Parse node for a simple expression.
+    /// </summary>
+    internal class SimpleExpression : Expression
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SimpleExpression"/> class.
+        /// </summary>
+        /// <param name="start">The first token in the parse node.</param>
+        /// <param name="left">The left side of the expresion.</param>
+        /// <param name="oper">The operator of the simple expression.</param>
+        /// <param name="right">The right side of the expression.</param>
         public SimpleExpression(
             Token start,
             Expression left,
@@ -20,11 +35,19 @@ namespace TEAC
             this.Right = right;
         }
 
-        public Expression Left { get; private set; }
+        /// <summary>
+        /// Gets the left side of the expression.
+        /// </summary>
+        public Expression Left { get; }
 
-        public Keyword Operator { get; private set; }
+        /// <summary>
+        /// Gets the operator of the expression.
+        /// </summary>
+        public Keyword Operator { get; }
 
-        public Expression Right { get; private set; }
-
+        /// <summary>
+        /// Gets the right side of the expression.
+        /// </summary>
+        public Expression Right { get; }
     }
 }
