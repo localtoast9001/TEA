@@ -11,15 +11,28 @@ namespace TEAC
     using System.Linq;
     using System.Text;
 
+    /// <summary>
+    /// Parses a source code into parse trees.
+    /// </summary>
     internal class Parser
     {
         private MessageLog log;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Parser"/> class.
+        /// </summary>
+        /// <param name="log">The message log.</param>
         public Parser(MessageLog log)
         {
             this.log = log;
         }
 
+        /// <summary>
+        /// Tries to parse the sequence of tokens produced by the reader into a <see cref="ProgramUnit"/>.
+        /// </summary>
+        /// <param name="reader">The token reader.</param>
+        /// <param name="result">On success, receives the parsed result.</param>
+        /// <returns>True if the source can be parsed with no errors; otherwise, false.</returns>
         public bool TryParse(
             TokenReader reader,
             out ProgramUnit? result)
@@ -1849,7 +1862,8 @@ namespace TEAC
             bool allowInitializers,
             out VarBlock? value)
         {
-            VarBlock varBlock = new VarBlock(reader.Peek()!);
+            Token? start = reader.Peek();
+            VarBlock varBlock = new VarBlock(start!);
             value = null;
             if (!this.Expect(reader, Keyword.Var))
             {

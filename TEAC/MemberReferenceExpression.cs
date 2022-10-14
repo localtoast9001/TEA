@@ -6,8 +6,17 @@
 
 namespace TEAC
 {
-    class MemberReferenceExpression : ReferenceExpression
+    /// <summary>
+    /// Member reference expression.
+    /// </summary>
+    internal class MemberReferenceExpression : ReferenceExpression
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MemberReferenceExpression"/> class.
+        /// </summary>
+        /// <param name="start">The first token in the parse node.</param>
+        /// <param name="inner">The inner expression.</param>
+        /// <param name="memberName">The name of the member.</param>
         public MemberReferenceExpression(Token start, ReferenceExpression inner, string memberName)
             : base(start)
         {
@@ -15,10 +24,17 @@ namespace TEAC
             this.Inner = inner;
         }
 
+        /// <summary>
+        /// Gets the member name.
+        /// </summary>
         public string MemberName { get; }
 
+        /// <summary>
+        /// Gets the inner reference expression.
+        /// </summary>
         public ReferenceExpression Inner { get; }
 
+        /// <inheritdoc/>
         public override bool UseVirtualDispatch
         {
             get

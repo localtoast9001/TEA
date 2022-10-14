@@ -18,8 +18,8 @@ namespace TEAC
         private readonly Dictionary<string, TypeDeclaration> types = new Dictionary<string, TypeDeclaration>();
         private readonly List<TypeDeclaration> typeList = new List<TypeDeclaration>();
         private readonly List<MethodDefinition> methods = new List<MethodDefinition>();
-        private string nameSpace = string.Empty;
         private readonly List<string> usesReferences = new List<string>();
+        private string nameSpace = string.Empty;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ProgramUnit"/> class.

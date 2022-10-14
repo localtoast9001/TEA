@@ -67,16 +67,21 @@ namespace TEAC
             { "uses", Keyword.Uses },
             { "var", Keyword.Var },
             { "virtual", Keyword.Virtual },
-            { "while", Keyword.While }
+            { "while", Keyword.While },
         };
 
-        private string path;
-        private StreamReader inner;
+        private readonly string path;
+        private readonly StreamReader inner;
+        private readonly MessageLog log;
+        private Token? next;
         private int line;
         private int column;
-        private Token? next;
-        private MessageLog log;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TokenReader"/> class.
+        /// </summary>
+        /// <param name="path">The source path.</param>
+        /// <param name="log">The message log.</param>
         public TokenReader(string path, MessageLog log)
         {
             this.path = path;
@@ -86,20 +91,50 @@ namespace TEAC
             this.log = log;
         }
 
-        public string Path { get { return this.path; } }
-        public int Line { get { return this.line; } }
-        public int Column { get { return this.column; } }
+        /// <summary>
+        /// Gets the source path.
+        /// </summary>
+        public string Path
+        {
+            get { return this.path; }
+        }
 
+        /// <summary>
+        /// Gets the current source line.
+        /// </summary>
+        public int Line
+        {
+            get { return this.line; }
+        }
+
+        /// <summary>
+        /// Gets the current source column.
+        /// </summary>
+        public int Column
+        {
+            get { return this.column; }
+        }
+
+        /// <summary>
+        /// Closes the reader.
+        /// </summary>
         public void Close()
         {
             this.inner.Close();
         }
 
+        /// <summary>
+        /// Disposes this instance.
+        /// </summary>
         public void Dispose()
         {
             this.inner.Dispose();
         }
 
+        /// <summary>
+        /// Reads the next token.
+        /// </summary>
+        /// <returns>The next token or null if at the end of the stream.</returns>
         public Token? Read()
         {
             if (this.next == null)
@@ -112,6 +147,10 @@ namespace TEAC
             return result;
         }
 
+        /// <summary>
+        /// Peeks the next token.
+        /// </summary>
+        /// <returns>The next token.</returns>
         public Token? Peek()
         {
             if (this.next == null)

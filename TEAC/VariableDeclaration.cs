@@ -15,6 +15,13 @@ namespace TEAC
 
         private readonly TypeReference type;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="VariableDeclaration"/> class.
+        /// </summary>
+        /// <param name="start">The first token in the parse node.</param>
+        /// <param name="variableNames">The list of variable names.</param>
+        /// <param name="type">The type of the variable.</param>
+        /// <param name="initExpression">The init expression.</param>
         public VariableDeclaration(
             Token start,
             IEnumerable<string> variableNames,
@@ -27,8 +34,25 @@ namespace TEAC
             this.InitExpression = initExpression;
         }
 
-        public TypeReference Type { get { return this.type; } }
+        /// <summary>
+        /// Gets the type.
+        /// </summary>
+        public TypeReference Type
+        {
+            get { return this.type; }
+        }
+
+        /// <summary>
+        /// Gets the init expression.
+        /// </summary>
         public Expression? InitExpression { get; }
-        public IEnumerable<string> VariableNames { get { return this.variableNames; } }
+
+        /// <summary>
+        /// Gets the variable names.
+        /// </summary>
+        public IEnumerable<string> VariableNames
+        {
+            get { return this.variableNames; }
+        }
     }
 }

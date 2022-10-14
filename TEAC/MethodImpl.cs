@@ -6,19 +6,47 @@
 
 namespace TEAC
 {
+    /// <summary>
+    /// Method implementation created during code generation.
+    /// </summary>
     internal class MethodImpl
     {
-        private List<AsmStatement> statements = new List<AsmStatement>();
-        private Dictionary<string, int> symbols = new Dictionary<string, int>();
+        private readonly List<AsmStatement> statements = new List<AsmStatement>();
+        private readonly Dictionary<string, int> symbols = new Dictionary<string, int>();
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MethodImpl"/> class.
+        /// </summary>
+        /// <param name="module">The module that contains the method impl.</param>
         public MethodImpl(Module module)
         {
             this.Module = module;
         }
 
-        public List<AsmStatement> Statements { get { return this.statements; } }
-        public IDictionary<string, int> Symbols { get { return this.symbols; } }
+        /// <summary>
+        /// Gets the statements.
+        /// </summary>
+        public List<AsmStatement> Statements
+        {
+            get { return this.statements; }
+        }
+
+        /// <summary>
+        /// Gets the symbols.
+        /// </summary>
+        public IDictionary<string, int> Symbols
+        {
+            get { return this.symbols; }
+        }
+
+        /// <summary>
+        /// Gets or sets the method info.
+        /// </summary>
         public MethodInfo? Method { get; set; }
-        public Module? Module { get; private set; }
+
+        /// <summary>
+        /// Gets the containing module.
+        /// </summary>
+        public Module? Module { get; }
     }
 }
