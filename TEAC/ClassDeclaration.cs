@@ -45,10 +45,13 @@ namespace TEAC
         public string? BaseType { get; }
 
         /// <summary>
-        /// Gets the class fields.
+        /// Gets or sets the class fields.
         /// </summary>
         public VarBlock? Fields { get; set; }
 
+        /// <summary>
+        /// Gets the public methods.
+        /// </summary>
         public IEnumerable<MethodDeclaration> PublicMethods
         {
             get { return this.publicMethods; }
@@ -57,17 +60,26 @@ namespace TEAC
         /// <summary>
         /// Gets the set of protected methods.
         /// </summary>
-        public IEnumerable<MethodDeclaration> ProtectedMethods { get { return this.protectedMethods; } }
+        public IEnumerable<MethodDeclaration> ProtectedMethods
+        {
+            get { return this.protectedMethods; }
+        }
 
         /// <summary>
         /// Gets the set of private methods.
         /// </summary>
-        public IEnumerable<MethodDeclaration> PrivateMethods { get { return this.privateMethods; } }
+        public IEnumerable<MethodDeclaration> PrivateMethods
+        {
+            get { return this.privateMethods; }
+        }
 
         /// <summary>
         /// Gets the set of interfaces.
         /// </summary>
-        public IEnumerable<string> Interfaces { get { return this.interfaces; } }
+        public IEnumerable<string> Interfaces
+        {
+            get { return this.interfaces; }
+        }
 
         /// <summary>
         /// Adds a public method.

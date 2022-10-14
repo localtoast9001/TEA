@@ -229,6 +229,10 @@ namespace TEAC
             return null;
         }
 
+        /// <summary>
+        /// Gets the default constructor.
+        /// </summary>
+        /// <returns>The default constructor or null.</returns>
         public MethodInfo? GetDefaultConstructor()
         {
             foreach (MethodInfo method in this.Methods)
@@ -247,16 +251,32 @@ namespace TEAC
             return null;
         }
 
+        /// <summary>
+        /// Finds a method with the given name.
+        /// </summary>
+        /// <param name="name">The method name.</param>
+        /// <returns>The matching method or null.</returns>
         public MethodInfo? FindMethod(string name)
         {
             return this.FindMethod(name, null, false);
         }
 
+        /// <summary>
+        /// Finds a method by name and list of argument types.
+        /// </summary>
+        /// <param name="name">The name of the method.</param>
+        /// <param name="argTypes">The list of arg types to match.</param>
+        /// <returns>The matching method or null.</returns>
         public MethodInfo? FindMethod(string name, IList<TypeDefinition>? argTypes)
         {
             return this.FindMethod(name, argTypes, true);
         }
 
+        /// <summary>
+        /// Finds a constructor.
+        /// </summary>
+        /// <param name="argTypes">The list of arg types.</param>
+        /// <returns>The matching method or null.</returns>
         public MethodInfo? FindConstructor(IList<TypeDefinition> argTypes)
         {
             foreach (MethodInfo method in this.Methods)
@@ -273,6 +293,10 @@ namespace TEAC
             return null;
         }
 
+        /// <summary>
+        /// Creates a method info for a given method type.
+        /// </summary>
+        /// <returns>The method info.</returns>
         public MethodInfo CreateMethodInfoForMethodType()
         {
             MethodInfo meth = new MethodInfo(this.MethodImplicitArgType);
@@ -290,6 +314,11 @@ namespace TEAC
             return meth;
         }
 
+        /// <summary>
+        /// Gets the copy constructor for this type.
+        /// </summary>
+        /// <param name="context">The compiler context.</param>
+        /// <returns>The copy constructor or null.</returns>
         public MethodInfo? GetCopyConstructor(CompilerContext context)
         {
             List<TypeDefinition> argTypes = new List<TypeDefinition>();
@@ -297,21 +326,42 @@ namespace TEAC
             return this.FindConstructor(argTypes);
         }
 
+        /// <summary>
+        /// Adds an interface to the type.
+        /// </summary>
+        /// <param name="interfaceType">The interface.</param>
+        /// <param name="offset">The field offset where to add the interface.</param>
         public void AddInterface(TypeDefinition interfaceType, int offset)
         {
             this.interfaces.Add(new KeyValuePair<TypeDefinition, int>(interfaceType, offset));
         }
 
+        /// <summary>
+        /// Gets the interface table pointer.
+        /// </summary>
+        /// <param name="interfaceType">The interface type.</param>
+        /// <returns>The matching field info for the table pointer or null.</returns>
         public FieldInfo? GetInterfaceTablePointer(TypeDefinition interfaceType)
         {
             return this.GetTablePointer(VTablePointerFieldName + interfaceType.MangledName);
         }
 
+        /// <summary>
+        /// Gets the vtable pointer.
+        /// </summary>
+        /// <returns>The vtable pointer or null if the type does not have one.</returns>
         public FieldInfo? GetVTablePointer()
         {
             return this.GetTablePointer(VTablePointerFieldName);
         }
 
+        /// <summary>
+        /// Adds an interface table pointer.
+        /// </summary>
+        /// <param name="context">The compiler context.</param>
+        /// <param name="offset">The offset of the field.</param>
+        /// <param name="interfaceType">The interface type.</param>
+        /// <returns>The field that was created.</returns>
         public FieldInfo AddInterfaceTablePointer(CompilerContext context, int offset, TypeDefinition interfaceType)
         {
             return this.AddTablePointer(
@@ -320,6 +370,12 @@ namespace TEAC
                 VTablePointerFieldName + interfaceType.MangledName);
         }
 
+        /// <summary>
+        /// Adds a vtable pointer.
+        /// </summary>
+        /// <param name="context">The compiler context.</param>
+        /// <param name="offset">The offset for the table.</param>
+        /// <returns>The vtable field.</returns>
         public FieldInfo AddVTablePointer(CompilerContext context, int offset)
         {
             return this.AddTablePointer(context, offset, VTablePointerFieldName);

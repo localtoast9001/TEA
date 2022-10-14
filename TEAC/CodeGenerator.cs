@@ -11,21 +11,36 @@ namespace TEAC
     using System.Linq;
     using System.Text;
 
+    /// <summary>
+    /// Generates the code from a parse tree.
+    /// </summary>
     internal class CodeGenerator
     {
-        private MessageLog log;
+        private readonly MessageLog log;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CodeGenerator"/> class.
+        /// </summary>
+        /// <param name="log">The message log.</param>
         public CodeGenerator(MessageLog log)
         {
             this.log = log;
         }
 
+        /// <summary>
+        /// Creates the types.
+        /// </summary>
+        /// <param name="context">The context.</param>
+        /// <param name="programUnit">The source program unit.</param>
+        /// <returns>True if the types could be created without error; otherwise, false.</returns>
         public bool CreateTypes(CompilerContext context, ProgramUnit programUnit)
         {
             bool failed = false;
             foreach (string uses in programUnit.Uses)
             {
                 List<string> searchDirs = new List<string>();
-                searchDirs.Add(System.IO.Path.GetDirectoryName(programUnit.Start.Path)!);
+                string? dirName = System.IO.Path.GetDirectoryName(programUnit.Start.Path);
+                searchDirs.Add(dirName!);
                 searchDirs.AddRange(context.Includes);
                 string? headerPath = null;
                 foreach (string dir in searchDirs)
@@ -438,6 +453,13 @@ namespace TEAC
             return !failed;
         }
 
+        /// <summary>
+        /// Creates a module from the given parse tree.
+        /// </summary>
+        /// <param name="context">The compiler context.</param>
+        /// <param name="programUnit">The source program unit.</param>
+        /// <param name="module">On success, receives the created module.</param>
+        /// <returns>True if there were no errors; otherwise, false.</returns>
         public bool CreateModule(CompilerContext context, ProgramUnit programUnit, out Module module)
         {
             bool failed = false;
@@ -722,11 +744,11 @@ namespace TEAC
             while (destructables.Count > 0)
             {
                 LocalVariable destructable = destructables.Pop();
-                MethodInfo destructor = destructable.Type!.GetDestructor()!;
-                method.Module!.AddProto(destructor);
+                MethodInfo? destructor = destructable.Type!.GetDestructor();
+                method.Module!.AddProto(destructor!);
                 method.Statements.Add(new AsmStatement { Instruction = string.Format("lea eax,_{0}$[ebp]", destructable.Name) });
                 method.Statements.Add(new AsmStatement { Instruction = "push eax" });
-                method.Statements.Add(new AsmStatement { Instruction = "call " + destructor.MangledName });
+                method.Statements.Add(new AsmStatement { Instruction = "call " + destructor!.MangledName });
                 method.Statements.Add(new AsmStatement { Instruction = "add esp,4" });
             }
 
@@ -829,10 +851,10 @@ namespace TEAC
                                 method.Statements.Add(new AsmStatement { Instruction = "push ecx" });
                                 if (memberDestructor!.IsVirtual)
                                 {
-                                    FieldInfo memberVTable = field.Type!.GetVTablePointer()!;
-                                    if (memberVTable.Offset > 0)
+                                    FieldInfo? memberVTable = field.Type!.GetVTablePointer();
+                                    if (memberVTable!.Offset > 0)
                                     {
-                                        method.Statements.Add(new AsmStatement { Instruction = string.Format("add ecx,{0}", memberVTable.Offset) });
+                                        method.Statements.Add(new AsmStatement { Instruction = string.Format("add ecx,{0}", memberVTable!.Offset) });
                                     }
 
                                     method.Statements.Add(new AsmStatement { Instruction = "mov eax,[ecx]" });
@@ -1030,10 +1052,10 @@ namespace TEAC
                         method.Module!.AddProto(destructor);
                         if (destructor!.IsVirtual)
                         {
-                            FieldInfo vtblPointer = innerType.GetVTablePointer()!;
-                            if (vtblPointer.Offset > 0)
+                            FieldInfo? vtblPointer = innerType.GetVTablePointer();
+                            if (vtblPointer!.Offset > 0)
                             {
-                                method.Statements.Add(new AsmStatement { Instruction = string.Format("add eax,{0}", vtblPointer.Offset) });
+                                method.Statements.Add(new AsmStatement { Instruction = string.Format("add eax,{0}", vtblPointer!.Offset) });
                             }
 
                             method.Statements.Add(new AsmStatement { Instruction = "mov ecx,[eax]" });
@@ -1645,15 +1667,15 @@ namespace TEAC
 
                 if (calleeMethod!.IsVirtual && callExpr!.Inner!.UseVirtualDispatch)
                 {
-                    FieldInfo vtablePtr = calleeMethod!.Type!.GetVTablePointer()!;
+                    FieldInfo? vtablePtr = calleeMethod!.Type!.GetVTablePointer();
                     if (string.CompareOrdinal(callLoc, "[eax]") != 0)
                     {
                         method.Statements.Add(new AsmStatement { Instruction = string.Format("lea eax,{0}", callLoc) });
                     }
 
-                    if (vtablePtr.Offset > 0)
+                    if (vtablePtr!.Offset > 0)
                     {
-                        method.Statements.Add(new AsmStatement { Instruction = string.Format("add eax,{0}", vtablePtr.Offset) });
+                        method.Statements.Add(new AsmStatement { Instruction = string.Format("add eax,{0}", vtablePtr!.Offset) });
                     }
 
                     method.Statements.Add(new AsmStatement { Instruction = "mov ecx,[eax]" });

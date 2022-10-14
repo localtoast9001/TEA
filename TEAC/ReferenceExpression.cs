@@ -9,7 +9,7 @@ namespace TEAC
     /// <summary>
     /// Parse node for a reference.
     /// </summary>
-    abstract class ReferenceExpression : Expression
+    internal abstract class ReferenceExpression : Expression
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="ReferenceExpression"/> class.

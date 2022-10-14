@@ -27,9 +27,12 @@ namespace TEAC
         }
 
         /// <summary>
-        /// Get the identifier value.
+        /// Gets the identifier value.
         /// </summary>
-        public string Value { get { return this.identifier; } }
+        public string Value
+        {
+            get { return this.identifier; }
+        }
 
         /// <inheritdoc/>
         public override string ToString()

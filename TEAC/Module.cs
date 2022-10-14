@@ -11,24 +11,55 @@ namespace TEAC
     using System.Linq;
     using System.Text;
 
+    /// <summary>
+    /// Module that is output from a code generator.
+    /// </summary>
     internal class Module
     {
-        private List<DataEntry> dataSeg = new List<DataEntry>();
-        private List<MethodInfo> protoList = new List<MethodInfo>();
-        private List<string> externList = new List<string>();
-        private List<MethodImpl> codeSeg = new List<MethodImpl>();
+        private readonly List<DataEntry> dataSeg = new List<DataEntry>();
+        private readonly List<MethodInfo> protoList = new List<MethodInfo>();
+        private readonly List<string> externList = new List<string>();
+        private readonly List<MethodImpl> codeSeg = new List<MethodImpl>();
         private int literalStringIndex;
         private int literalDoubleIndex;
         private int jumpLabelIndex;
 
-        public List<DataEntry> DataSegment { get { return this.dataSeg; } }
-        public List<MethodImpl> CodeSegment { get { return this.codeSeg; } }
-        public List<MethodInfo> ProtoList { get { return this.protoList; } }
+        /// <summary>
+        /// Gets the data segment.
+        /// </summary>
+        public List<DataEntry> DataSegment
+        {
+            get { return this.dataSeg; }
+        }
+
+        /// <summary>
+        /// Gets the code segment.
+        /// </summary>
+        public List<MethodImpl> CodeSegment
+        {
+            get { return this.codeSeg; }
+        }
+
+        /// <summary>
+        /// Gets the prototype list.
+        /// </summary>
+        public List<MethodInfo> ProtoList
+        {
+            get { return this.protoList; }
+        }
+
+        /// <summary>
+        /// Gets the list of externs.
+        /// </summary>
         public List<string> ExternList
         {
             get { return this.externList; }
         }
 
+        /// <summary>
+        /// Adds a method prototype.
+        /// </summary>
+        /// <param name="proto">The method to add.</param>
         public void AddProto(MethodInfo proto)
         {
             string mangledName = proto.MangledName;
@@ -43,6 +74,10 @@ namespace TEAC
             this.protoList.Add(proto);
         }
 
+        /// <summary>
+        /// Adds an extern symbol.
+        /// </summary>
+        /// <param name="externSymbol">The symbol to add.</param>
         public void AddExtern(string externSymbol)
         {
             foreach (var existing in this.externList)
@@ -56,11 +91,20 @@ namespace TEAC
             this.externList.Add(externSymbol);
         }
 
+        /// <summary>
+        /// Gets the next jump symbol.
+        /// </summary>
+        /// <returns>The next jump signal.</returns>
         public string GetNextJumpLabel()
         {
             return "$Label_" + (this.jumpLabelIndex++).ToString();
         }
 
+        /// <summary>
+        /// Defines a constant.
+        /// </summary>
+        /// <param name="value">The constant value.</param>
+        /// <returns>The new symbol name.</returns>
         public string DefineConstant(double value)
         {
             byte[] rawData = BitConverter.GetBytes(value);
@@ -76,6 +120,11 @@ namespace TEAC
             return symbolName;
         }
 
+        /// <summary>
+        /// Defines a literal string.
+        /// </summary>
+        /// <param name="value">The literal value.</param>
+        /// <returns>The symbol name.</returns>
         public string DefineLiteralString(string value)
         {
             System.IO.MemoryStream ms = new System.IO.MemoryStream();
@@ -98,6 +147,10 @@ namespace TEAC
             return symbolName;
         }
 
+        /// <summary>
+        /// Defines interfaces tables from the given type.
+        /// </summary>
+        /// <param name="type">The type for which to define the interface tables.</param>
         public void DefineInterfaceTables(TypeDefinition type)
         {
             IEnumerable<KeyValuePair<TypeDefinition, int>> allInterfaces = type.GetAllInterfaces();
@@ -165,6 +218,10 @@ namespace TEAC
             }
         }
 
+        /// <summary>
+        /// Defines the vtable for the given type.
+        /// </summary>
+        /// <param name="type">The type for which to define the vtable.</param>
         public void DefineVTable(TypeDefinition type)
         {
             string label = "$Vtbl_" + type.MangledName;

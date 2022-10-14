@@ -11,10 +11,21 @@ namespace TEAC
     using System.Linq;
     using System.Text;
 
+    /// <summary>
+    /// Method declaration parse node.
+    /// </summary>
     internal class MethodDeclaration : ParseNode
     {
-        private List<ParameterDeclaration> parameters = new List<ParameterDeclaration>();
+        private readonly List<ParameterDeclaration> parameters = new List<ParameterDeclaration>();
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MethodDeclaration"/> class.
+        /// </summary>
+        /// <param name="start">The first token in the parse node.</param>
+        /// <param name="name">The name of the method.</param>
+        /// <param name="isStatic">True if the method is static; otherwise, false.</param>
+        /// <param name="isVirtual">True if the method is virtual; otherwise, false.</param>
+        /// <param name="isAbstract">True if the method is abstract; otherwise, false.</param>
         public MethodDeclaration(
             Token start,
             string name,
@@ -29,18 +40,43 @@ namespace TEAC
             this.IsAbstract = isAbstract;
         }
 
+        /// <summary>
+        /// Gets or sets the return type.
+        /// </summary>
         public TypeReference? ReturnType { get; set; }
 
-        public string MethodName { get; private set; }
+        /// <summary>
+        /// Gets the method name.
+        /// </summary>
+        public string MethodName { get; }
 
-        public bool IsStatic { get; private set; }
+        /// <summary>
+        /// Gets a value indicating whether the method is static.
+        /// </summary>
+        public bool IsStatic { get; }
 
-        public bool IsVirtual { get; private set; }
+        /// <summary>
+        /// Gets a value indicating whether the method is virtual.
+        /// </summary>
+        public bool IsVirtual { get; }
 
-        public bool IsAbstract { get; private set; }
+        /// <summary>
+        /// Gets a value indicating whether the method is abstract.
+        /// </summary>
+        public bool IsAbstract { get; }
 
-        public IEnumerable<ParameterDeclaration> Parameters { get { return this.parameters; } }
+        /// <summary>
+        /// Gets the parameters.
+        /// </summary>
+        public IEnumerable<ParameterDeclaration> Parameters
+        {
+            get { return this.parameters; }
+        }
 
+        /// <summary>
+        /// Adds a parameter.
+        /// </summary>
+        /// <param name="parameterDecl">The parameter to add.</param>
         public void AddParameter(ParameterDeclaration parameterDecl)
         {
             this.parameters.Add(parameterDecl);

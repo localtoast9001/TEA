@@ -6,16 +6,35 @@
 
 namespace TEAC
 {
-    class ArrayIndexReferenceExpression : ReferenceExpression
+    /// <summary>
+    /// Expression to index an array.
+    /// </summary>
+    internal class ArrayIndexReferenceExpression : ReferenceExpression
     {
-        public ArrayIndexReferenceExpression(Token start, ReferenceExpression inner, Expression index)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ArrayIndexReferenceExpression"/> class.
+        /// </summary>
+        /// <param name="start">The first token in the parse node.</param>
+        /// <param name="inner">The inner expression.</param>
+        /// <param name="index">The index expression.</param>
+        public ArrayIndexReferenceExpression(
+            Token start,
+            ReferenceExpression inner,
+            Expression index)
             : base(start)
         {
             this.Inner = inner;
             this.Index = index;
         }
 
+        /// <summary>
+        /// Gets the inner reference to the array.
+        /// </summary>
         public ReferenceExpression Inner { get; }
+
+        /// <summary>
+        /// Gets the index expression.
+        /// </summary>
         public Expression Index { get; }
     }
 }

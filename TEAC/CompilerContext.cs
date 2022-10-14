@@ -146,6 +146,7 @@ namespace TEAC
         /// Tests if a namespace is already used.
         /// </summary>
         /// <param name="ns">The namespace.</param>
+        /// <returns>True if used; otherwise, false.</returns>
         public bool AlreadyUsed(string ns)
         {
             return this.alreadyUsed.Contains(ns);
@@ -199,6 +200,13 @@ namespace TEAC
             return false;
         }
 
+        /// <summary>
+        /// Tries to find the matching constructor.
+        /// </summary>
+        /// <param name="objectType">The object type.</param>
+        /// <param name="parameterTypes">The parameter types.</param>
+        /// <param name="methodInfo">On success, receives the method info.</param>
+        /// <returns>True if a match is found; otherwise, false.</returns>
         public bool TryFindConstructor(
             TypeDefinition objectType,
             IList<TypeDefinition> parameterTypes,
@@ -232,6 +240,14 @@ namespace TEAC
             return false;
         }
 
+        /// <summary>
+        /// Tries to find the method and matching type.
+        /// </summary>
+        /// <param name="methodNameRef">The method name.</param>
+        /// <param name="parameterTypes">The parameter types.</param>
+        /// <param name="type">On success, receives the reference to the type.</param>
+        /// <param name="methodInfo">On success, receives the method info.</param>
+        /// <returns>True if a match could be found; otherwise, false.</returns>
         public bool TryFindMethodAndType(
             string methodNameRef,
             IList<TypeDefinition> parameterTypes,
@@ -285,6 +301,11 @@ namespace TEAC
             return false;
         }
 
+        /// <summary>
+        /// Gets a pointer type for the given element type.
+        /// </summary>
+        /// <param name="elementType">The element type.</param>
+        /// <returns>The pointer type to the given element type.</returns>
         public TypeDefinition GetPointerType(TypeDefinition elementType)
         {
             TypeDefinition? result = null;
@@ -305,6 +326,12 @@ namespace TEAC
             return result;
         }
 
+        /// <summary>
+        /// Gets an array type given an element type and count.
+        /// </summary>
+        /// <param name="elementType">The element type.</param>
+        /// <param name="elementCount">The element count.</param>
+        /// <returns>The array type definition.</returns>
         public TypeDefinition GetArrayType(TypeDefinition elementType, int elementCount)
         {
             TypeDefinition? result = null;
@@ -326,6 +353,12 @@ namespace TEAC
             return result;
         }
 
+        /// <summary>
+        /// Tries to declare a type.
+        /// </summary>
+        /// <param name="name">The name of the type.</param>
+        /// <param name="typeDef">On success, receives the type definition.</param>
+        /// <returns>True if the type could be declared; otherwise, false.</returns>
         public bool TryDeclareType(string name, out TypeDefinition typeDef)
         {
             string fullName = this.Namespace + "." + name;
@@ -345,6 +378,11 @@ namespace TEAC
             return true;
         }
 
+        /// <summary>
+        /// Begins a new scope.
+        /// </summary>
+        /// <param name="method">The method for which to create a scope.</param>
+        /// <returns>The new scope.</returns>
         public Scope BeginScope(MethodInfo method)
         {
             Scope scope = new Scope();
@@ -373,6 +411,11 @@ namespace TEAC
             return scope;
         }
 
+        /// <summary>
+        /// Gets the method type.
+        /// </summary>
+        /// <param name="calleeMethod">The callee method.</param>
+        /// <returns>The method type for the calle method.</returns>
         public TypeDefinition GetMethodType(MethodInfo calleeMethod)
         {
             StringBuilder sb = new StringBuilder();
@@ -431,6 +474,9 @@ namespace TEAC
             return methodType;
         }
 
+        /// <summary>
+        /// Clears the uses set.
+        /// </summary>
         internal void ClearUses()
         {
             this.uses.Clear();

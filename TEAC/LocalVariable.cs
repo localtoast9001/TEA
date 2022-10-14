@@ -9,15 +9,24 @@ namespace TEAC
     using System.Collections.Generic;
     using System.Linq;
     using System.Text;
-    using System.Threading.Tasks;
 
-    class LocalVariable : SymbolEntry
+    /// <summary>
+    /// Symbol entry for a local variable.
+    /// </summary>
+    internal class LocalVariable : SymbolEntry
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LocalVariable"/> class.
+        /// </summary>
+        /// <param name="name">The variable name.</param>
         public LocalVariable(string name)
             : base(name)
         {
         }
 
+        /// <summary>
+        /// Gets or sets the offset on the frame.
+        /// </summary>
         public int Offset { get; set; }
     }
 }
