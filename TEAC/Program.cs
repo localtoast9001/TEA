@@ -11,6 +11,7 @@ namespace TEAC
     using System.Linq;
     using System.Text;
     using System.Threading.Tasks;
+    using Tea.Language;
 
     /// <summary>
     /// Program entry point.
@@ -52,7 +53,7 @@ namespace TEAC
                             {
                                 using (AsmModuleWriter moduleWriter = new AsmModuleWriter(arguments!.OutputListing))
                                 {
-                                    moduleWriter.Write(module);
+                                    moduleWriter.Write(module!);
                                 }
                             }
                         }
