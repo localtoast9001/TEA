@@ -4,7 +4,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-namespace TEAC
+namespace Tea.Compiler
 {
     using System;
     using System.Collections.Generic;
@@ -16,7 +16,7 @@ namespace TEAC
     /// <summary>
     /// Writer that writes a module to a ASM source file.
     /// </summary>
-    internal class AsmModuleWriter : ModuleWriter
+    public class AsmModuleWriter : ModuleWriter
     {
         private readonly StreamWriter writer;
 
