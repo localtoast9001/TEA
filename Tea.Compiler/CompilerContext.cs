@@ -4,7 +4,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-namespace TEAC
+namespace Tea.Compiler
 {
     using System;
     using System.Collections.Generic;
@@ -14,7 +14,7 @@ namespace TEAC
     /// <summary>
     /// Modifiable state used by the compiler as it goes through parsing and code generation phases.
     /// </summary>
-    internal class CompilerContext
+    public class CompilerContext
     {
         private readonly List<string> uses = new List<string>();
         private readonly List<string> includes = new List<string>();

@@ -1,15 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
-    <ProjectGuid>{4DD62EA9-081A-4C3E-A71B-22BB035EE1F7}</ProjectGuid>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>TEAC</RootNamespace>
-    <AssemblyName>TEAC</AssemblyName>
-    <FileAlignment>512</FileAlignment>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
@@ -24,7 +18,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Tea.Language\Tea.Language.csproj" />
-    <ProjectReference Include="..\Tea.Compiler\Tea.Compiler.csproj" />
   </ItemGroup>
 
 </Project>

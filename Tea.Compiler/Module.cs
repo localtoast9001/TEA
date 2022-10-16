@@ -4,7 +4,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-namespace TEAC
+namespace Tea.Compiler
 {
     using System;
     using System.Collections.Generic;
@@ -14,7 +14,7 @@ namespace TEAC
     /// <summary>
     /// Module that is output from a code generator.
     /// </summary>
-    internal class Module
+    public class Module
     {
         private readonly List<DataEntry> dataSeg = new List<DataEntry>();
         private readonly List<MethodInfo> protoList = new List<MethodInfo>();

@@ -3,18 +3,18 @@
 //     Copyright (C) Jon Rowlett. All rights reserved.
 // </copyright>
 //-----------------------------------------------------------------------
-namespace TEAC
+
+namespace Tea.Compiler
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Text;
-    using System.Threading.Tasks;
 
     /// <summary>
     /// Type definition intermediate structure.
     /// </summary>
-    internal class TypeDefinition
+    public class TypeDefinition
     {
         private const string VTablePointerFieldName = "?vtblptr";
 

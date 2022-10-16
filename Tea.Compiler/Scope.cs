@@ -4,7 +4,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-namespace TEAC
+namespace Tea.Compiler
 {
     using System;
     using System.Collections.Generic;
@@ -14,7 +14,7 @@ namespace TEAC
     /// <summary>
     /// Scope for resolving identifiers.
     /// </summary>
-    internal class Scope
+    public class Scope
     {
         private Dictionary<string, SymbolEntry> symbols = new Dictionary<string, SymbolEntry>();
         private int parameterOffset = 8;

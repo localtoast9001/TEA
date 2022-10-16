@@ -4,7 +4,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-namespace TEAC
+namespace Tea.Compiler
 {
     using System;
     using System.Collections.Generic;
@@ -15,7 +15,7 @@ namespace TEAC
     /// <summary>
     /// Generates the code from a parse tree.
     /// </summary>
-    internal class CodeGenerator
+    public class CodeGenerator
     {
         private readonly MessageLog log;
 

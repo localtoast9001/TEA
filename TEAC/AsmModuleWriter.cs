@@ -11,6 +11,7 @@ namespace TEAC
     using System.IO;
     using System.Linq;
     using System.Text;
+    using Tea.Compiler;
 
     /// <summary>
     /// Writer that writes a module to a ASM source file.

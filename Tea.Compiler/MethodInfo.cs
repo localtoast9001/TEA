@@ -3,7 +3,8 @@
 //     Copyright (C) Jon Rowlett. All rights reserved.
 // </copyright>
 //-----------------------------------------------------------------------
-namespace TEAC
+
+namespace Tea.Compiler
 {
     using System;
     using System.Collections.Generic;
@@ -13,7 +14,7 @@ namespace TEAC
     /// <summary>
     /// Information about a method used in code generation.
     /// </summary>
-    internal class MethodInfo
+    public class MethodInfo
     {
         private readonly List<ParameterInfo> parameters = new List<ParameterInfo>();
 

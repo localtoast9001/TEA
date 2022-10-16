@@ -4,7 +4,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-namespace TEAC
+namespace Tea.Compiler
 {
     using System;
     using System.Collections.Generic;
@@ -14,7 +14,7 @@ namespace TEAC
     /// <summary>
     /// Information about a field created as part of code generation.
     /// </summary>
-    internal class FieldInfo
+    public class FieldInfo
     {
         /// <summary>
         /// Gets or sets the name of the field.
