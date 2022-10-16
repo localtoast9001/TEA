@@ -1,9 +1,10 @@
 ﻿//-----------------------------------------------------------------------
-// <copyright file="LocalVariable.cs" company="Jon Rowlett">
+// <copyright file="ParameterVariable.cs" company="Jon Rowlett">
 //     Copyright (C) Jon Rowlett. All rights reserved.
 // </copyright>
 //-----------------------------------------------------------------------
-namespace TEAC
+
+namespace Tea.Compiler
 {
     using System;
     using System.Collections.Generic;
@@ -11,21 +12,21 @@ namespace TEAC
     using System.Text;
 
     /// <summary>
-    /// Symbol entry for a local variable.
+    /// <see cref="SymbolEntry"/> for a parameter.
     /// </summary>
-    internal class LocalVariable : SymbolEntry
+    public class ParameterVariable : SymbolEntry
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="LocalVariable"/> class.
+        /// Initializes a new instance of the <see cref="ParameterVariable"/> class.
         /// </summary>
-        /// <param name="name">The variable name.</param>
-        public LocalVariable(string name)
+        /// <param name="name">Name of the parameter.</param>
+        public ParameterVariable(string name)
             : base(name)
         {
         }
 
         /// <summary>
-        /// Gets or sets the offset on the frame.
+        /// Gets or sets the offset of the parameter on the stack.
         /// </summary>
         public int Offset { get; set; }
     }

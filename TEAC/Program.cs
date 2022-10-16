@@ -3,6 +3,7 @@
 //     Copyright (C) Jon Rowlett. All rights reserved.
 // </copyright>
 //-----------------------------------------------------------------------
+
 namespace TEAC
 {
     using System;
@@ -11,6 +12,7 @@ namespace TEAC
     using System.Linq;
     using System.Text;
     using System.Threading.Tasks;
+    using Tea.Compiler;
     using Tea.Language;
 
     /// <summary>

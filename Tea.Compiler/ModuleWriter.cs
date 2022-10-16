@@ -4,7 +4,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-namespace TEAC
+namespace Tea.Compiler
 {
     using System;
     using System.Collections.Generic;
@@ -14,7 +14,7 @@ namespace TEAC
     /// <summary>
     /// Base class of writers that serialize modules to an output format.
     /// </summary>
-    internal abstract class ModuleWriter : IDisposable
+    public abstract class ModuleWriter : IDisposable
     {
         /// <summary>
         /// Finalizes an instance of the <see cref="ModuleWriter"/> class.

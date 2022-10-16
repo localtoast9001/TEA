@@ -1,15 +1,15 @@
 //-----------------------------------------------------------------------
-// <copyright file="AsmStatement.cs" company="Jon Rowlett">
+// <copyright file="DataEntry.cs" company="Jon Rowlett">
 //     Copyright (C) Jon Rowlett. All rights reserved.
 // </copyright>
 //-----------------------------------------------------------------------
 
-namespace TEAC
+namespace Tea.Compiler
 {
     /// <summary>
-    /// Assembly statement.
+    /// Data segment entry for module output.
     /// </summary>
-    internal class AsmStatement
+    public class DataEntry
     {
         /// <summary>
         /// Gets or sets the label.
@@ -17,8 +17,10 @@ namespace TEAC
         public string? Label { get; set; }
 
         /// <summary>
-        /// Gets or sets the instruction.
+        /// Gets or sets the value.
         /// </summary>
-        public string? Instruction { get; set; }
+#pragma warning disable SA1011 // False positive.
+        public object[]? Value { get; set; }
+#pragma warning restore
     }
 }

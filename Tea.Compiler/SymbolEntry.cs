@@ -3,7 +3,8 @@
 //     Copyright (C) Jon Rowlett. All rights reserved.
 // </copyright>
 //-----------------------------------------------------------------------
-namespace TEAC
+
+namespace Tea.Compiler
 {
     using System;
     using System.Collections.Generic;
@@ -13,7 +14,7 @@ namespace TEAC
     /// <summary>
     /// Base symbol definition.
     /// </summary>
-    internal abstract class SymbolEntry
+    public abstract class SymbolEntry
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="SymbolEntry"/> class.

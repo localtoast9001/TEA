@@ -4,12 +4,12 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-namespace TEAC
+namespace Tea.Compiler
 {
     /// <summary>
     /// Method implementation created during code generation.
     /// </summary>
-    internal class MethodImpl
+    public class MethodImpl
     {
         private readonly List<AsmStatement> statements = new List<AsmStatement>();
         private readonly Dictionary<string, int> symbols = new Dictionary<string, int>();
