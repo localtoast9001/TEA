@@ -57,6 +57,11 @@ namespace TEAC
                                 {
                                     moduleWriter.Write(module!);
                                 }
+
+                                using (Elf32ModuleWriter objWriter = new Elf32ModuleWriter(arguments!.OutputObj))
+                                {
+                                    objWriter.Write(module!);
+                                }
                             }
                         }
                     }

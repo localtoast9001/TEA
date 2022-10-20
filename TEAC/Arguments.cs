@@ -21,10 +21,15 @@ namespace TEAC
         /// </summary>
         private List<string> includes = new List<string>();
 
-        private Arguments(string inputFile, string outputListing, IEnumerable<string> includeDirs)
+        private Arguments(
+            string inputFile,
+            string outputListing,
+            string outputObj,
+            IEnumerable<string> includeDirs)
         {
             this.InputFile = inputFile;
             this.OutputListing = outputListing;
+            this.OutputObj = outputObj;
             this.includes.AddRange(includeDirs);
         }
 
@@ -37,6 +42,11 @@ namespace TEAC
         /// Gets the output listing path.
         /// </summary>
         public string OutputListing { get; }
+
+        /// <summary>
+        /// Gets the output obj path.
+        /// </summary>
+        public string OutputObj { get; }
 
         /// <summary>
         /// Gets the list of include search paths.
@@ -57,6 +67,7 @@ namespace TEAC
             result = null;
             string? inputFile = null;
             string? outputListing = null;
+            string? outputObj = null;
             List<string> includes = new List<string>();
             if (args.Length < 1)
             {
@@ -81,6 +92,10 @@ namespace TEAC
                 {
                     outputListing = arg.Substring(3);
                 }
+                else if (arg.StartsWith("/Fo", StringComparison.Ordinal))
+                {
+                    outputObj = arg.Substring(3);
+                }
                 else if (arg.StartsWith("/I", StringComparison.Ordinal))
                 {
                     string includeDir = arg.Substring(2);
@@ -100,19 +115,29 @@ namespace TEAC
             inputFile = args[index];
             if (string.IsNullOrEmpty(outputListing))
             {
-                int extIndex = inputFile.LastIndexOf('.');
-                if (extIndex > 0 && string.Compare(inputFile.Substring(extIndex), ".tea", StringComparison.OrdinalIgnoreCase) == 0)
-                {
-                    outputListing = inputFile.Substring(0, extIndex) + ".asm";
-                }
-                else
-                {
-                    outputListing = inputFile + ".asm";
-                }
+                outputListing = GetOutputPath(inputFile, ".asm");
             }
 
-            result = new Arguments(inputFile, outputListing, includes);
+            if (string.IsNullOrEmpty(outputObj))
+            {
+                outputObj = GetOutputPath(inputFile, ".o");
+            }
+
+            result = new Arguments(inputFile, outputListing, outputObj, includes);
             return true;
+        }
+
+        private static string GetOutputPath(string inputFile, string defaultExt)
+        {
+            int extIndex = inputFile.LastIndexOf('.');
+            if (extIndex > 0 && string.Compare(inputFile.Substring(extIndex), ".tea", StringComparison.OrdinalIgnoreCase) == 0)
+            {
+                return inputFile.Substring(0, extIndex) + defaultExt;
+            }
+            else
+            {
+                return inputFile + defaultExt;
+            }
         }
     }
 }
