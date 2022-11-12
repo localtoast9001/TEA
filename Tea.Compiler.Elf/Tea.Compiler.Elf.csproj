@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <InternalsVisibleTo>Tea.Compiler.Elf.UnitTest</InternalsVisibleTo>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,8 +18,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Tea.Language\Tea.Language.csproj" />
-    <ProjectReference Include="..\Tea.Compiler.Elf\Tea.Compiler.Elf.csproj" />
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>$(AssemblyName).UnitTest</_Parameter1>
+    </AssemblyAttribute>
   </ItemGroup>
-
 </Project>

@@ -609,20 +609,24 @@ $Label_3:	nop
 	mov _i$[ebp],eax
 	jmp $Label_3
 $Label_4:	nop
+	xor eax,eax
+	push eax
+	pop eax
+	mov _Main$[ebp],eax
 	mov eax, dword ptr _Main$[ebp]
 	mov esp,ebp
 	pop ebp
 	ret
 _ZN7Samples7Program4MainEiAAc ENDP
 wmain PROC C EXPORT
-	push ebp
-	mov ebp,esp    
+    push ebp
+    mov ebp,esp    
     push [ebp+12]
     push [ebp+8]
     call _ZN7Samples7Program4MainEiAAc
     add esp,8
-	mov esp,ebp
-	pop ebp
+    mov esp,ebp
+    pop ebp
     ret
 wmain ENDP
 END

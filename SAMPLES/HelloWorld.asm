@@ -53,14 +53,14 @@ _ZN7Samples7Program4MainEiAAc PROC C EXPORT
 	ret
 _ZN7Samples7Program4MainEiAAc ENDP
 wmain PROC C EXPORT
-	push ebp
-	mov ebp,esp    
+    push ebp
+    mov ebp,esp    
     push [ebp+12]
     push [ebp+8]
     call _ZN7Samples7Program4MainEiAAc
     add esp,8
-	mov esp,ebp
-	pop ebp
+    mov esp,ebp
+    pop ebp
     ret
 wmain ENDP
 END
