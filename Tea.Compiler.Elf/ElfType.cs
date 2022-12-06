@@ -11,10 +11,29 @@ namespace Tea.Compiler.Elf
     /// </summary>
     public enum ElfType : ushort
     {
+        /// <summary>
+        /// No type.
+        /// </summary>
         None,
+
+        /// <summary>
+        /// Relocatable objects.
+        /// </summary>
         Rel,
+
+        /// <summary>
+        /// Executable code.
+        /// </summary>
         Exec,
+
+        /// <summary>
+        /// dynamic module.
+        /// </summary>
         Dyn,
+
+        /// <summary>
+        /// Core binary.
+        /// </summary>
         Core,
     }
 }

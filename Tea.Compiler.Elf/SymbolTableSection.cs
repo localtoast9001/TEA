@@ -54,11 +54,11 @@ namespace Tea.Compiler.Elf
         /// <returns>The index of the symbol in the table.</returns>
         public uint FindSymbol(uint nameOffset)
         {
-            for (uint i = 1; i < this.Symbols.Count; i++)
+            for (uint i = 0; i < this.Symbols.Count; i++)
             {
                 if (this.Symbols[(int)i].Name == nameOffset)
                 {
-                    return i;
+                    return i + 1;
                 }
             }
 

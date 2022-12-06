@@ -8,7 +8,7 @@ namespace Tea.Compiler
 {
     using System;
     using System.IO;
-    using Elf;
+    using Tea.Compiler.Elf;
 
     /// <summary>
     /// Module writer for the elf32-little format.
@@ -55,14 +55,26 @@ namespace Tea.Compiler
                 OSAbi = OSAbi.SystemV,
             };
 
-            ProgramSection textSection = new ProgramSection
-            {
-                Name = ".text",
-                Executable = true,
-            };
-
-            builder.Sections.Add(textSection);
+            builder.Sections.Add(BuildCodeSection(module.CodeSegment));
             builder.Sections.Add(BuildDataSection(module.DataSegment));
+
+            foreach (MethodInfo meth in module.ProtoList)
+            {
+                foreach (MethodImpl methImpl in module.CodeSegment)
+                {
+                    if (methImpl.Method! == meth)
+                    {
+                        continue;
+                    }
+                }
+
+                builder.DefineExternalSymbol(meth.MangledName);
+            }
+
+            foreach (string symbol in module.ExternList)
+            {
+                builder.DefineExternalSymbol(symbol);
+            }
 
             builder.Save(this.Output);
             return true;
@@ -73,6 +85,39 @@ namespace Tea.Compiler
         {
             base.Dispose(disposing);
             this.Output.Close();
+        }
+
+        private static ProgramSection BuildCodeSection(IList<MethodImpl> codeSegment)
+        {
+            ProgramSection textSection = new ProgramSection
+            {
+                Name = ".text",
+                Executable = true,
+            };
+
+            foreach (MethodImpl method in codeSegment)
+            {
+                Symbol sym = textSection.StartSymbol(method.Method!.MangledName, SymbolType.Func, SymbolBinding.Global);
+                foreach (AsmStatement statement in method.Statements)
+                {
+                    if (statement.Label != null)
+                    {
+                        Symbol label = textSection.StartSymbol(statement.Label!, SymbolType.Func, SymbolBinding.Local);
+                        textSection.EndSymbol(label);
+                    }
+
+                    foreach (RelocationEntry relEntry in statement.Instruction!.RelocationEntries)
+                    {
+                        textSection.DefineRelocation(relEntry.Symbol, relEntry.Relative, relEntry.Offset);
+                    }
+
+                    textSection.ContentWriter.WriteBytes(statement.Instruction!.ToArray());
+                }
+
+                textSection.EndSymbol(sym);
+            }
+
+            return textSection;
         }
 
         private static ProgramSection BuildDataSection(IList<DataEntry> dataSegment)
@@ -122,7 +167,7 @@ namespace Tea.Compiler
                 else if (obj is string)
                 {
                     string symbolRef = (string)obj;
-                    dataSection.DefineRelocation(symbolRef);
+                    dataSection.DefineRelocation(symbolRef, false);
                     dataSection.ContentWriter.WriteUInt32(0);
                 }
                 else

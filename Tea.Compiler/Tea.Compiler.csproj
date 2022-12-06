@@ -17,6 +17,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Tea.Compiler.UnitTest" /> 
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Tea.Language\Tea.Language.csproj" />
     <ProjectReference Include="..\Tea.Compiler.Elf\Tea.Compiler.Elf.csproj" />
   </ItemGroup>

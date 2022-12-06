@@ -81,6 +81,16 @@ namespace Tea.Compiler
         public int VTableIndex { get; set; }
 
         /// <summary>
+        /// Gets a value indicating whether the method is a constructor.
+        /// </summary>
+        public bool IsConstructor => string.Equals(this.Name, "constructor", StringComparison.Ordinal);
+
+        /// <summary>
+        /// Gets a value indicating whether the method is a destructor.
+        /// </summary>
+        public bool IsDestructor => string.Equals(this.Name, "destructor", StringComparison.Ordinal);
+
+        /// <summary>
         /// Gets the mangled name.
         /// </summary>
         public string MangledName

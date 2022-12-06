@@ -92,6 +92,7 @@ namespace Tea.Compiler.Elf
         /// <summary>
         /// Ends a symbol definition.
         /// </summary>
+        /// <param name="symbol">The symbol to end.</param>
         public void EndSymbol(Symbol symbol)
         {
             symbol.Complete((uint)(this.content.Position - symbol.Offset));
@@ -101,10 +102,12 @@ namespace Tea.Compiler.Elf
         /// Defines a new relocation at the current position in the content stream.
         /// </summary>
         /// <param name="symbol">The symbol reference.</param>
+        /// <param name="relative">True if PC relative; otherwise, false.</param>
+        /// <param name="offset">The offset from the current position where the relocation starts.</param>
         /// <returns>A new instance of the <see cref="Relocation"/> class.</returns>
-        public Relocation DefineRelocation(string symbol)
+        public Relocation DefineRelocation(string symbol, bool relative, uint offset = 0)
         {
-            Relocation rel = new Relocation((uint)this.content.Position, symbol);
+            Relocation rel = new Relocation((uint)this.content.Position + offset, relative, symbol);
             this.relocations.Add(rel);
             return rel;
         }

@@ -21,6 +21,11 @@ namespace Tea.Compiler.Elf
         public Collection<Section> Sections { get; } = new Collection<Section>();
 
         /// <summary>
+        /// Gets the collection of external symbols.
+        /// </summary>
+        public Collection<Symbol> ExternalSymbols { get; } = new Collection<Symbol>();
+
+        /// <summary>
         /// Gets or sets the type of file.
         /// </summary>
         public ElfType Type { get; set; }
@@ -34,6 +39,18 @@ namespace Tea.Compiler.Elf
         /// Gets or sets the OS ABI.
         /// </summary>
         public OSAbi OSAbi { get; set; }
+
+        /// <summary>
+        /// Defines an external symbol.
+        /// </summary>
+        /// <param name="name">The name of the external symbol.</param>
+        /// <returns>A new instance of the <see cref="Symbol"/> class.</returns>
+        public Symbol DefineExternalSymbol(string name)
+        {
+            Symbol sym = new Symbol(name, 0, SymbolType.Func, SymbolBinding.Global);
+            this.ExternalSymbols.Add(sym);
+            return sym;
+        }
 
         /// <summary>
         /// Saves the contents to disk.
@@ -70,13 +87,13 @@ namespace Tea.Compiler.Elf
                 {
                     if (progSection!.Relocations.Count > 0)
                     {
-                        RelocationTableSection relSection = new RelocationTableSection()
+                        RelocationTableSection relSection = new RelocationTableSection(progSection)
                         {
                             Name = ".rel" + section.Name,
                         };
 
                         expandedSections.Add(relSection);
-                        relSection.Link = section;
+                        relSection.Link = symbolTable;
                     }
                 }
             }
@@ -87,6 +104,17 @@ namespace Tea.Compiler.Elf
             symbolTable.Link = stringTable;
             expandedSections.Add(symbolTable);
             expandedSections.Add(stringTable);
+
+            foreach (Symbol sym in this.ExternalSymbols)
+            {
+                Elf32SymbolEntry symbolEntry = new Elf32SymbolEntry()
+                {
+                    Name = stringTable.DefineString(sym.Name),
+                    Type = SymbolType.Func,
+                };
+
+                symbolTable.Symbols.Add(symbolEntry);
+            }
 
             StringTableSection sectionHeaderStrings = new StringTableSection();
             sectionHeaderStrings.DefineString(string.Empty);
@@ -120,15 +148,15 @@ namespace Tea.Compiler.Elf
             // Populate relocation sections.
             foreach (RelocationTableSection relSection in expandedSections.OfType<RelocationTableSection>())
             {
-                ProgramSection sourceSection = (ProgramSection)relSection.Link;
-                foreach (Relocation rel in sourceSection.Relocations)
+                ProgramSection targetSection = relSection.Target;
+                foreach (Relocation rel in targetSection.Relocations)
                 {
                     uint nameOffset = stringTable.DefineString(rel.Symbol);
                     uint symbolRef = symbolTable.FindSymbol(nameOffset);
                     Rel32 rel32 = new Rel32
                     {
                         Offset = rel.Offset,
-                        Type = Rel32Type.R_386_32,
+                        Type = rel.Relative ? Rel32Type.R_386_PC32 : Rel32Type.R_386_32,
                         SymbolRef = symbolRef,
                     };
 
@@ -153,13 +181,24 @@ namespace Tea.Compiler.Elf
             for (int i = 0; i < expandedSections.Count; i++)
             {
                 Section section = expandedSections[i];
+                SectionHeaderEntry32 entry = sections[i + 1];
                 if (section.Link != null)
                 {
                     int linkedSectionIndex = expandedSections.IndexOf(section.Link);
                     if (linkedSectionIndex >= 0)
                     {
-                        SectionHeaderEntry32 entry = sections[i + 1];
                         entry.Link = (uint)linkedSectionIndex + 1;
+                        sections[i + 1] = entry;
+                    }
+                }
+
+                RelocationTableSection? relTableSection = section as RelocationTableSection;
+                if (relTableSection != null)
+                {
+                    int infoLink = expandedSections.IndexOf(relTableSection!.Target);
+                    if (infoLink >= 0)
+                    {
+                        entry.Info = (uint)infoLink + 1;
                         sections[i + 1] = entry;
                     }
                 }

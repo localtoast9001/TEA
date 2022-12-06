@@ -116,6 +116,23 @@ namespace Tea.Compiler
         }
 
         /// <summary>
+        /// Tries to lookup the implicit argument.
+        /// </summary>
+        /// <param name="value">On success, receives the matching variable.</param>
+        /// <returns>True if there is a match; otherwise, false.</returns>
+        public bool TryLookupThis(out ParameterVariable? value)
+        {
+            if (this.TryLookup("this", out SymbolEntry? entry))
+            {
+                value = entry as ParameterVariable;
+                return true;
+            }
+
+            value = null;
+            return false;
+        }
+
+        /// <summary>
         /// Saves the symbol names and offsets to the given dictionary.
         /// </summary>
         /// <param name="dictionary">The dictionary where copies of the symbols will be saved.</param>
