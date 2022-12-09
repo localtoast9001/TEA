@@ -1702,9 +1702,10 @@ namespace Tea.Compiler
                 }
                 else
                 {
-                    if (callLoc!.ToString().Contains("["))
+                    if (callLoc!.Relocation != null && callLoc!.ToString().Equals($"[{callLoc.Relocation!.Symbol}]", StringComparison.Ordinal))
                     {
-                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Call(callLoc!) });
+                        // replace with an inline near call.
+                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Call(callLoc!.Relocation!.Symbol) });
                     }
                     else
                     {
