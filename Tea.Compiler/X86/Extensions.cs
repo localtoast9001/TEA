@@ -163,5 +163,40 @@ namespace Tea.Compiler.X86
 
             return (uint)(data[0] | (data[1] << 8) | (data[2] << 16) | (data[3] << 24));
         }
+
+        /// <summary>
+        /// Decodes bytes to an int32.
+        /// </summary>
+        /// <param name="data">The data to decode.</param>
+        /// <returns>The decoded value.</returns>
+        internal static int ToInt32(this ReadOnlySpan<byte> data)
+        {
+            return (int)ToUInt32(data);
+        }
+
+        /// <summary>
+        /// Decodes bytes to a uint16.
+        /// </summary>
+        /// <param name="data">The data to decode.</param>
+        /// <returns>The decoded value.</returns>
+        internal static ushort ToUInt16(this ReadOnlySpan<byte> data)
+        {
+            if (data.Length != sizeof(short))
+            {
+                throw new ArgumentOutOfRangeException(nameof(data));
+            }
+
+            return (ushort)(data[0] | (data[1] << 8));
+        }
+
+        /// <summary>
+        /// Decodes bytes to a int16.
+        /// </summary>
+        /// <param name="data">The data to decode.</param>
+        /// <returns>The decoded value.</returns>
+        internal static short ToInt16(this ReadOnlySpan<byte> data)
+        {
+            return (short)ToUInt16(data);
+        }
     }
 }

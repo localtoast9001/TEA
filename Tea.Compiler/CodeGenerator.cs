@@ -710,14 +710,7 @@ namespace Tea.Compiler
                             }
                             else if (varType!.IsFloatingPoint)
                             {
-                                if (varType!.Size == 4)
-                                {
-                                    method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction(string.Format("fstp dword ptr _{0}$[ebp]", localVar.Name)) });
-                                }
-                                else
-                                {
-                                    method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction(string.Format("fstp qword ptr _{0}$[ebp]", localVar.Name)) });
-                                }
+                                method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Fstp(FromLocalVariable(localVar)) });
                             }
                             else if (!varType!.IsClass)
                             {
@@ -787,14 +780,7 @@ namespace Tea.Compiler
                 LocalVariable returnVar = scope.ReturnVariable!;
                 if (method.Method!.ReturnType!.IsFloatingPoint)
                 {
-                    if (method.Method!.ReturnType!.Size == 8)
-                    {
-                        method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction(string.Format("fld qword ptr _{0}$[ebp]", returnVar.Name)) });
-                    }
-                    else
-                    {
-                        method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction(string.Format("fld dword ptr _{0}$[ebp]", returnVar.Name)) });
-                    }
+                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Fld(FromLocalVariable(returnVar)) });
                 }
                 else if (method.Method!.ReturnType!.Size <= 8 && !method.Method!.ReturnType!.IsClass)
                 {
@@ -1529,16 +1515,16 @@ namespace Tea.Compiler
                 decimal exprValue = (decimal)expression.Value;
                 if (exprValue == 0.0M)
                 {
-                    method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("fldz") });
+                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Fldz() });
                 }
                 else if (exprValue == 1.0M)
                 {
-                    method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("fld1") });
+                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Fld1() });
                 }
                 else
                 {
                     string label = method.Module!.DefineConstant((double)exprValue);
-                    method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction(string.Format("fld qword ptr [{0}]", label)) });
+                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Fld(RM.Address(label, sizeof(double))) });
                 }
 
                 return context.TryFindTypeByName("double", out valueType);
@@ -1659,7 +1645,7 @@ namespace Tea.Compiler
                         method.Statements.Insert(argStatementStart, resultPush);
 
                         // push the ref to the storage for the class on the stack.
-                        method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction(string.Format("lea eax,[esp+{0}]", argSize)) });
+                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Lea(Register.EAX, RM.Address(Register.ESP, (sbyte)argSize, null)) });
                         method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Push(Register.EAX) });
                     }
                     else if (storageType.IsClass || (!storageType.IsFloatingPoint && storageType.Size > 8))
@@ -1671,9 +1657,9 @@ namespace Tea.Compiler
                         // push the ref to the storage for the class on the stack.
                         method.Statements.Add(new AsmStatement
                             {
-                                Instruction = new UnknownInstruction(string.Format(
-                                    "lea ebx,[esp+{0}]",
-                                    calleeMethod!.IsStatic ? argSize : argSize + 4)),
+                                Instruction = X86Instruction.Lea(
+                                    Register.EBX,
+                                    RM.Address(Register.ESP, (sbyte)(calleeMethod!.IsStatic ? argSize : argSize + 4), null)),
                             });
                         method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Push(Register.EBX) });
                         argSize += 4;
@@ -1739,39 +1725,25 @@ namespace Tea.Compiler
                         {
                             if (storageType!.IsFloatingPoint)
                             {
-                                switch (storageType!.Size)
-                                {
-                                    case 10:
-                                        method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("fstp tword ptr [esp+" + argSize + "]") });
-                                        break;
-                                    case 8:
-                                        method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("fstp qword ptr [esp+" + argSize + "]") });
-                                        break;
-                                    case 4:
-                                        method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("fstp dword ptr [esp+" + argSize + "]") });
-                                        break;
-                                }
+                                method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Fstp(RM.Address(Register.ESP, (sbyte)argSize, null, storageType!.Size)) });
                             }
                             else
                             {
                                 if (storageType!.Size > 4)
                                 {
-                                    method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("mov dword ptr [esp+" + (argSize + 4) + "],edx") });
+                                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(RM.Address(Register.ESP, (sbyte)(argSize + 4), null), Register.EDX) });
                                 }
 
                                 switch (storageType!.Size % 4)
                                 {
-                                    case 0:
-                                        method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("mov dword ptr [esp+" + argSize + "],eax") });
-                                        break;
-                                    case 3:
-                                        method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("mov dword ptr [esp+" + argSize + "],eax") });
-                                        break;
                                     case 2:
-                                        method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("mov word ptr [esp+" + argSize + "],ax") });
+                                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(RM.Address(Register.ESP, (sbyte)argSize, null, sizeof(ushort)), Register.AX) });
                                         break;
                                     case 1:
-                                        method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("mov byte ptr [esp+" + argSize + "],al") });
+                                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(RM.Address(Register.ESP, (sbyte)argSize, null, sizeof(byte)), Register.AL) });
+                                        break;
+                                    default:
+                                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(RM.Address(Register.ESP, (sbyte)argSize, null), Register.EAX) });
                                         break;
                                 }
                             }
@@ -1788,7 +1760,7 @@ namespace Tea.Compiler
                             if (argDes != null)
                             {
                                 method.Module!.AddProto(argDes);
-                                method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("lea ecx,[esp]") });
+                                method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Lea(Register.ECX, RM.Address(Register.ESP)) });
                                 method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Push(Register.ECX) });
                                 method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Call(argDes!.MangledName) });
                                 method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Add(Register.ESP, 4) });
@@ -1801,19 +1773,7 @@ namespace Tea.Compiler
                         {
                             if (storageType!.IsFloatingPoint)
                             {
-                                switch (storageType!.Size)
-                                {
-                                    case 10:
-                                        method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("fld tword ptr [esp]") });
-                                        break;
-                                    case 8:
-                                        method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("fld qword ptr [esp]") });
-                                        break;
-                                    case 4:
-                                        method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("fld dword ptr [esp]") });
-                                        break;
-                                }
-
+                                method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Fld(RM.Address(Register.ESP, storageType!.Size)) });
                                 method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Add(Register.ESP, (uint)storageType!.Size) });
                             }
                             else
@@ -1915,18 +1875,7 @@ namespace Tea.Compiler
 
                 if (storageType!.IsFloatingPoint)
                 {
-                    if (storageType.Size == 8)
-                    {
-                        method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("fld qword ptr " + location) });
-                    }
-                    else if (storageType.Size == 4)
-                    {
-                        method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("fld dword ptr " + location) });
-                    }
-                    else
-                    {
-                        method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("fld tword ptr " + location) });
-                    }
+                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Fld(location!) });
                 }
                 else if (storageType!.IsArray)
                 {
@@ -1974,7 +1923,7 @@ namespace Tea.Compiler
                     if (copyConstructor != null)
                     {
                         method.Module!.AddProto(copyConstructor!);
-                        method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("lea ecx,[esp]") });
+                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Lea(Register.ECX, RM.Address(Register.ESP)) });
                         method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Push(Register.EAX) });
                         method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Push(Register.ECX) });
                         method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Call(copyConstructor!.MangledName) });
@@ -1987,7 +1936,7 @@ namespace Tea.Compiler
                         method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(Register.ESI, Register.EAX) });
                         method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(Register.ECX, (uint)storageType.Size) });
                         method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Cld() });
-                        method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("rep movsb") });
+                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Movsb().Rep() });
                     }
                 }
 
@@ -2055,7 +2004,7 @@ namespace Tea.Compiler
 
             if (valueType!.IsFloatingPoint)
             {
-                method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("fchs") });
+                method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Fchs() });
             }
             else if (valueType!.IsPointer || valueType!.IsClass || valueType!.IsArray || valueType!.IsInterface)
             {
@@ -2296,21 +2245,9 @@ namespace Tea.Compiler
             {
                 if (leftSideType!.IsFloatingPoint)
                 {
-                    switch (rightSideType!.Size)
-                    {
-                        case 4:
-                            method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("fld dword ptr [esp]") });
-                            break;
-                        case 8:
-                            method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("fld qword ptr [esp]") });
-                            break;
-                        default:
-                            method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("fld tword ptr [esp]") });
-                            break;
-                    }
-
+                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Fld(RM.Address(Register.ESP, rightSideType!.Size)) });
                     method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Add(Register.ESP, (uint)rightSideType!.Size) });
-                    method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("fcompp") });
+                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Fcompp() });
                     method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Fnstsw() });
                     method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Sahf() });
                     switch (relExpr.Operator)
@@ -2442,18 +2379,7 @@ namespace Tea.Compiler
             if (type.IsFloatingPoint)
             {
                 method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Sub(Register.ESP, (uint)type.Size) });
-                if (type.Size == 4)
-                {
-                    method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("fstp dword ptr [esp]") });
-                }
-                else if (type.Size == 8)
-                {
-                    method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("fstp qword ptr [esp]") });
-                }
-                else
-                {
-                    method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("fstp tword ptr [esp]") });
-                }
+                method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Fstp(RM.Address(Register.ESP, type.Size)) });
             }
             else if (type.IsArray)
             {
@@ -2499,20 +2425,12 @@ namespace Tea.Compiler
             {
                 if (rightSideType!.IsFloatingPoint)
                 {
-                    if (rightSideType!.Size == 8)
-                    {
-                        method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("fld qword ptr [esp]") });
-                    }
-                    else
-                    {
-                        method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("fld dword ptr [esp]") });
-                    }
-
+                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Fld(RM.Address(Register.ESP, rightSideType!.Size)) });
                     method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Add(Register.ESP, (uint)rightSideType.Size) });
                 }
                 else if (rightSideType!.Size <= 4)
                 {
-                    method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("fild [esp]") });
+                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Fild(RM.Address(Register.ESP)) });
                     method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Add(Register.ESP, (uint)rightSideType.Size) });
                 }
 
@@ -2520,13 +2438,13 @@ namespace Tea.Compiler
                 {
                     case Keyword.Plus:
                         {
-                            method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("faddp") });
+                            method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Faddp() });
                         }
 
                         break;
                     case Keyword.Minus:
                         {
-                            method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("fsubp") });
+                            method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Fsubp() });
                         }
 
                         break;
@@ -2544,7 +2462,7 @@ namespace Tea.Compiler
                                 if (leftSideType.IsPointer || leftSideType.IsArray)
                                 {
                                     int elementSize = leftSideType!.InnerType!.Size;
-                                    method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("imul ecx," + elementSize) });
+                                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Imul(Register.ECX, RM.FromRegister(Register.ECX), elementSize) });
                                 }
 
                                 method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Add(Register.EAX, Register.ECX) });
@@ -2559,7 +2477,7 @@ namespace Tea.Compiler
                             break;
                         case Keyword.Or:
                             {
-                                method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("or eax,ecx") });
+                                method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Or(Register.EAX, Register.ECX) });
                             }
 
                             break;
@@ -2597,20 +2515,12 @@ namespace Tea.Compiler
             {
                 if (rightSideType!.IsFloatingPoint)
                 {
-                    if (rightSideType!.Size == 8)
-                    {
-                        method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("fld qword ptr [esp]") });
-                    }
-                    else
-                    {
-                        method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("fld dword ptr [esp]") });
-                    }
-
+                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Fld(RM.Address(Register.ESP, rightSideType!.Size)) });
                     method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Add(Register.ESP, (uint)rightSideType!.Size) });
                 }
                 else if (rightSideType.Size <= 4)
                 {
-                    method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("fild [esp]") });
+                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Fild(RM.Address(Register.ESP)) });
                     method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Add(Register.ESP, (uint)rightSideType!.Size) });
                 }
 
@@ -2618,13 +2528,13 @@ namespace Tea.Compiler
                 {
                     case Keyword.Star:
                         {
-                            method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("fmulp") });
+                            method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Fmulp() });
                         }
 
                         break;
                     case Keyword.Slash:
                         {
-                            method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("fdivp") });
+                            method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Fdivp() });
                         }
 
                         break;
@@ -2646,7 +2556,7 @@ namespace Tea.Compiler
                         case Keyword.Mod:
                             {
                                 method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Xor(Register.EDX, Register.EDX) });
-                                method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("idiv ecx") });
+                                method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Idiv(RM.FromRegister(Register.ECX)) });
                                 method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(Register.EAX, Register.EDX) });
                             }
 
@@ -2660,7 +2570,7 @@ namespace Tea.Compiler
                         case Keyword.Div:
                             {
                                 method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Xor(Register.EDX, Register.EDX) });
-                                method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("idiv ecx") });
+                                method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Idiv(RM.FromRegister(Register.ECX)) });
                             }
 
                             break;
@@ -2985,7 +2895,7 @@ namespace Tea.Compiler
                             shiftSize = 6;
                             break;
                         default:
-                            method.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction(string.Format("imul eax,{0}", elementSize)) });
+                            method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Imul(Register.EAX, RM.FromRegister(Register.EAX), elementSize) });
                             break;
                     }
 

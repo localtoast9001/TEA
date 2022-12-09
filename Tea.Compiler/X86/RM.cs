@@ -14,6 +14,11 @@ namespace Tea.Compiler.X86
     /// <seealso cref="X86Instruction"/>
     public class RM
     {
+        /// <summary>
+        /// 80-bit a.k.a. TWORD floating point size.
+        /// </summary>
+        internal const int TWordSize = 10;
+
         private readonly int size;
 
         private readonly byte[] code;
@@ -39,7 +44,7 @@ namespace Tea.Compiler.X86
 
         private RM(byte[] code, int size, RelocationEntry? relocation, string? label)
         {
-            if (size != sizeof(byte) && size != sizeof(ushort) && size != sizeof(uint))
+            if (size != sizeof(byte) && size != sizeof(ushort) && size != sizeof(uint) && size != sizeof(double) && size != TWordSize)
             {
                 throw new ArgumentOutOfRangeException(nameof(size));
             }
@@ -94,7 +99,7 @@ namespace Tea.Compiler.X86
                         switch (rm)
                         {
                             case 4:
-                                throw new NotImplementedException();
+                                return new RM(code.Slice(0, 2), size, rel, label);
                             case 5:
                                 return new RM(code.Slice(0, 1 + sizeof(uint)), size, rel, label);
                             default:
@@ -108,7 +113,7 @@ namespace Tea.Compiler.X86
                         switch (rm)
                         {
                             case 4:
-                                throw new NotImplementedException();
+                                return new RM(code.Slice(0, 2 + sizeof(byte)), size, rel, label);
                             default:
                                 return new RM(code.Slice(0, 1 + sizeof(byte)), size, rel, label);
                         }
@@ -120,7 +125,7 @@ namespace Tea.Compiler.X86
                         switch (rm)
                         {
                             case 4:
-                                throw new NotImplementedException();
+                                return new RM(code.Slice(0, 2 + sizeof(uint)), size, rel, label);
                             default:
                                 return new RM(code.Slice(0, 1 + sizeof(uint)), size, rel, label);
                         }
@@ -173,6 +178,13 @@ namespace Tea.Compiler.X86
                 case Register.EDI:
                     modrm = 7;
                     break;
+                case Register.ESP:
+                    {
+                        // Only support this SIB for now.
+                        modrm = 4;
+                        return new RM(new ReadOnlySpan<byte>(new byte[] { modrm, 0x24 }), size);
+                    }
+
                 default:
                     throw new NotSupportedException($"Register {reg} is not supported.");
             }
@@ -227,6 +239,13 @@ namespace Tea.Compiler.X86
                 case Register.EDI:
                     rm = 7;
                     break;
+                case Register.ESP:
+                    {
+                        // only support ESP for now.
+                        rm = 4;
+                        return new RM(new byte[] { (byte)(0x40 | rm), 0x24, (byte)disp }, size, null, label);
+                    }
+
                 default:
                     throw new NotImplementedException($"Register {reg} is either not implemented or not supported.");
             }
@@ -250,6 +269,7 @@ namespace Tea.Compiler.X86
             int mod = modrm >> 6;
             byte rm = (byte)(modrm & 0x7);
             string operandSize = string.Empty;
+            int index = 1;
             switch (this.size)
             {
                 case sizeof(byte):
@@ -257,6 +277,12 @@ namespace Tea.Compiler.X86
                     break;
                 case sizeof(ushort):
                     operandSize = "word ptr ";
+                    break;
+                case sizeof(double):
+                    operandSize = "qword ptr ";
+                    break;
+                case TWordSize:
+                    operandSize = "tword ptr ";
                     break;
             }
 
@@ -273,6 +299,17 @@ namespace Tea.Compiler.X86
                             return $"{operandSize}[edx]";
                         case 3:
                             return $"{operandSize}[ebx]";
+                        case 4:
+                            {
+                                byte sib = this.code[index];
+                                if (sib != 0x24)
+                                {
+                                    throw new NotImplementedException();
+                                }
+
+                                return $"{operandSize}[esp]";
+                            }
+
                         case 5:
                             {
                                 string str = string.Empty;
@@ -282,7 +319,7 @@ namespace Tea.Compiler.X86
                                 }
                                 else
                                 {
-                                    ReadOnlySpan<byte> disp32 = new ReadOnlySpan<byte>(this.code, 1, sizeof(uint));
+                                    ReadOnlySpan<byte> disp32 = new ReadOnlySpan<byte>(this.code, index, sizeof(uint));
                                     str = disp32.ToUInt32().ToString();
                                 }
 
@@ -314,6 +351,18 @@ namespace Tea.Compiler.X86
                             case 3:
                                 regBase = "[ebx]";
                                 break;
+                            case 4:
+                                {
+                                    byte sib = this.code[index++];
+                                    if (sib != 0x24)
+                                    {
+                                        throw new NotImplementedException();
+                                    }
+
+                                    regBase = "[esp]";
+                                }
+
+                                break;
                             case 5:
                                 regBase = "[ebp]";
                                 break;
@@ -334,7 +383,7 @@ namespace Tea.Compiler.X86
                         }
                         else
                         {
-                            sbyte disp8 = (sbyte)this.code[1];
+                            sbyte disp8 = (sbyte)this.code[index];
                             disp8Str = disp8.ToString();
                         }
 

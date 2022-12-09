@@ -18,6 +18,23 @@ namespace Tea.Compiler.UnitTest.X86
     public class X86InstructionTest
     {
         /// <summary>
+        /// Unit test for the <see cref="X86Instruction.Imul(Register, RM, int)"/> method.
+        /// </summary>
+        [TestMethod]
+        public void ImulImmediateInt()
+        {
+            X86Instruction target = X86Instruction.Imul(Register.AX, RM.FromRegister(Register.CX), -2000);
+            Assert.IsNotNull(target);
+            byte[] actual = target.ToArray();
+            Assert.AreEqual(5, actual.Length);
+            Assert.AreEqual(0x66, actual[0]);
+            Assert.AreEqual(0x69, actual[1]);
+            Assert.AreEqual(0xc1, actual[2]);
+            Assert.AreEqual(0x30, actual[3]);
+            Assert.AreEqual(0xf8, actual[4]);
+        }
+
+        /// <summary>
         /// Unit test for the <see cref="X86Instruction.Push(Register)"/> method.
         /// </summary>
         [TestMethod]
@@ -69,11 +86,35 @@ namespace Tea.Compiler.UnitTest.X86
                 new Tuple<X86Instruction, string>(X86Instruction.Cld(), "cld"),
                 new Tuple<X86Instruction, string>(X86Instruction.Cmp(Register.AL, Register.CL), "cmp al, cl"),
                 new Tuple<X86Instruction, string>(X86Instruction.Cmp(Register.EAX, Register.ECX), "cmp eax, ecx"),
+                new Tuple<X86Instruction, string>(X86Instruction.Faddp(), "faddp"),
+                new Tuple<X86Instruction, string>(X86Instruction.Fcompp(), "fcompp"),
+                new Tuple<X86Instruction, string>(X86Instruction.Fdivp(), "fdivp"),
+                new Tuple<X86Instruction, string>(X86Instruction.Fild(RM.Address(Register.ESP)), "fild [esp]"),
+                new Tuple<X86Instruction, string>(X86Instruction.Fild(RM.Address(Register.ESP, sizeof(ushort))), "fild word ptr [esp]"),
+                new Tuple<X86Instruction, string>(X86Instruction.Fild(RM.Address(Register.ESP, sizeof(ulong))), "fild qword ptr [esp]"),
+                new Tuple<X86Instruction, string>(X86Instruction.Fld(RM.Address(Register.EAX)), "fld [eax]"),
+                new Tuple<X86Instruction, string>(X86Instruction.Fld(RM.Address(Register.EAX, sizeof(double))), "fld qword ptr [eax]"),
+                new Tuple<X86Instruction, string>(X86Instruction.Fld(RM.Address(Register.EAX, RM.TWordSize)), "fld tword ptr [eax]"),
+                new Tuple<X86Instruction, string>(X86Instruction.Fld1(), "fld1"),
+                new Tuple<X86Instruction, string>(X86Instruction.Fldz(), "fldz"),
+                new Tuple<X86Instruction, string>(X86Instruction.Fmulp(), "fmulp"),
+                new Tuple<X86Instruction, string>(X86Instruction.Fsubp(), "fsubp"),
+                new Tuple<X86Instruction, string>(X86Instruction.Fstp(RM.Address(Register.EAX)), "fstp [eax]"),
+                new Tuple<X86Instruction, string>(X86Instruction.Fstp(RM.Address(Register.EAX, sizeof(double))), "fstp qword ptr [eax]"),
+                new Tuple<X86Instruction, string>(X86Instruction.Fstp(RM.Address(Register.EAX, RM.TWordSize)), "fstp tword ptr [eax]"),
+                new Tuple<X86Instruction, string>(X86Instruction.Fchs(), "fchs"),
                 new Tuple<X86Instruction, string>(X86Instruction.Fnstsw(), "fnstsw ax"),
+                new Tuple<X86Instruction, string>(X86Instruction.Idiv(RM.FromRegister(Register.CL)), "idiv cl"),
+                new Tuple<X86Instruction, string>(X86Instruction.Idiv(RM.FromRegister(Register.CX)), "idiv cx"),
+                new Tuple<X86Instruction, string>(X86Instruction.Idiv(RM.FromRegister(Register.ECX)), "idiv ecx"),
                 new Tuple<X86Instruction, string>(X86Instruction.Imul(RM.FromRegister(Register.CL)), "imul al, cl"),
                 new Tuple<X86Instruction, string>(X86Instruction.Imul(RM.FromRegister(Register.CX)), "imul ax, cx"),
                 new Tuple<X86Instruction, string>(X86Instruction.Imul(RM.FromRegister(Register.ECX)), "imul eax, ecx"),
                 new Tuple<X86Instruction, string>(X86Instruction.Imul(Register.ECX, RM.Address(Register.EDI)), "imul ecx, [edi]"),
+                new Tuple<X86Instruction, string>(X86Instruction.Imul(Register.AX, RM.FromRegister(Register.CX), 5), "imul ax, cx, 5"),
+                new Tuple<X86Instruction, string>(X86Instruction.Imul(Register.EAX, RM.FromRegister(Register.ECX), 50), "imul eax, ecx, 50"),
+                new Tuple<X86Instruction, string>(X86Instruction.Imul(Register.AX, RM.FromRegister(Register.CX), -2000), "imul ax, cx, -2000"),
+                new Tuple<X86Instruction, string>(X86Instruction.Imul(Register.EAX, RM.FromRegister(Register.ECX), -2000), "imul eax, ecx, -2000"),
                 new Tuple<X86Instruction, string>(X86Instruction.Jmp("label1"), "jmp label1"),
                 new Tuple<X86Instruction, string>(X86Instruction.Jz("label1"), "jz label1"),
                 new Tuple<X86Instruction, string>(X86Instruction.Lea(Register.ECX, RM.Address(Register.EAX)), "lea ecx, [eax]"),
@@ -92,6 +133,9 @@ namespace Tea.Compiler.UnitTest.X86
                 new Tuple<X86Instruction, string>(X86Instruction.Mov(RM.Address(Register.EBP, 4, "_x$", sizeof(byte)), Register.AL), "mov byte ptr _x$[ebp], al"),
                 new Tuple<X86Instruction, string>(X86Instruction.Mov(RM.Address(Register.EBP, 4, "_x$", sizeof(ushort)), Register.AX), "mov word ptr _x$[ebp], ax"),
                 new Tuple<X86Instruction, string>(X86Instruction.Movsb().Rep(), "rep movsb"),
+                new Tuple<X86Instruction, string>(X86Instruction.Or(Register.AL, Register.DL), "or al, dl"),
+                new Tuple<X86Instruction, string>(X86Instruction.Or(Register.AX, Register.DX), "or ax, dx"),
+                new Tuple<X86Instruction, string>(X86Instruction.Or(Register.EAX, Register.ECX), "or eax, ecx"),
                 new Tuple<X86Instruction, string>(X86Instruction.Pop(Register.EAX), "pop eax"),
                 new Tuple<X86Instruction, string>(X86Instruction.Push(Register.EAX), "push eax"),
                 new Tuple<X86Instruction, string>(X86Instruction.Sahf(), "sahf"),

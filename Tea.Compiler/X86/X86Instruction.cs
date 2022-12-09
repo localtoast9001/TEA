@@ -307,6 +307,164 @@ namespace Tea.Compiler.X86
         }
 
         /// <summary>
+        /// Creates an FADDP instruction.
+        /// </summary>
+        /// <returns>A new instance of the <see cref="X86Instruction"/> class.</returns>
+        public static X86Instruction Faddp()
+        {
+            return new X86Instruction(new byte[] { 0xde, 0xc1 });
+        }
+
+        /// <summary>
+        /// Creates an FCOMPP instruction.
+        /// </summary>
+        /// <returns>A new instance of the <see cref="X86Instruction"/> class.</returns>
+        public static X86Instruction Fcompp()
+        {
+            return new X86Instruction(new byte[] { 0xde, 0xd9 });
+        }
+
+        /// <summary>
+        /// Creates an FDIVP instruction.
+        /// </summary>
+        /// <returns>A new instance of the <see cref="X86Instruction"/> class.</returns>
+        public static X86Instruction Fdivp()
+        {
+            return new X86Instruction(new byte[] { 0xde, 0xf9 });
+        }
+
+        /// <summary>
+        /// Creates an FILD instruction.
+        /// </summary>
+        /// <param name="rm">The register/memory operand.</param>
+        /// <returns>A new instance of the <see cref="X86Instruction"/> class.</returns>
+        public static X86Instruction Fild(RM rm)
+        {
+            byte[] code = new byte[1 + rm.Length];
+            rm.CopyTo(new Span<byte>(code, 1, rm.Length));
+            switch (rm.OperandSize)
+            {
+                case sizeof(ushort):
+                    code[0] = 0xdf;
+                    break;
+                case sizeof(uint):
+                    code[0] = 0xdb;
+                    break;
+                case sizeof(ulong):
+                    code[0] = 0xdf;
+                    code[1] |= (byte)(5 << 3);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(rm));
+            }
+
+            return new X86Instruction(code, GetRelocations(rm, 1), rm.Label);
+        }
+
+        /// <summary>
+        /// Creates an FLD instruction.
+        /// </summary>
+        /// <param name="rm">The register/memory operand.</param>
+        /// <returns>A new instance of the <see cref="X86Instruction"/> class.</returns>
+        public static X86Instruction Fld(RM rm)
+        {
+            byte[] code = new byte[1 + rm.Length];
+            rm.CopyTo(new Span<byte>(code, 1, rm.Length));
+            switch (rm.OperandSize)
+            {
+                case sizeof(float):
+                    code[0] = 0xd9;
+                    break;
+                case sizeof(double):
+                    code[0] = 0xdd;
+                    break;
+                case RM.TWordSize:
+                    code[0] = 0xdb;
+                    code[1] |= (byte)(5 << 3);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(rm));
+            }
+
+            return new X86Instruction(code, GetRelocations(rm, 1), rm.Label);
+        }
+
+        /// <summary>
+        /// Creates an FSTP instruction.
+        /// </summary>
+        /// <param name="rm">The register/memory operand.</param>
+        /// <returns>A new instance of the <see cref="X86Instruction"/> class.</returns>
+        public static X86Instruction Fstp(RM rm)
+        {
+            byte[] code = new byte[1 + rm.Length];
+            rm.CopyTo(new Span<byte>(code, 1, rm.Length));
+            switch (rm.OperandSize)
+            {
+                case sizeof(float):
+                    code[0] = 0xd9;
+                    code[1] |= (byte)(3 << 3);
+                    break;
+                case sizeof(double):
+                    code[0] = 0xdd;
+                    code[1] |= (byte)(3 << 3);
+                    break;
+                case RM.TWordSize:
+                    code[0] = 0xdb;
+                    code[1] |= (byte)(7 << 3);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(rm));
+            }
+
+            return new X86Instruction(code, GetRelocations(rm, 1), rm.Label);
+        }
+
+        /// <summary>
+        /// Creates an FLD1 instruction.
+        /// </summary>
+        /// <returns>A new instance of the <see cref="X86Instruction"/> class.</returns>
+        public static X86Instruction Fld1()
+        {
+            return new X86Instruction(new byte[] { 0xd9, 0xe8 });
+        }
+
+        /// <summary>
+        /// Creates an FLDZ instruction.
+        /// </summary>
+        /// <returns>A new instance of the <see cref="X86Instruction"/> class.</returns>
+        public static X86Instruction Fldz()
+        {
+            return new X86Instruction(new byte[] { 0xd9, 0xee });
+        }
+
+        /// <summary>
+        /// Creates an FMULP instruction.
+        /// </summary>
+        /// <returns>A new instance of the <see cref="X86Instruction"/> class.</returns>
+        public static X86Instruction Fmulp()
+        {
+            return new X86Instruction(new byte[] { 0xde, 0xc9 });
+        }
+
+        /// <summary>
+        /// Creates an FSUBP instruction.
+        /// </summary>
+        /// <returns>A new instance of the <see cref="X86Instruction"/> class.</returns>
+        public static X86Instruction Fsubp()
+        {
+            return new X86Instruction(new byte[] { 0xde, 0xe9 });
+        }
+
+        /// <summary>
+        /// Creates an FCHS instruction.
+        /// </summary>
+        /// <returns>A new instance of the <see cref="X86Instruction"/> class.</returns>
+        public static X86Instruction Fchs()
+        {
+            return new X86Instruction(new byte[] { 0xd9, 0xe0 });
+        }
+
+        /// <summary>
         /// Create a fnstsw ax near instruction.
         /// </summary>
         /// <returns>A new instance of the <see cref="X86Instruction"/> class.</returns>
@@ -485,6 +643,125 @@ namespace Tea.Compiler.X86
         }
 
         /// <summary>
+        /// Creates an IMUL instruction.
+        /// </summary>
+        /// <param name="dest">The destination register.</param>
+        /// <param name="src">The register/memory operand.</param>
+        /// <param name="imm">The immediate operand.</param>
+        /// <returns>A new instance of the <see cref="X86Instruction"/> class.</returns>
+        public static X86Instruction Imul(Register dest, RM src, sbyte imm)
+        {
+            bool prefix = src.OperandSize == sizeof(ushort);
+            if (!prefix && src.OperandSize != sizeof(uint))
+            {
+                throw new ArgumentOutOfRangeException(nameof(src));
+            }
+
+            if (dest.Size() != src.OperandSize)
+            {
+                throw new ArgumentOutOfRangeException(nameof(dest));
+            }
+
+            byte[] code = new byte[(prefix ? 1 : 0) + 1 + src.Length + sizeof(sbyte)];
+            int index = 0;
+            if (prefix)
+            {
+                code[index++] = OperandSizeOverridePrefix;
+            }
+
+            code[index++] = 0x6b;
+            src.CopyTo(new Span<byte>(code, index, src.Length));
+            code[index] |= (byte)(dest.RegisterCode() << 3);
+            code[index + src.Length] = (byte)imm;
+            return new X86Instruction(code);
+        }
+
+        /// <summary>
+        /// Creates an IMUL instruction.
+        /// </summary>
+        /// <param name="dest">The destination register.</param>
+        /// <param name="src">The register/memory operand.</param>
+        /// <param name="imm">The immediate operand.</param>
+        /// <returns>A new instance of the <see cref="X86Instruction"/> class.</returns>
+        public static X86Instruction Imul(Register dest, RM src, int imm)
+        {
+            if (imm >= sbyte.MinValue && imm <= sbyte.MaxValue)
+            {
+                return Imul(dest, src, (sbyte)imm);
+            }
+
+            bool prefix = src.OperandSize == sizeof(ushort);
+            if (!prefix && src.OperandSize != sizeof(uint))
+            {
+                throw new ArgumentOutOfRangeException(nameof(src));
+            }
+
+            if (dest.Size() != src.OperandSize)
+            {
+                throw new ArgumentOutOfRangeException(nameof(dest));
+            }
+
+            if (prefix && (imm < short.MinValue || imm > short.MaxValue))
+            {
+                throw new ArgumentOutOfRangeException(nameof(imm));
+            }
+
+            byte[] code = new byte[(prefix ? 1 : 0) + 1 + src.Length + (prefix ? sizeof(short) : sizeof(int))];
+            int index = 0;
+            if (prefix)
+            {
+                code[index++] = OperandSizeOverridePrefix;
+            }
+
+            code[index++] = 0x69;
+            src.CopyTo(new Span<byte>(code, index, src.Length));
+            code[index] |= (byte)(dest.RegisterCode() << 3);
+            index += src.Length;
+            if (prefix)
+            {
+                Array.Copy(ToBytes((ushort)imm), 0, code, index, sizeof(short));
+            }
+            else
+            {
+                Array.Copy(ToBytes((uint)imm), 0, code, index, sizeof(int));
+            }
+
+            return new X86Instruction(code);
+        }
+
+        /// <summary>
+        /// Creates an IDIV instruction.
+        /// </summary>
+        /// <param name="rm">The divisor register or memory.</param>
+        /// <returns>A new instance of the <see cref="X86Instruction"/> class.</returns>
+        public static X86Instruction Idiv(RM rm)
+        {
+            byte opcode = 0xf7;
+            bool prefix = false;
+            switch (rm.OperandSize)
+            {
+                case sizeof(byte):
+                    opcode = 0xf6;
+                    break;
+                case sizeof(ushort):
+                    prefix = true;
+                    break;
+            }
+
+            byte[] code = new byte[1 + rm.Length + (prefix ? 1 : 0)];
+            int index = 0;
+            if (prefix)
+            {
+                code[index++] = OperandSizeOverridePrefix;
+            }
+
+            code[index++] = opcode;
+            rm.CopyTo(new Span<byte>(code, index, rm.Length));
+            code[index] |= (byte)(7 << 3);
+            return new X86Instruction(code);
+        }
+
+        /// <summary>
         /// Creates an imul instruction that stores the result in the destinationregister.
         /// </summary>
         /// <param name="dest">The destination register operand.</param>
@@ -575,6 +852,55 @@ namespace Tea.Compiler.X86
             }
 
             return new X86Instruction(new byte[] { opCode, (byte)(0xd0 | reg.RegisterCode()) });
+        }
+
+        /// <summary>
+        /// Creates an OR instruction.
+        /// </summary>
+        /// <param name="dest">The register to store the result.</param>
+        /// <param name="src">The source register.</param>
+        /// <returns>A new instance of the <see cref="X86Instruction"/> class.</returns>
+        public static X86Instruction Or(Register dest, Register src)
+        {
+            return Or(dest, RM.FromRegister(src));
+        }
+
+        /// <summary>
+        /// Creates an OR instruction.
+        /// </summary>
+        /// <param name="dest">The register to store the result.</param>
+        /// <param name="src">The source register or memory.</param>
+        /// <returns>A new instance of the <see cref="X86Instruction"/> class.</returns>
+        public static X86Instruction Or(Register dest, RM src)
+        {
+            if (src.OperandSize != dest.Size())
+            {
+                throw new ArgumentOutOfRangeException(nameof(src));
+            }
+
+            byte opcode = 0x0b;
+            bool prefix = false;
+            switch (src.OperandSize)
+            {
+                case sizeof(byte):
+                    opcode = 0x0a;
+                    break;
+                case sizeof(ushort):
+                    prefix = true;
+                    break;
+            }
+
+            byte[] code = new byte[1 + src.Length + (prefix ? 1 : 0)];
+            int index = 0;
+            if (prefix)
+            {
+                code[index++] = OperandSizeOverridePrefix;
+            }
+
+            code[index++] = opcode;
+            src.CopyTo(new Span<byte>(code, index, src.Length));
+            code[index] |= (byte)(dest.RegisterCode() << 3);
+            return new X86Instruction(code);
         }
 
         /// <summary>
@@ -1021,6 +1347,23 @@ namespace Tea.Compiler.X86
                     case 0x5:
                         result.Append($"add eax, {new ReadOnlySpan<byte>(this.machineCode, index, sizeof(uint)).ToUInt32()}");
                         break;
+                    case 0xa:
+                        {
+                            byte modRM = this.machineCode[index];
+                            RM rm = this.GetRM(index, sizeof(byte));
+                            result.Append($"or {DecodeModRMReg(modRM, sizeof(byte)).ToString().ToLowerInvariant()}, {rm}");
+                        }
+
+                        break;
+                    case 0xb:
+                        {
+                            int operandSize = operandSizeOverride ? sizeof(ushort) : sizeof(uint);
+                            byte modRM = this.machineCode[index];
+                            RM rm = this.GetRM(index,  operandSize);
+                            result.Append($"or {DecodeModRMReg(modRM, operandSize).ToString().ToLowerInvariant()}, {rm}");
+                        }
+
+                        break;
                     case 0xc:
                         result.Append("cld");
                         break;
@@ -1142,6 +1485,29 @@ namespace Tea.Compiler.X86
                             byte modRM = this.machineCode[index];
                             RM rm = this.GetRM(index, sizeof(uint));
                             result.Append($"cmp {DecodeModRMReg(modRM, sizeof(uint)).ToString().ToLowerInvariant()}, {rm}");
+                        }
+
+                        break;
+                    case 0x69:
+                        {
+                            int operandSize = operandSizeOverride ? sizeof(ushort) : sizeof(uint);
+                            byte modRM = this.machineCode[index];
+                            Register reg = DecodeModRMReg(modRM, operandSize);
+                            RM rm = this.GetRM(index, operandSize);
+                            ReadOnlySpan<byte> immBytes = new ReadOnlySpan<byte>(this.machineCode, index + rm.Length, operandSize);
+                            int imm = operandSizeOverride ? (int)immBytes.ToInt16() : immBytes.ToInt32();
+                            result.Append($"imul {reg.ToString().ToLowerInvariant()}, {rm}, {imm}");
+                        }
+
+                        break;
+                    case 0x6b:
+                        {
+                            int operandSize = operandSizeOverride ? sizeof(ushort) : sizeof(uint);
+                            byte modRM = this.machineCode[index];
+                            RM rm = this.GetRM(index, operandSize);
+                            Register reg = DecodeModRMReg(modRM, operandSize);
+                            sbyte imm = (sbyte)this.machineCode[index + rm.Length];
+                            result.Append($"imul {reg.ToString().ToLowerInvariant()}, {rm}, {imm}");
                         }
 
                         break;
@@ -1342,16 +1708,171 @@ namespace Tea.Compiler.X86
                         }
 
                         break;
-                    case 0xdf:
+                    case 0xd9:
                         {
-                            byte opcode = this.machineCode[index++];
+                            byte modrm = this.machineCode[index];
+                            byte opcode = DecodeModRMOpcode(modrm);
+                            if ((modrm >> 6) == 3)
+                            {
+                                switch (modrm)
+                                {
+                                    case 0xe0:
+                                        result.Append("fchs");
+                                        break;
+                                    case 0xe8:
+                                        result.Append("fld1");
+                                        break;
+                                    case 0xee:
+                                        result.Append("fldz");
+                                        break;
+                                    default:
+                                        throw new NotImplementedException();
+                                }
+                            }
+                            else
+                            {
+                                switch (opcode)
+                                {
+                                    case 0: // fld m32fp
+                                        {
+                                            RM rm = this.GetRM(index, sizeof(float));
+                                            result.Append($"fld {rm}");
+                                        }
+
+                                        break;
+                                    case 3: // fstp m32fp
+                                        {
+                                            RM rm = this.GetRM(index, sizeof(float));
+                                            result.Append($"fstp {rm}");
+                                        }
+
+                                        break;
+                                    default:
+                                        throw new NotImplementedException();
+                                }
+                            }
+                        }
+
+                        break;
+                    case 0xdb:
+                        {
+                            byte modrm = this.machineCode[index];
+                            int opcode = DecodeModRMOpcode(modrm);
                             switch (opcode)
                             {
-                                case 0xe0:
-                                    result.Append("fnstsw ax");
+                                case 0: // fild
+                                    {
+                                        RM rm = this.GetRM(index, sizeof(uint));
+                                        result.Append($"fild {rm}");
+                                    }
+
+                                    break;
+                                case 5: // fld m80fp
+                                    {
+                                        RM rm = this.GetRM(index, RM.TWordSize);
+                                        result.Append($"fld {rm}");
+                                    }
+
+                                    break;
+                                case 7: // fstp m80fp
+                                    {
+                                        RM rm = this.GetRM(index, RM.TWordSize);
+                                        result.Append($"fstp {rm}");
+                                    }
+
                                     break;
                                 default:
                                     throw new NotSupportedException();
+                            }
+                        }
+
+                        break;
+                    case 0xdd:
+                        {
+                            byte modrm = this.machineCode[index];
+                            int opcode = DecodeModRMOpcode(modrm);
+                            switch (opcode)
+                            {
+                                case 0: // fld m64fp
+                                    {
+                                        RM rm = this.GetRM(index, sizeof(double));
+                                        result.Append($"fld {rm}");
+                                    }
+
+                                    break;
+                                case 3: // fstp m64fp
+                                    {
+                                        RM rm = this.GetRM(index, sizeof(double));
+                                        result.Append($"fstp {rm}");
+                                    }
+
+                                    break;
+                                default:
+                                    throw new NotSupportedException();
+                            }
+                        }
+
+                        break;
+                    case 0xde:
+                        {
+                            opCode = this.machineCode[index++];
+                            switch (opCode)
+                            {
+                                case 0xc1:
+                                    result.Append("faddp");
+                                    break;
+                                case 0xc9:
+                                    result.Append("fmulp");
+                                    break;
+                                case 0xd9:
+                                    result.Append("fcompp");
+                                    break;
+                                case 0xe9:
+                                    result.Append("fsubp");
+                                    break;
+                                case 0xf9:
+                                    result.Append("fdivp");
+                                    break;
+                                default:
+                                    throw new NotImplementedException();
+                            }
+                        }
+
+                        break;
+                    case 0xdf:
+                        {
+                            byte modrm = this.machineCode[index];
+                            byte opcode = DecodeModRMOpcode(modrm);
+                            if ((modrm >> 6) == 3)
+                            {
+                                switch (modrm)
+                                {
+                                    case 0xe0:
+                                        result.Append("fnstsw ax");
+                                        break;
+                                    default:
+                                        throw new NotSupportedException();
+                                }
+                            }
+                            else
+                            {
+                                switch (opcode)
+                                {
+                                    case 0:
+                                        {
+                                            RM rm = this.GetRM(index, sizeof(ushort));
+                                            result.Append($"fild {rm}");
+                                        }
+
+                                        break;
+                                    case 5:
+                                        {
+                                            RM rm = this.GetRM(index, sizeof(ulong));
+                                            result.Append($"fild {rm}");
+                                        }
+
+                                        break;
+                                }
                             }
                         }
 
@@ -1380,6 +1901,9 @@ namespace Tea.Compiler.X86
                                 case 5: // imul
                                     result.Append($"imul al, {rm}");
                                     break;
+                                case 7: // idiv
+                                    result.Append($"idiv {rm}");
+                                    break;
                                 default:
                                     throw new NotImplementedException();
                             }
@@ -1403,6 +1927,9 @@ namespace Tea.Compiler.X86
                                     break;
                                 case 5:
                                     result.Append($"imul {(operandSizeOverride ? Register.AX : Register.EAX).ToString().ToLowerInvariant()}, {rm}");
+                                    break;
+                                case 7:
+                                    result.Append($"idiv {rm}");
                                     break;
                                 default:
                                     throw new NotImplementedException();
@@ -1471,6 +1998,15 @@ namespace Tea.Compiler.X86
         private static byte DecodeModRMOpcode(byte modRM)
         {
             return (byte)((modRM >> 3) & 0x7);
+        }
+
+        private static byte[] ToBytes(ushort data)
+        {
+            return new byte[]
+            {
+                (byte)data,
+                (byte)(data >> 8),
+            };
         }
 
         private static byte[] ToBytes(uint data)

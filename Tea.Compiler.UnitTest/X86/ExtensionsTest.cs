@@ -59,5 +59,35 @@ namespace Tea.Compiler.UnitTest.X86
             byte[] data = new byte[] { 1, 2, 3, 4 };
             Assert.AreEqual(0x04030201U, Extensions.ToUInt32(new ReadOnlySpan<byte>(data)));
         }
+
+        /// <summary>
+        /// Unit test for the <see cref="Extensions.ToInt32(ReadOnlySpan{byte})"/> method.
+        /// </summary>
+        [TestMethod]
+        public void ToInt32Test()
+        {
+            byte[] data = new byte[] { 0xfc, 0xff, 0xff, 0xff };
+            Assert.AreEqual(-4, Extensions.ToInt32(new ReadOnlySpan<byte>(data)));
+        }
+
+        /// <summary>
+        /// Unit test for the <see cref="Extensions.ToInt16(ReadOnlySpan{byte})"/> method.
+        /// </summary>
+        [TestMethod]
+        public void ToUInt16Test()
+        {
+            byte[] data = new byte[] { 1, 2 };
+            Assert.AreEqual(0x0201U, Extensions.ToUInt16(new ReadOnlySpan<byte>(data)));
+        }
+
+        /// <summary>
+        /// Unit test for the <see cref="Extensions.ToInt16(ReadOnlySpan{byte})"/> method.
+        /// </summary>
+        [TestMethod]
+        public void ToInt16Test()
+        {
+            byte[] data = new byte[] { 0xfc, 0xff };
+            Assert.AreEqual(-4, Extensions.ToInt16(new ReadOnlySpan<byte>(data)));
+        }
     }
 }

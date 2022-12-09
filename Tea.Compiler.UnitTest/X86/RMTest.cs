@@ -26,9 +26,13 @@ namespace Tea.Compiler.UnitTest.X86
             {
                 new Tuple<RM, string>(RM.FromRegister(Register.EAX), "eax"),
                 new Tuple<RM, string>(RM.Address(Register.EAX), "[eax]"),
+                new Tuple<RM, string>(RM.Address(Register.EAX, 8), "qword ptr [eax]"),
+                new Tuple<RM, string>(RM.Address(Register.EAX, 10), "tword ptr [eax]"),
+                new Tuple<RM, string>(RM.Address(Register.ESP), "[esp]"),
                 new Tuple<RM, string>(RM.Address("label1"), "[label1]"),
                 new Tuple<RM, string>(RM.Address(Register.EBP, -4, "_x$"), "_x$[ebp]"),
                 new Tuple<RM, string>(RM.Address(Register.EBP, -4, null), "-4[ebp]"),
+                new Tuple<RM, string>(RM.Address(Register.ESP, 4, null), "4[esp]"),
             };
 
             foreach (var testCase in testCases)
