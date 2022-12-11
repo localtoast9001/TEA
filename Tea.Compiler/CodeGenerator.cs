@@ -2642,7 +2642,7 @@ namespace Tea.Compiler
                         }
 
                         storageType = field.Type;
-                        location = RM.Address(Register.ECX);
+                        location = RM.Address(Register.ECX, GetOperandSize(field.Type!.Size));
                         return true;
                     }
                 }
@@ -2752,7 +2752,7 @@ namespace Tea.Compiler
                             }
 
                             storageType = field.Type;
-                            location = RM.Address(Register.ECX, field.Type!.Size);
+                            location = RM.Address(Register.ECX, GetOperandSize(field.Type!.Size));
                             return true;
                         }
                     }
@@ -2907,7 +2907,7 @@ namespace Tea.Compiler
                 }
 
                 method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Add(Register.ECX, Register.EAX) });
-                location = RM.Address(Register.ECX, innerType.InnerType.Size);
+                location = RM.Address(Register.ECX, GetOperandSize(elementSize));
                 storageType = innerType.InnerType;
                 return true;
             }
@@ -2946,7 +2946,7 @@ namespace Tea.Compiler
                 }
 
                 method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(Register.ECX, innerLoc!) });
-                location = RM.Address(Register.ECX, Math.Min(innerType.InnerType!.Size, sizeof(uint)));
+                location = RM.Address(Register.ECX, GetOperandSize(innerType.InnerType!.Size));
                 storageType = innerType.InnerType;
                 return true;
             }

@@ -90,10 +90,10 @@ begin
         end;
 
         _length := sourceLen;
-        TryAppend := true;
+        TryAssign := true;
     end
     else
-        TryAppend := false;
+        TryAssign := false;
 end;
 
 function SimpleStringBuilder.ToString(value : ^String) : boolean;

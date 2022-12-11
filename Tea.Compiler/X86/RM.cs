@@ -46,7 +46,7 @@ namespace Tea.Compiler.X86
         {
             if (size != sizeof(byte) && size != sizeof(ushort) && size != sizeof(uint) && size != sizeof(double) && size != TWordSize)
             {
-                throw new ArgumentOutOfRangeException(nameof(size));
+                throw new ArgumentOutOfRangeException(nameof(size), size, "Unsupported or invalid operand size.");
             }
 
             this.code = code;

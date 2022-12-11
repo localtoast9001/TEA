@@ -531,7 +531,7 @@ namespace Tea.Compiler.X86
         {
             if (dest.OperandSize != src.Size())
             {
-                throw new ArgumentOutOfRangeException(nameof(src));
+                throw new ArgumentOutOfRangeException(nameof(src), src, $"dest:[{dest}].OperandSize[{dest.OperandSize}] != src:[{src}].Size():[{src.Size()}]");
             }
 
             byte opcode = (byte)(dest.OperandSize == sizeof(byte) ? 0x88 : 0x89);

@@ -103,7 +103,7 @@ namespace TEAC
                 }
                 else
                 {
-                    return false;
+                    break;
                 }
             }
 

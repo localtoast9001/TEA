@@ -221,11 +221,12 @@
   </data>
   <data name="Usage" xml:space="preserve">
     <value>TEAC.exe - TEA Language Compiler
-Copyright (C) 2013 Jon Rowlett. All rights reserved.
+Copyright (C) 2013-2022 Jon Rowlett. All rights reserved.
 Usage:
 teac.exe [options] &lt;input file.tea&gt;
 Options:
   /Fa&lt;file.asm&gt; - write an assembly listing &lt;file.asm&gt; on output.
+  /Fo&lt;file.o&gt; - write an ELF object file &lt;file.o&gt; on output.
 &lt;input file.tea&gt; - TEA source file to compile.</value>
   </data>
 </root>

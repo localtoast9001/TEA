@@ -1,0 +1,13 @@
+<Project>
+    <PropertyGroup>
+      <SystemIncludeRoot>$(MSBuildThisFileDirectory)../System/</SystemIncludeRoot>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <IncludePath Include="$(SystemIncludeRoot)" />
+        <IncludePath Include="$(SystemIncludeRoot)ExtendedMath" />
+        <IncludePath Include="$(SystemIncludeRoot)Graphics" />
+        <IncludePath Include="$(SystemIncludeRoot)IO" />
+        <IncludePath Include="$(SystemIncludeRoot)Text" />
+    </ItemGroup>
+</Project>
