@@ -136,6 +136,8 @@ namespace Tea.Compiler.Elf
                             Value = (uint)sym.Offset,
                             Size = sym.Size,
                             SectionHeaderIndex = (ushort)sectionHeaderIndex,
+                            Type = sym.Type,
+                            Binding = sym.Binding,
                         };
 
                         symbolTable.Symbols.Add(symEntry);

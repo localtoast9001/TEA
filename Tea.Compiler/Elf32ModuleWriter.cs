@@ -95,29 +95,61 @@ namespace Tea.Compiler
                 Executable = true,
             };
 
+            string? mainMethod = null;
             foreach (MethodImpl method in codeSegment)
             {
-                Symbol sym = textSection.StartSymbol(method.Method!.MangledName, SymbolType.Func, SymbolBinding.Global);
-                foreach (AsmStatement statement in method.Statements)
+                if ((method.Method?.IsStatic ?? false) &&
+                    string.CompareOrdinal("Main", method.Method.Name) == 0 &&
+                    method.Method.Parameters.Count == 2 &&
+                    string.CompareOrdinal(method.Method?.Parameters[0].Type?.FullName, "integer") == 0 &&
+                    string.CompareOrdinal(method.Method?.Parameters[1].Type?.FullName, "#0#0character") == 0)
                 {
-                    if (statement.Label != null)
-                    {
-                        Symbol label = textSection.StartSymbol(statement.Label!, SymbolType.Func, SymbolBinding.Local);
-                        textSection.EndSymbol(label);
-                    }
-
-                    foreach (RelocationEntry relEntry in statement.Instruction!.RelocationEntries)
-                    {
-                        textSection.DefineRelocation(relEntry.Symbol, relEntry.Relative, relEntry.Offset);
-                    }
-
-                    textSection.ContentWriter.WriteBytes(statement.Instruction!.ToArray());
+                    mainMethod = method.Method?.MangledName;
                 }
+
+                Symbol sym = textSection.StartSymbol(method.Method!.MangledName, SymbolType.Func, SymbolBinding.Global);
+                WriteStatements(textSection, method.Statements);
 
                 textSection.EndSymbol(sym);
             }
 
+            if (mainMethod != null)
+            {
+                BuildMainWrapper(textSection, mainMethod!);
+            }
+
             return textSection;
+        }
+
+        private static void WriteStatements(ProgramSection textSection, IEnumerable<AsmStatement> statements)
+        {
+            foreach (AsmStatement statement in statements)
+            {
+                if (statement.Label != null)
+                {
+                    Symbol label = textSection.StartSymbol(statement.Label!, SymbolType.Func, SymbolBinding.Local);
+                    textSection.EndSymbol(label);
+                }
+
+                foreach (RelocationEntry relEntry in statement.Instruction!.RelocationEntries)
+                {
+                    textSection.DefineRelocation(relEntry.Symbol, relEntry.Relative, relEntry.Offset);
+                }
+
+                textSection.ContentWriter.WriteBytes(statement.Instruction!.ToArray());
+            }
+        }
+
+        private static void BuildMainWrapper(ProgramSection textSection, string mainMethod)
+        {
+            Symbol sym = textSection.StartSymbol("main", SymbolType.Func, SymbolBinding.Global);
+            AsmStatement[] mainBody = new AsmStatement[]
+            {
+                new AsmStatement { Instruction = X86.X86Instruction.Jmp(mainMethod) },
+            };
+
+            WriteStatements(textSection, mainBody);
+            textSection.EndSymbol(sym);
         }
 
         private static ProgramSection BuildDataSection(IList<DataEntry> dataSegment)

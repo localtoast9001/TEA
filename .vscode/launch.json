@@ -12,9 +12,7 @@
             "program": "${workspaceFolder}/TEAC/bin/Debug/net6.0/TEAC.dll",
             "args": [
                 "/ISystem/",
-                "/Faobj/Debug/System.Console.asm",
-                "/Foobj/Debug/System.Console.o",
-                "/home/localtoast/code/TEA/System/System.Console.Tea",
+                "/home/localtoast/code/TEA/SAMPLES/HelloWorld/HelloWorld.tea",
             ],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
