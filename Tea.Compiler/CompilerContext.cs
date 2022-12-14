@@ -118,6 +118,11 @@ namespace Tea.Compiler
         public string? Namespace { get; set; }
 
         /// <summary>
+        /// Gets or sets the source file name.
+        /// </summary>
+        public string? SourceFileName { get; set; }
+
+        /// <summary>
         /// Gets the uses namespaces.
         /// </summary>
         public IEnumerable<string> Uses

@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.Build.NoTargets">
+  <PropertyGroup>
+    <TargetFrameworks>net6.0</TargetFrameworks>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <Description>Provides MSBuild support for TEA Compilation.</Description>
+    <PackageTags>MSBuild MSBuildSdk TEA</PackageTags>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageType>MSBuildSdk</PackageType>
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+    <TeacOutputPath>../TEAC/bin/Debug/net6.0</TeacOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../TEAC/TEAC.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Sdk/**"
+          Pack="true"
+          PackagePath="Sdk/" /> 
+  </ItemGroup>
+
+  <Target Name="CollectionRuntimeOutputs" BeforeTargets="_GetPackageFiles" AfterTargets="_WalkEachTargetPerFramework">
+    <ItemGroup>
+      <Content
+        Include="$(TeacOutputPath)/*.dll;$(TeacOutputPath)/*.exe;$(TeacOutputPath)/TEAC;$(TeacOutputPath)/*.json"
+        Exclude="$(TeacOutputPath)/*.dev.json"
+        Pack="true"
+        PackagePath="build/net6.0"/>
+    </ItemGroup>
+  </Target>
+</Project>

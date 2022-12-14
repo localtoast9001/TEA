@@ -19,6 +19,6 @@ namespace Tea.Compiler
         /// <summary>
         /// Gets or sets the instruction.
         /// </summary>
-        public string? Instruction { get; set; }
+        public Instruction? Instruction { get; set; }
     }
 }

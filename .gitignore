@@ -1,5 +1,6 @@
 *~
 *.obj
+*.o
 Thumbs.db
 *.pch
 *.suo

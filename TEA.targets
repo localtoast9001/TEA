@@ -4,11 +4,32 @@
         <DefaultLanguageSourceExtension>.tea</DefaultLanguageSourceExtension>
         <Language>TEA</Language>
         <TargetRuntime>Native</TargetRuntime>
+        <Platform>x86</Platform>
+    </PropertyGroup>
+
+    <!-- Fix up properties before including common targets. -->
+    <PropertyGroup>
+        <OutputType Condition=" '$(TargetType)' != ''">$(TargetType)</OutputType>
+        <OutputType Condition=" '$(OutputType)' == '' ">exe</OutputType>
+
+        <TargetExt Condition="'$(TargetExt)' == '' and '$(OS)' != 'Unix' and '$(OutputType)' == 'exe'">.exe</TargetExt>
+        <TargetExt Condition="'$(TargetExt)' == '' and '$(OS)' == 'Unix' and '$(OutputType)' == 'exe'"></TargetExt>
+        <TargetExt Condition="'$(TargetExt)' == '' and '$(OS)' != 'Unix' and '$(OutputType)' == 'library'">.dll</TargetExt>
+        <TargetExt Condition="'$(TargetExt)' == '' and '$(OS)' == 'Unix' and '$(OutputType)' == 'library'">.so</TargetExt>
+        <TargetExt Condition="'$(TargetExt)' == '' and '$(OS)' != 'Unix' and '$(OutputType)' == 'module'">.lib</TargetExt>
+        <TargetExt Condition="'$(TargetExt)' == '' and '$(OS)' == 'Unix' and '$(OutputType)' == 'module'">.a</TargetExt>
+        <TargetName Condition=" '$(TargetName)' == '' ">$(AssemblyName)</TargetName>
+        <TargetFileName Condition=" '$(TargetFileName)' == '' ">$(TargetName)$(TargetExt)</TargetFileName>
     </PropertyGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" />
     <ItemGroup>
+        <IntermediateAssembly Remove="$(IntermediateOutputPath)$(TargetName)$(TargetExt)"/>
+        <IntermediateAssembly Include="$(IntermediateOutputPath)$(TargetFileName)"/>
+    </ItemGroup>
+    <ItemGroup>
         <TeaAsmFiles Include="@(Compile->'$(IntermediateOutputPath)%(filename).asm')" />
-        <TeaObjFiles Include="@(Compile->'$(IntermediateOutputPath)%(filename).obj')" />
+        <TeaObjFiles Condition="'$(OS)' != 'Unix'" Include="@(Compile->'$(IntermediateOutputPath)%(filename).obj')" />
+        <TeaObjFiles Condition="'$(OS)' == 'Unix'" Include="@(Compile->'$(IntermediateOutputPath)%(filename).o')" />
     </ItemGroup>
     <Target Name="CreateManifestResourceNames" />
 
@@ -16,29 +37,34 @@
         Name="TeaCompile"
         Inputs="@(Compile)"
         Outputs="@(TeaObjFiles)"
-        DependsOnTargets="$(CoreCompileDependsOn)"
-        >
+        DependsOnTargets="$(CoreCompileDependsOn)">
         <PropertyGroup>
-            <TeacToolPath>..\TEAC\bin\debug\teac.exe</TeacToolPath>
+            <TeacToolPath Condition="'$(OS)' != 'Unix'">$(MSBuildThisFileDirectory)\TEAC\bin\debug\net6.0\teac.exe</TeacToolPath>
+            <TeacToolPath Condition="'$(OS)' == 'Unix'">$(MSBuildThisFileDirectory)\TEAC\bin\Debug\net6.0\TEAC</TeacToolPath>
+            <_Includes>/I@(IncludePath, ' /I')</_Includes>
         </PropertyGroup>
+        <MakeDir
+            Directories="$(IntermediateOutputPath)" />
         <Exec 
-            Command="$(TeacToolPath) $(Includes) /Fa$(IntermediateOutputPath)%(Compile.filename).asm %(Compile.fullpath)" />
-        <Exec
+            Command="$(TeacToolPath) $(_Includes) /Fa$(IntermediateOutputPath)%(Compile.filename).asm /Fo$(IntermediateOutputPath)%(Compile.filename).o %(Compile.fullpath)" />
+        <Exec Condition="'$(OS)' != 'Unix'"
             Command="ml /c /Cp /Cx /Zi /Fo $(IntermediateOutputPath)%(Compile.filename).obj $(IntermediateOutputPath)%(Compile.filename).asm"/>
-            
     </Target>
+
     <Target 
         Name="CoreCompile" 
         DependsOnTargets="$(CoreCompileDependsOn);TeaCompile" 
         Inputs="@(TeaObjFiles)" 
-        Outputs="$(IntermediateOutputPath)$(AssemblyName).exe">
-        <!-- <Link 
-            ObjectFiles="@(TeaObjFiles);@(References)"
-            OutputFile="$(IntermediateOutputPath)$(AssemblyName).exe"
-            SubSystem="Console"
-            EntryPointSymbol="wmainCRTStartup"
-            /> -->
-        <Exec
+        Outputs="@(IntermediateAssembly)">
+        <!-- Windows Linking -->
+        <Exec Condition="('$(OS)' != 'Unix') And ('$(OutputType)' == 'Exe')"
             Command="link /SUBSYSTEM:CONSOLE /entry:wmainCRTStartup /DEBUG /PDB:$(OutputPath)$(AssemblyName).pdb /out:$(IntermediateOutputPath)$(AssemblyName).exe @(TeaObjFiles->'%(fullpath)',' ') @(Reference->'%(fullpath)',' ')" />
+        <Exec Condition="('$(OS)' != 'Unix') And ('$(OutputType)' == 'module')"
+            Command="lib /SUBSYSTEM:CONSOLE /out:$(IntermediateOutputPath)$(AssemblyName).lib @(TeaObjFiles->'%(fullpath)',' ') @(Reference->'%(fullpath)',' ') msvcrt.lib" />
+        <!-- Unix Linking -->
+        <Exec Condition="('$(OS)' == 'Unix') And ('$(OutputType)' == 'Exe')"
+            Command="gcc -m32 -lstdc++ -pthread -lpthread @(TeaObjFiles->'%(fullpath)',' ') @(Reference->'%(fullpath)',' ') -lm -o $(IntermediateOutputPath)$(AssemblyName)" />
+        <Exec Condition="('$(OS)' == 'Unix') And ('$(OutputType)' == 'module')"
+            Command="ar rc --target=elf32-i386 $(IntermediateOutputPath)$(AssemblyName).a @(TeaObjFiles->'%(fullpath)',' ') @(Reference->'%(fullpath)',' ')" />
     </Target>
 </Project>

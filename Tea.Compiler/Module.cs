@@ -25,6 +25,11 @@ namespace Tea.Compiler
         private int jumpLabelIndex;
 
         /// <summary>
+        /// Gets or sets the source file name.
+        /// </summary>
+        public string? SourceFileName { get; set; }
+
+        /// <summary>
         /// Gets the data segment.
         /// </summary>
         public List<DataEntry> DataSegment
@@ -206,10 +211,10 @@ namespace Tea.Compiler
                             jumpMethodImpl.Method = jumpMethod;
                             this.CodeSegment.Add(jumpMethodImpl);
                             jumpMethodImpl.Symbols.Add(new KeyValuePair<string, int>("_this$", 4));
-                            jumpMethodImpl.Statements.Add(new AsmStatement { Instruction = "mov eax,_this$[esp]" });
-                            jumpMethodImpl.Statements.Add(new AsmStatement { Instruction = string.Format("sub eax,{0}", pair.Value) });
-                            jumpMethodImpl.Statements.Add(new AsmStatement { Instruction = "mov _this$[esp],eax" });
-                            jumpMethodImpl.Statements.Add(new AsmStatement { Instruction = "jmp " + implMethod.MangledName });
+                            jumpMethodImpl.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("mov eax,_this$[esp]") });
+                            jumpMethodImpl.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction(string.Format("sub eax,{0}", pair.Value)) });
+                            jumpMethodImpl.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("mov _this$[esp],eax") });
+                            jumpMethodImpl.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("jmp " + implMethod.MangledName) });
                         }
                     }
                 }

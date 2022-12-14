@@ -33,4 +33,6 @@ begin
 end;
 
 function Console.WriteLine(text : array of character) : integer;
-extern '_putws';
+begin
+    WriteLine := Print.PrintString('%s'#13, text);
+end;
