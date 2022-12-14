@@ -465,7 +465,11 @@ namespace Tea.Compiler
         public bool CreateModule(CompilerContext context, ProgramUnit programUnit, out Module module)
         {
             bool failed = false;
-            module = new Module();
+            module = new Module()
+            {
+                SourceFileName = context.SourceFileName,
+            };
+
             foreach (MethodDefinition methodDef in programUnit.Methods)
             {
                 MethodInfo? methodInfo = null;

@@ -25,6 +25,11 @@ namespace Tea.Compiler
         private int jumpLabelIndex;
 
         /// <summary>
+        /// Gets or sets the source file name.
+        /// </summary>
+        public string? SourceFileName { get; set; }
+
+        /// <summary>
         /// Gets the data segment.
         /// </summary>
         public List<DataEntry> DataSegment

@@ -53,6 +53,7 @@ namespace Tea.Compiler
                 Type = ElfType.Rel,
                 Machine = MachineIsa.X86,
                 OSAbi = OSAbi.SystemV,
+                SourceFileName = module.SourceFileName,
             };
 
             builder.Sections.Add(BuildCodeSection(module.CodeSegment));
@@ -168,7 +169,7 @@ namespace Tea.Compiler
                     sym = dataSection.StartSymbol(
                         dataEntry.Label!,
                         SymbolType.Object,
-                        SymbolBinding.Global);
+                        SymbolBinding.Local);
                 }
 
                 BuildDataEntry(dataSection, dataEntry);

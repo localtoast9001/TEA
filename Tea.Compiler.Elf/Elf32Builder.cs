@@ -41,6 +41,11 @@ namespace Tea.Compiler.Elf
         public OSAbi OSAbi { get; set; }
 
         /// <summary>
+        /// Gets or sets the source file name.
+        /// </summary>
+        public string? SourceFileName { get; set; }
+
+        /// <summary>
         /// Defines an external symbol.
         /// </summary>
         /// <param name="name">The name of the external symbol.</param>
@@ -105,15 +110,28 @@ namespace Tea.Compiler.Elf
             expandedSections.Add(symbolTable);
             expandedSections.Add(stringTable);
 
+            if (!string.IsNullOrEmpty(this.SourceFileName))
+            {
+                Elf32SymbolEntry sourceFileEntry = new Elf32SymbolEntry()
+                {
+                    Name = stringTable.DefineString(this.SourceFileName!),
+                    Type = SymbolType.File,
+                    SectionHeaderIndex = (ushort)SpecialSectionIndex.Abs,
+                };
+
+                symbolTable.AddSymbol(sourceFileEntry);
+            }
+
             foreach (Symbol sym in this.ExternalSymbols)
             {
                 Elf32SymbolEntry symbolEntry = new Elf32SymbolEntry()
                 {
                     Name = stringTable.DefineString(sym.Name),
-                    Type = SymbolType.Func,
+                    Type = SymbolType.None,
+                    Binding = SymbolBinding.Global,
                 };
 
-                symbolTable.Symbols.Add(symbolEntry);
+                symbolTable.AddSymbol(symbolEntry);
             }
 
             StringTableSection sectionHeaderStrings = new StringTableSection();
@@ -140,7 +158,7 @@ namespace Tea.Compiler.Elf
                             Binding = sym.Binding,
                         };
 
-                        symbolTable.Symbols.Add(symEntry);
+                        symbolTable.AddSymbol(symEntry);
                     }
                 }
 
