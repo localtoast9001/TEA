@@ -278,6 +278,9 @@ namespace Tea.Compiler.X86
                 case sizeof(ushort):
                     operandSize = "word ptr ";
                     break;
+                case sizeof(uint):
+                    operandSize = "dword ptr ";
+                    break;
                 case sizeof(double):
                     operandSize = "qword ptr ";
                     break;

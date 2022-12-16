@@ -45,26 +45,42 @@
         </PropertyGroup>
         <MakeDir
             Directories="$(IntermediateOutputPath)" />
-        <Exec 
-            Command="$(TeacToolPath) $(_Includes) /Fa$(IntermediateOutputPath)%(Compile.filename).asm /Fo$(IntermediateOutputPath)%(Compile.filename).o %(Compile.fullpath)" />
-        <Exec Condition="'$(OS)' != 'Unix'"
-            Command="ml /c /Cp /Cx /Zi /Fo $(IntermediateOutputPath)%(Compile.filename).obj $(IntermediateOutputPath)%(Compile.filename).asm"/>
+        <Exec
+            ContinueOnError="ErrorAndContinue"
+            Command="$(TeacToolPath) $(_Includes) /Fa$(IntermediateOutputPath)%(Compile.filename).asm /Fo$(IntermediateOutputPath)%(Compile.filename).o %(Compile.fullpath)"
+            Outputs="$(IntermediateOutputPath)%(Compile.filename).asm;$(IntermediateOutputPath)%(Compile.filename).o">
+            <Output TaskParameter="Outputs" ItemName="FileWrites" />
+        </Exec>
+        <Exec
+            Condition="'$(OS)' != 'Unix'"
+            ContinueOnError="ErrorAndContinue"
+            Command="ml /c /Cp /Cx /Zi /Fo $(IntermediateOutputPath)%(Compile.filename).obj $(IntermediateOutputPath)%(Compile.filename).asm"
+            Outputs="$(IntermediateOutputPath)%(Compile.filename).obj">
+            <Output TaskParameter="Outputs" ItemName="FileWrites" />            
+        </Exec>
     </Target>
 
     <Target 
         Name="CoreCompile" 
         DependsOnTargets="$(CoreCompileDependsOn);TeaCompile" 
-        Inputs="@(TeaObjFiles)" 
+        Inputs="@(TeaObjFiles);@(ReferencePathWithRefAssemblies)" 
         Outputs="@(IntermediateAssembly)">
+
+		<ItemGroup>
+			<_Reference Include="@(Reference)" />
+			<_Reference Condition="'$(OS)' != 'Unix'" Include="@(ReferencePathWithRefAssemblies)" />
+			<_Reference Condition="'$(OS)' == 'Unix'" Include="@(ReferencePathWithRefAssemblies)" />
+		</ItemGroup>
+		
         <!-- Windows Linking -->
         <Exec Condition="('$(OS)' != 'Unix') And ('$(OutputType)' == 'Exe')"
-            Command="link /SUBSYSTEM:CONSOLE /entry:wmainCRTStartup /DEBUG /PDB:$(OutputPath)$(AssemblyName).pdb /out:$(IntermediateOutputPath)$(AssemblyName).exe @(TeaObjFiles->'%(fullpath)',' ') @(Reference->'%(fullpath)',' ')" />
+            Command="link /SUBSYSTEM:CONSOLE /entry:wmainCRTStartup /DEBUG /PDB:$(OutputPath)$(AssemblyName).pdb /out:$(IntermediateOutputPath)$(AssemblyName).exe @(TeaObjFiles->'%(fullpath)',' ') @(_Reference->'%(fullpath)',' ') libvcruntimed.lib msvcrtd.lib" />
         <Exec Condition="('$(OS)' != 'Unix') And ('$(OutputType)' == 'module')"
-            Command="lib /SUBSYSTEM:CONSOLE /out:$(IntermediateOutputPath)$(AssemblyName).lib @(TeaObjFiles->'%(fullpath)',' ') @(Reference->'%(fullpath)',' ') msvcrt.lib" />
+            Command="lib /SUBSYSTEM:CONSOLE /out:$(IntermediateOutputPath)$(AssemblyName).lib @(TeaObjFiles->'%(fullpath)',' ') @(_Reference->'%(fullpath)',' ')" />
         <!-- Unix Linking -->
         <Exec Condition="('$(OS)' == 'Unix') And ('$(OutputType)' == 'Exe')"
-            Command="gcc -m32 -lstdc++ -pthread -lpthread @(TeaObjFiles->'%(fullpath)',' ') @(Reference->'%(fullpath)',' ') -lm -o $(IntermediateOutputPath)$(AssemblyName)" />
+            Command="gcc -m32 -lstdc++ -pthread -lpthread @(TeaObjFiles->'%(fullpath)',' ') @(_Reference->'%(fullpath)',' ') -lm -o $(IntermediateOutputPath)$(AssemblyName)" />
         <Exec Condition="('$(OS)' == 'Unix') And ('$(OutputType)' == 'module')"
-            Command="ar rc --target=elf32-i386 $(IntermediateOutputPath)$(AssemblyName).a @(TeaObjFiles->'%(fullpath)',' ') @(Reference->'%(fullpath)',' ')" />
+            Command="ar rc --target=elf32-i386 $(IntermediateOutputPath)$(AssemblyName).a @(TeaObjFiles->'%(fullpath)',' ') @(_Reference->'%(fullpath)',' ')" />
     </Target>
 </Project>

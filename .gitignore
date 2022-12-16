@@ -9,7 +9,9 @@ Thumbs.db
 *.user.*
 *.ilk
 *.log
+*.binlog
 obj/
+.vs/
 *.sdf
 *.filters
 ipch/

@@ -1,0 +1,55 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TEAC", "TEAC\TEAC.csproj", "{4DD62EA9-081A-4C3E-A71B-22BB035EE1F7}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tea.Compiler", "Tea.Compiler\Tea.Compiler.csproj", "{7BCB34DC-1CEF-4330-B20A-180C4CBD2CCE}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tea.Compiler.Elf", "Tea.Compiler.Elf\Tea.Compiler.Elf.csproj", "{C3A9CA38-AC49-46EE-8956-08B024B10138}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tea.Language", "Tea.Language\Tea.Language.csproj", "{2A6609AE-69B9-434A-913C-E48E9A8ECBC8}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tea.Compiler.Elf.UnitTest", "Tea.Compiler.Elf.UnitTest\Tea.Compiler.Elf.UnitTest.csproj", "{460C0D73-D7C2-4ADE-9306-D617E2D29842}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tea.Compiler.UnitTest", "Tea.Compiler.UnitTest\Tea.Compiler.UnitTest.csproj", "{2A03E6BC-07A1-49BD-8063-C164CB668CE4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4DD62EA9-081A-4C3E-A71B-22BB035EE1F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4DD62EA9-081A-4C3E-A71B-22BB035EE1F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4DD62EA9-081A-4C3E-A71B-22BB035EE1F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4DD62EA9-081A-4C3E-A71B-22BB035EE1F7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7BCB34DC-1CEF-4330-B20A-180C4CBD2CCE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7BCB34DC-1CEF-4330-B20A-180C4CBD2CCE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7BCB34DC-1CEF-4330-B20A-180C4CBD2CCE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7BCB34DC-1CEF-4330-B20A-180C4CBD2CCE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C3A9CA38-AC49-46EE-8956-08B024B10138}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C3A9CA38-AC49-46EE-8956-08B024B10138}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C3A9CA38-AC49-46EE-8956-08B024B10138}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C3A9CA38-AC49-46EE-8956-08B024B10138}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2A6609AE-69B9-434A-913C-E48E9A8ECBC8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A6609AE-69B9-434A-913C-E48E9A8ECBC8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A6609AE-69B9-434A-913C-E48E9A8ECBC8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A6609AE-69B9-434A-913C-E48E9A8ECBC8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{460C0D73-D7C2-4ADE-9306-D617E2D29842}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{460C0D73-D7C2-4ADE-9306-D617E2D29842}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{460C0D73-D7C2-4ADE-9306-D617E2D29842}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{460C0D73-D7C2-4ADE-9306-D617E2D29842}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2A03E6BC-07A1-49BD-8063-C164CB668CE4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A03E6BC-07A1-49BD-8063-C164CB668CE4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A03E6BC-07A1-49BD-8063-C164CB668CE4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A03E6BC-07A1-49BD-8063-C164CB668CE4}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {286458D2-2C31-4BAE-B970-8B04E3C606DE}
+	EndGlobalSection
+EndGlobal
