@@ -21,95 +21,107 @@ namespace Tea.Compiler
         private readonly Dictionary<string, TypeDefinition> types = new Dictionary<string, TypeDefinition>();
         private readonly HashSet<string> alreadyUsed = new HashSet<string>();
 
+        private readonly TypeDefinition intType = new TypeDefinition
+        {
+            FullName = "integer",
+            Size = 4,
+            SpecialMangledName = "i",
+        };
+
+        private readonly TypeDefinition shortType = new TypeDefinition
+        {
+            FullName = "short",
+            Size = 2,
+            SpecialMangledName = "i2",
+        };
+
+        private readonly TypeDefinition longType = new TypeDefinition
+        {
+            FullName = "long",
+            Size = 8,
+            SpecialMangledName = "i8",
+        };
+
+        private readonly TypeDefinition charType = new TypeDefinition
+        {
+            FullName = "character",
+            Size = 1,
+            SpecialMangledName = "c",
+        };
+
+        private readonly TypeDefinition boolType = new TypeDefinition
+        {
+            FullName = "boolean",
+            Size = 1,
+            SpecialMangledName = "f",
+        };
+
+        private readonly TypeDefinition byteType = new TypeDefinition
+        {
+            FullName = "byte",
+            Size = 1,
+            SpecialMangledName = "b",
+        };
+
+        private readonly TypeDefinition singleType = new TypeDefinition
+        {
+            FullName = "single",
+            Size = 4,
+            SpecialMangledName = "s",
+            IsFloatingPoint = true,
+        };
+
+        private readonly TypeDefinition doubleType = new TypeDefinition
+        {
+            FullName = "double",
+            Size = 8,
+            SpecialMangledName = "d",
+            IsFloatingPoint = true,
+        };
+
+        private readonly TypeDefinition extendedType = new TypeDefinition
+        {
+            FullName = "extended",
+            Size = 10,
+            SpecialMangledName = "e",
+            IsFloatingPoint = true,
+        };
+
+        private readonly TypeDefinition genericPointerType = new TypeDefinition
+        {
+            FullName = "^",
+            Size = 4,
+            SpecialMangledName = "p",
+            IsPointer = true,
+        };
+
+        private readonly TypeDefinition charArrayType;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="CompilerContext"/> class.
         /// </summary>
         public CompilerContext()
         {
-            TypeDefinition intType = new TypeDefinition
+            TypeDefinition[] builtinTypes = new[]
             {
-                FullName = "integer",
-                Size = 4,
-                SpecialMangledName = "i",
+                this.intType,
+                this.shortType,
+                this.longType,
+                this.charType,
+                this.singleType,
+                this.doubleType,
+                this.extendedType,
+                this.boolType,
+                this.byteType,
+                this.genericPointerType,
             };
 
-            TypeDefinition shortType = new TypeDefinition
+            foreach (TypeDefinition t in builtinTypes)
             {
-                FullName = "short",
-                Size = 2,
-                SpecialMangledName = "i2",
-            };
+                this.types.Add(t.FullName!, t);
+            }
 
-            TypeDefinition longType = new TypeDefinition
-            {
-                FullName = "long",
-                Size = 8,
-                SpecialMangledName = "i8",
-            };
-
-            TypeDefinition charType = new TypeDefinition
-            {
-                FullName = "character",
-                Size = 2,
-                SpecialMangledName = "c",
-            };
-
-            TypeDefinition boolType = new TypeDefinition
-            {
-                FullName = "boolean",
-                Size = 1,
-                SpecialMangledName = "f",
-            };
-
-            TypeDefinition byteType = new TypeDefinition
-            {
-                FullName = "byte",
-                Size = 1,
-                SpecialMangledName = "b",
-            };
-
-            TypeDefinition singleType = new TypeDefinition
-            {
-                FullName = "single",
-                Size = 4,
-                SpecialMangledName = "s",
-                IsFloatingPoint = true,
-            };
-
-            TypeDefinition doubleType = new TypeDefinition
-            {
-                FullName = "double",
-                Size = 8,
-                SpecialMangledName = "d",
-                IsFloatingPoint = true,
-            };
-
-            TypeDefinition extendedType = new TypeDefinition
-            {
-                FullName = "extended",
-                Size = 10,
-                SpecialMangledName = "e",
-                IsFloatingPoint = true,
-            };
-
-            TypeDefinition genericPointerType = new TypeDefinition
-            {
-                FullName = "^",
-                Size = 4,
-                SpecialMangledName = "p",
-                IsPointer = true,
-            };
-
-            this.types.Add(intType.FullName, intType);
-            this.types.Add(shortType.FullName, shortType);
-            this.types.Add(longType.FullName, longType);
-            this.types.Add(charType.FullName, charType);
-            this.types.Add(singleType.FullName, singleType);
-            this.types.Add(doubleType.FullName, doubleType);
-            this.types.Add(extendedType.FullName, extendedType);
-            this.types.Add(boolType.FullName, boolType);
-            this.types.Add(byteType.FullName, byteType);
-            this.types.Add(genericPointerType.FullName, genericPointerType);
+            this.charArrayType = this.GetArrayType(this.charType, 0);
         }
 
         /// <summary>
@@ -137,6 +149,41 @@ namespace Tea.Compiler
         {
             get { return this.includes; }
         }
+
+        /// <summary>
+        /// Gets the integer type.
+        /// </summary>
+        public TypeDefinition IntegerType => this.intType;
+
+        /// <summary>
+        /// Gets the char type.
+        /// </summary>
+        public TypeDefinition CharType => this.charType;
+
+        /// <summary>
+        /// Gets the boolean type.
+        /// </summary>
+        public TypeDefinition BooleanType => this.boolType;
+
+        /// <summary>
+        /// Gets the generic pointer type.
+        /// </summary>
+        public TypeDefinition GenericPointerType => this.genericPointerType;
+
+        /// <summary>
+        /// Gets the single precision floating point type.
+        /// </summary>
+        public TypeDefinition SingleType => this.singleType;
+
+        /// <summary>
+        /// Gets the double precision floating point type.
+        /// </summary>
+        public TypeDefinition DoubleType => this.doubleType;
+
+        /// <summary>
+        /// Gets the type for an array of chars of indefinite length.
+        /// </summary>
+        public TypeDefinition CharArrayType => this.charArrayType;
 
         /// <summary>
         /// Adds include search paths to the context.

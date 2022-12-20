@@ -1,0 +1,31 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <TargetType>Exe</TargetType>
+        <AssemblyName>SystemTests</AssemblyName>
+    </PropertyGroup>
+
+    <PropertyGroup>
+      <SystemIncludeRoot>$(MSBuildThisFileDirectory)../System/</SystemIncludeRoot>
+      <TestProjRoot>$(MSBuildThisFileDirectory)../Test/</TestProjRoot>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <IncludePath Include="$(SystemIncludeRoot)" />
+        <IncludePath Include="$(SystemIncludeRoot)ExtendedMath" />
+        <IncludePath Include="$(SystemIncludeRoot)Graphics" />
+        <IncludePath Include="$(SystemIncludeRoot)IO" />
+        <IncludePath Include="$(SystemIncludeRoot)Text" />
+        <IncludePath Include="$(TestProjRoot)" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Include="**/*.tea" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="$(SystemIncludeRoot)/build.proj" />
+      <ProjectReference Include="$(TestProjRoot)/build.proj" />
+    </ItemGroup>
+
+    <Import Project="../TEA.targets" />
+</Project>

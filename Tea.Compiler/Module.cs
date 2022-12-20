@@ -132,19 +132,14 @@ namespace Tea.Compiler
         /// <returns>The symbol name.</returns>
         public string DefineLiteralString(string value)
         {
-            System.IO.MemoryStream ms = new System.IO.MemoryStream();
-            using (System.IO.StreamWriter writer = new System.IO.StreamWriter(ms, Encoding.Unicode))
+            byte[] rawData = Encoding.UTF8.GetBytes(value);
+            object[] scrub = new object[rawData.Length + 1];
+            for (int i = 0; i < rawData.Length; i++)
             {
-                writer.Write(value);
-                writer.Write('\0');
+                scrub[i] = rawData[i];
             }
 
-            byte[] rawData = ms.ToArray();
-            object[] scrub = new object[rawData.Length - 2]; // strip out byte order
-            for (int i = 0; i < scrub.Length; i++)
-            {
-                scrub[i] = rawData[i + 2];
-            }
+            scrub[^1] = (byte)0;
 
             string symbolName = "$String_" + this.literalStringIndex.ToString();
             this.literalStringIndex++;

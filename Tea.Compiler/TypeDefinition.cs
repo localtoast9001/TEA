@@ -14,7 +14,7 @@ namespace Tea.Compiler
     /// <summary>
     /// Type definition intermediate structure.
     /// </summary>
-    public class TypeDefinition
+    public class TypeDefinition : IEquatable<TypeDefinition>
     {
         private const string VTablePointerFieldName = "?vtblptr";
 
@@ -379,6 +379,29 @@ namespace Tea.Compiler
         public FieldInfo AddVTablePointer(CompilerContext context, int offset)
         {
             return this.AddTablePointer(context, offset, VTablePointerFieldName);
+        }
+
+        /// <inheritdoc/>
+        public override int GetHashCode()
+        {
+            return this.MangledName.GetHashCode();
+        }
+
+        /// <inheritdoc/>
+        public bool Equals(TypeDefinition? other)
+        {
+            if (other == null)
+            {
+                return false;
+            }
+
+            return string.CompareOrdinal(this.MangledName, other!.MangledName) == 0;
+        }
+
+        /// <inheritdoc/>
+        public override bool Equals(object? obj)
+        {
+            return this.Equals(obj as TypeDefinition);
         }
 
         private static bool MatchArgs(MethodInfo method, IList<TypeDefinition> argTypes)

@@ -1,0 +1,30 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <TargetType>Exe</TargetType>
+        <AssemblyName>RayTracer</AssemblyName>
+        <SystemIncludeRoot>../System/</SystemIncludeRoot>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <IncludePath Include="$(SystemIncludeRoot)" />
+        <IncludePath Include="$(SystemIncludeRoot)ExtendedMath" />
+        <IncludePath Include="$(SystemIncludeRoot)Graphics" />
+        <IncludePath Include="$(SystemIncludeRoot)Graphics/IO" />
+        <IncludePath Include="$(SystemIncludeRoot)IO" />
+        <IncludePath Include="$(SystemIncludeRoot)Text" />
+        <IncludePath Include="Lights" />
+        <IncludePath Include="Shapes" />
+        <IncludePath Include="." />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Include="**/*.tea" />
+        <Compile Include="*.asm" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="../System/build.proj" />
+    </ItemGroup>
+
+    <Import Project="../TEA.targets" />
+</Project>

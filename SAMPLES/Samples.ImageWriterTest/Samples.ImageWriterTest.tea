@@ -49,18 +49,18 @@ begin
         i := 0;
         while i < 256 do
         begin
-            row0[i * 4] := 0;
-            row1[i * 4] := 0;
-            row2[i * 4] := i;
-            row0[i * 4 + 1] := 0;
-            row1[i * 4 + 1] := i;
-            row2[i * 4 + 1] := 0;
-            row0[i * 4 + 2] := i;
-            row1[i * 4 + 2] := 0;
-            row2[i * 4 + 2] := 0;
-            row0[i * 4 + 3] := 255;
-            row1[i * 4 + 3] := 255;
-            row2[i * 4 + 3] := 255;
+            row0[i * 4] := Convert.Lo(Convert.Lo(0));
+            row1[i * 4] := Convert.Lo(Convert.Lo(0));
+            row2[i * 4] := Convert.Lo(Convert.Lo(i));
+            row0[i * 4 + 1] := Convert.Lo(Convert.Lo(0));
+            row1[i * 4 + 1] := Convert.Lo(Convert.Lo(i));
+            row2[i * 4 + 1] := Convert.Lo(Convert.Lo(0));
+            row0[i * 4 + 2] := Convert.Lo(Convert.Lo(i));
+            row1[i * 4 + 2] := Convert.Lo(Convert.Lo(0));
+            row2[i * 4 + 2] := Convert.Lo(Convert.Lo(0));
+            row0[i * 4 + 3] := Convert.Lo(Convert.Lo(255));
+            row1[i * 4 + 3] := Convert.Lo(Convert.Lo(255));
+            row2[i * 4 + 3] := Convert.Lo(Convert.Lo(255));
             i := i + 1;
         end;
     end;

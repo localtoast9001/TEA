@@ -15,12 +15,12 @@ type
 function Print.PrintString(
     format : array of character;
     text : array of character) : integer;
-extern 'wprintf';
+extern 'printf';
 
 function Print.PrintChar(
     format : array of character;
     ch : character) : integer;
-extern 'wprintf';
+extern 'printf';
 
 function Console.Write(text : array of character) : integer;
 begin
@@ -34,5 +34,5 @@ end;
 
 function Console.WriteLine(text : array of character) : integer;
 begin
-    WriteLine := Print.PrintString('%s'#13, text);
+    WriteLine := Print.PrintString('%s'#10, text);
 end;

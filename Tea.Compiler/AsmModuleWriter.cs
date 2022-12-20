@@ -125,7 +125,7 @@ namespace Tea.Compiler
 
             if (!string.IsNullOrEmpty(mainMethod))
             {
-                string methodText = @"wmain PROC C EXPORT
+                string methodText = @"main PROC C EXPORT
     push ebp
     mov ebp,esp    
     push [ebp+12]
@@ -135,7 +135,7 @@ namespace Tea.Compiler
     mov esp,ebp
     pop ebp
     ret
-wmain ENDP";
+main ENDP";
 
                 this.writer.WriteLine(methodText, mainMethod);
             }

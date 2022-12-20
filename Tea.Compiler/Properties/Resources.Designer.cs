@@ -122,7 +122,17 @@ namespace Tea.Compiler.Properties {
                 return ResourceManager.GetString("CodeGenerator_CannotDerefNonPointer", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to The character '{0}' cannot be encoded into a single TEA character.
+        /// </summary>
+        internal static string CodeGenerator_CannotEncodeChar
+        {
+            get {
+                return ResourceManager.GetString("CodeGenerator_CannotEncodeChar", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Cannot locate an appropriate constructor for {0} with the arguments given..
         /// </summary>
