@@ -1,5 +1,5 @@
 namespace Samples;
-uses System, System.IO;
+uses System, System.IO, System.Text;
 
 type
     Program = public static class
@@ -17,8 +17,11 @@ var
     path : array of character;
     fs : FileStream;
     lastError : integer;
-    buffer : array [256] of character;
+    byteBuffer : array [256] of byte;
+    charBuffer : array [258] of character;
+    encoding : ASCIIEncoding;
     bytesRead : integer;
+    charCount : integer;
 begin
     Main := 0;
     lastError := 0;
@@ -37,22 +40,22 @@ begin
 
     if not failed then
     begin
-        bytesRead := fs.Read(buffer, 0, 510);
-        while bytesRead = 510 do
+        bytesRead := fs.Read(byteBuffer, 0, 256);
+        while bytesRead > 0 do
         begin
-            buffer[255] := 0;
-            Console.Write(buffer);
-            bytesRead := fs.Read(buffer, 0, 510);
+            charCount := encoding.GetChars(byteBuffer, 0, bytesRead, charBuffer, 256, 0);
+            charBuffer[charCount] := Convert.ToCharacter(0);
+            Console.Write(charBuffer);
+            bytesRead := fs.Read(byteBuffer, 0, 256);
         end;
-        if bytesRead >= 0 then
-        begin
-            buffer[bytesRead / 2] := 0;
-            Console.WriteLine(buffer);
-        end
-        else
+        if bytesRead < 0 then
         begin
             failed := true;
             lastError := fs.LastError();
+        end
+        else
+        begin
+            Console.WriteLine('');
         end;
     end
     else

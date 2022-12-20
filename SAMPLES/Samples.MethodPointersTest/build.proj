@@ -1,0 +1,16 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <TargetType>Exe</TargetType>
+        <AssemblyName>Samples.MethodPointersTest</AssemblyName>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="**/*.tea" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\System\build.proj" />
+    </ItemGroup>
+
+    <Import Project="../../TEA.targets" />
+</Project>

@@ -11,17 +11,17 @@ function Program.Main(
     argc : integer; 
     argv : array of array of character) : integer;
 var
-    buffer : array [100] of character;
+    buffer : array [60] of character;
     index : integer;
 begin
     index := 0;
-    while index < 99 do
+    while index < 59 do
     begin
-        buffer[index] := index + 65;
+        buffer[index] := Convert.ToCharacter(index + 65);
         index := index + 1;
     end;
 
-    buffer[99] := 0;
+    buffer[59] := Convert.ToCharacter(0);
     Console.WriteLine(buffer);
     Main := 0;
 end;

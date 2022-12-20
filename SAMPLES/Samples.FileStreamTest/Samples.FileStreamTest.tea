@@ -27,33 +27,24 @@ function Program.Main(
 var 
     failed : boolean;
     path : array of character;
-    contents : array of character;
+    contents : ^character;
     contentsLength : integer;
     fs : FileStream;
     lastError : integer;
-    unicode : character;
 begin
-    unicode := Convert.ToCharacter(Convert.Lo(65279));
     Main := 0;
     failed := false;
     if argc = 3 then
     begin
         path := argv[1];
         contents := argv[2];
-        contentsLength := StringLength(contents) * 2;
+        contentsLength := StringLength(contents);
         if fs.Open(path, false, true) then
         begin
             failed := not fs.Write(
-                @unicode,
+                contents,
                 0,
-                2);
-            if not failed then
-            begin
-                failed := not fs.Write(
-                    contents,
-                    0,
-                    contentsLength);
-            end;
+                contentsLength);
         end
         else
         begin
@@ -66,7 +57,7 @@ begin
     if failed then
     begin
         lastError := fs.LastError();
-        Console.WriteLine('Usage: Samples.FileStream.exe <file> <text>');
+        Console.WriteLine('Usage: Samples.FileStreamTest.exe <file> <text>');
         Main := lastError;
     end;
 end;

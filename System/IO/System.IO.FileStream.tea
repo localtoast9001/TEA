@@ -158,7 +158,7 @@ end;
 function FileStream._wopen(
     filename : array of character;
     oflag, pmode : integer) : integer;
-extern '_wopen';
+extern '_open';
 
 function FileStream._read( 
     fd : integer;

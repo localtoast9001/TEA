@@ -820,7 +820,7 @@ namespace Tea.Compiler
                                 break;
                             case 1:
                                 method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(Register.AL, FromLocalVariable(returnVar)) });
-                                if (string.CompareOrdinal(returnVar.Type!.MangledName, "f") == 0)
+                                if (context.BooleanType.Equals(returnVar.Type))
                                 {
                                     method.Statements.Add(new AsmStatement { Instruction = X86Instruction.And(Register.EAX, 1U) });
                                 }
@@ -1158,7 +1158,7 @@ namespace Tea.Compiler
                 return false;
             }
 
-            if (!this.ValidateConditionType(ifStatement.Condition!, conditionType!))
+            if (!this.ValidateConditionType(context, ifStatement.Condition!, conditionType!))
             {
                 return false;
             }
@@ -1206,7 +1206,7 @@ namespace Tea.Compiler
                 return false;
             }
 
-            if (!this.ValidateConditionType(whileStatement.Condition!, conditionType!))
+            if (!this.ValidateConditionType(context, whileStatement.Condition!, conditionType!))
             {
                 return false;
             }
@@ -1225,10 +1225,10 @@ namespace Tea.Compiler
             return true;
         }
 
-        private bool ValidateConditionType(Expression condition, TypeDefinition conditionType)
+        private bool ValidateConditionType(CompilerContext context, Expression condition, TypeDefinition conditionType)
         {
             string message = Properties.Resources.CodeGenerator_BooleanConditionExpected;
-            if (string.CompareOrdinal(conditionType.MangledName, "f") != 0)
+            if (!conditionType.Equals(context.BooleanType))
             {
                 this.log.Write(new Message(
                     condition.Start.Path,
@@ -1482,7 +1482,8 @@ namespace Tea.Compiler
             if (expression.Value == null)
             {
                 method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Xor(Register.EAX, Register.EAX) });
-                return context.TryFindTypeByName("^", out valueType);
+                valueType = context.GenericPointerType;
+                return true;
             }
 
             if (expression.Value is int)
@@ -1497,21 +1498,40 @@ namespace Tea.Compiler
                     method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(Register.EAX, (uint)exprValue) });
                 }
 
-                return context.TryFindTypeByName("integer", out valueType);
+                valueType = context.IntegerType;
+                return true;
             }
 
-            if (expression.Value is char)
+            if (expression.Value is char charValue)
             {
-                char charValue = (char)expression.Value;
+                byte[] encValue = Encoding.UTF8.GetBytes(new char[] { charValue });
+                if (encValue.Length != 1)
+                {
+                    string message = string.Format(
+                        System.Globalization.CultureInfo.CurrentCulture,
+                        Properties.Resources.CodeGenerator_CannotEncodeChar,
+                        charValue);
+                    this.log.Write(new Message(
+                        expression.Start.Path,
+                        expression.Start.Line,
+                        expression.Start.Column,
+                        Severity.Error,
+                        message));
+                    valueType = null;
+                    return false;
+                }
+
                 method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(Register.EAX, (uint)charValue) });
-                return context.TryFindTypeByName("character", out valueType);
+                valueType = context.CharType;
+                return true;
             }
 
             if (expression.Value is string)
             {
                 string label = method.Module!.DefineLiteralString((string)expression.Value);
                 method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Lea(Register.EAX, RM.Address(label)) });
-                return context.TryFindTypeByName("#0character", out valueType);
+                valueType = context.CharArrayType;
+                return true;
             }
 
             if (expression.Value is decimal)
@@ -1531,7 +1551,8 @@ namespace Tea.Compiler
                     method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Fld(RM.Address(label, sizeof(double))) });
                 }
 
-                return context.TryFindTypeByName("double", out valueType);
+                valueType = context.DoubleType;
+                return true;
             }
 
             if (expression.Value is bool)
@@ -1546,7 +1567,8 @@ namespace Tea.Compiler
                     method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Xor(Register.EAX, Register.EAX) });
                 }
 
-                return context.TryFindTypeByName("boolean", out valueType);
+                valueType = context.BooleanType;
+                return true;
             }
 
             valueType = null;
@@ -1686,7 +1708,7 @@ namespace Tea.Compiler
                 if (calleeMethod!.IsVirtual && callExpr!.Inner!.UseVirtualDispatch)
                 {
                     FieldInfo? vtablePtr = calleeMethod!.Type!.GetVTablePointer();
-                    if (string.CompareOrdinal(callLoc!.ToString(), "[eax]") != 0)
+                    if (string.CompareOrdinal(callLoc!.ToString(), "dword ptr [eax]") != 0)
                     {
                         method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Lea(Register.EAX, callLoc!) });
                     }
@@ -1706,7 +1728,7 @@ namespace Tea.Compiler
                 }
                 else
                 {
-                    if (callLoc!.Relocation != null && callLoc!.ToString().Equals($"[{callLoc.Relocation!.Symbol}]", StringComparison.Ordinal))
+                    if (callLoc!.Relocation != null && callLoc!.ToString().Equals($"dword ptr [{callLoc.Relocation!.Symbol}]", StringComparison.Ordinal))
                     {
                         // replace with an inline near call.
                         method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Call(callLoc!.Relocation!.Symbol) });
@@ -2075,7 +2097,7 @@ namespace Tea.Compiler
                         break;
                 }
 
-                if (string.CompareOrdinal(valueType!.MangledName, "f") == 0)
+                if (context.BooleanType.Equals(valueType))
                 {
                     method.Statements.Add(new AsmStatement { Instruction = X86Instruction.And(Register.AL, 1) });
                 }
@@ -2232,7 +2254,7 @@ namespace Tea.Compiler
             MethodImpl method,
             out TypeDefinition? valueType)
         {
-            context.TryFindTypeByName("boolean", out valueType);
+            valueType = context.BooleanType;
             TypeDefinition? rightSideType = null;
             if (!this.TryEmitExpression(relExpr.Right, context, scope, method, out rightSideType))
             {
