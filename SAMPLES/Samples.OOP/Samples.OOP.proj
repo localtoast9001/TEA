@@ -4,13 +4,5 @@
         <AssemblyName>Samples.OOP</AssemblyName>
     </PropertyGroup>
 
-    <ItemGroup>
-        <Compile Include="**/*.tea" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\..\System\build.proj" />
-    </ItemGroup>
-
     <Import Project="../../TEA.targets" />
 </Project>

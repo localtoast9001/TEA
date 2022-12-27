@@ -11,13 +11,35 @@
             "preLaunchTask": "build",
             "program": "${workspaceFolder}/TEAC/bin/Debug/net6.0/TEAC.dll",
             "args": [
-                "/ISystem/",
-                "/home/localtoast/code/TEA/SAMPLES/HelloWorld/HelloWorld.tea",
+                "/I../System/",
+                "/I../System/ExtendedMath",
+                "/I../System/Graphics",
+                "/I../System/Graphics/IO",
+                "/I../System/IO",
+                "/I../System/Text",
+                "/I./Lights",
+                "/I./Shapes",
+                "/I.",
+                "/Faobj/x86/Debug/RayTracer.Program.asm",
+                "/Foobj/x86/Debug/RayTracer.Program.o",
+                "/home/localtoast/code/TEA/RT/RayTracer.Program.tea",
             ],
-            "cwd": "${workspaceFolder}",
+            "cwd": "${workspaceFolder}/RT",
             "stopAtEntry": false,
             "console": "internalConsole"
+        },
+        {
+            "name": "(gdb) Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/SAMPLES/Samples.FileStreamTest/bin/x86/Debug/Samples.FileStreamTest",
+            "args": [
+                "~/foo.txt",
+                "Hello"
+            ],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}",
+            "externalConsole": false,
         }
-
     ]
 }

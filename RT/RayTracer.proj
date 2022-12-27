@@ -19,11 +19,12 @@
 
     <ItemGroup>
         <Compile Include="**/*.tea" />
-        <Compile Include="*.asm" />
+        <Assemble Condition="'$(OS)' != 'Unix'" Include="*.asm" />
+        <Assemble Condition="'$(OS)' == 'Unix'" Include="*.S" />
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="../System/build.proj" />
+      <ProjectReference Include="../System/System.proj" />
     </ItemGroup>
 
     <Import Project="../TEA.targets" />
