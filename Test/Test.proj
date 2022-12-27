@@ -16,5 +16,9 @@
         <Compile Include="**/*.tea" />
     </ItemGroup>
 
+    <ItemGroup>
+        <!-- <ProjectReference Include="../System/System.proj" /> -->
+    </ItemGroup>
+
     <Import Project="../TEA.targets" />
 </Project>

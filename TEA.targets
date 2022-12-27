@@ -26,21 +26,26 @@
         <IntermediateAssembly Remove="$(IntermediateOutputPath)$(TargetName)$(TargetExt)"/>
         <IntermediateAssembly Include="$(IntermediateOutputPath)$(TargetFileName)"/>
     </ItemGroup>
+
+    <ItemGroup>
+        <Compile Condition="'@(Compile)' == ''" Include="**/*.tea" />
+    </ItemGroup>
+
     <ItemGroup>
         <TeaCompile Include="@(Compile)" />
-        <TeaCompile Remove="*.asm" />
-        <MasmCompile Include="@(Compile)" />
-        <MasmCompile Remove="@(TeaCompile)" />
+        <MasmAssemble Include="@(Assemble)" Condition="'$(OS)' != 'Unix'" />
+        <GasAssemble Include="@(Assemble)" Condition="'$(OS)' == 'Unix'" />
         <TeaAsmFiles Include="@(TeaCompile->'$(IntermediateOutputPath)%(filename).asm')" />
         <TeaObjFiles Condition="'$(OS)' != 'Unix'" Include="@(TeaCompile->'$(IntermediateOutputPath)%(filename).obj')" />
-        <MasmObjFiles Condition="'$(OS)' != 'Unix'" Include="@(MasmCompile->'$(IntermediateOutputPath)%(filename).obj')" />
+        <MasmObjFiles Condition="'$(OS)' != 'Unix'" Include="@(MasmAssemble->'$(IntermediateOutputPath)%(filename).obj')" />
+        <GasObjFiles Condition="'$(OS)' == 'Unix'" Include="@(GasAssemble->'$(IntermediateOutputPath)%(filename).o')" />
         <TeaObjFiles Condition="'$(OS)' == 'Unix'" Include="@(TeaCompile->'$(IntermediateOutputPath)%(filename).o')" />
     </ItemGroup>
     <Target Name="CreateManifestResourceNames" />
 
     <Target
-        Name="MasmCompile"
-        Inputs="@(MasmCompile)"
+        Name="MasmAssemble"
+        Inputs="@(MasmAssemble)"
         Outputs="@(MasmObjFiles)"
         DependsOnTargets="$(CoreCompileDependsOn)">
         <MakeDir
@@ -48,9 +53,25 @@
         <Exec
             Condition="'$(OS)' != 'Unix'"
             ContinueOnError="ErrorAndContinue"
-            Command="ml /c /Cp /Cx /Zi /Fo $(IntermediateOutputPath)%(MasmCompile.filename).obj %(MasmCompile.filename).asm"
-            Outputs="$(IntermediateOutputPath)%(MasmCompile.filename).obj">
-            <Output TaskParameter="Outputs" ItemName="FileWrites" />            
+            Command="ml /c /Cp /Cx /Zi /Fo $(IntermediateOutputPath)%(MasmAssemble.filename).obj %(MasmAssemble.fullpath)"
+            Outputs="$(IntermediateOutputPath)%(MasmAssemble.filename).obj">
+            <Output TaskParameter="Outputs" ItemName="FileWrites" />
+        </Exec>
+    </Target>
+
+    <Target
+        Name="GasAssemble"
+        Inputs="@(GasAssemble)"
+        Outputs="@(GasObjFiles)"
+        DependsOnTargets="$(CoreCompileDependsOn)">
+        <MakeDir
+            Directories="$(IntermediateOutputPath)" />
+        <Exec
+            Condition="'$(OS)' == 'Unix'"
+            ContinueOnError="ErrorAndContinue"
+            Command="as --32 -o $(IntermediateOutputPath)%(GasAssemble.filename).o %(GasAssemble.fullpath)"
+            Outputs="$(IntermediateOutputPath)%(GasAssemble.filename).o">
+            <Output TaskParameter="Outputs" ItemName="FileWrites" />
         </Exec>
     </Target>
 
@@ -77,31 +98,40 @@
             ContinueOnError="ErrorAndContinue"
             Command="ml /c /Cp /Cx /Zi /Fo $(IntermediateOutputPath)%(TeaCompile.filename).obj $(IntermediateOutputPath)%(TeaCompile.filename).asm"
             Outputs="$(IntermediateOutputPath)%(TeaCompile.filename).obj">
-            <Output TaskParameter="Outputs" ItemName="FileWrites" />            
+            <Output TaskParameter="Outputs" ItemName="FileWrites" />
         </Exec>
     </Target>
 
     <Target 
-        Name="CoreCompile" 
-        DependsOnTargets="$(CoreCompileDependsOn);TeaCompile;MasmCompile" 
-        Inputs="@(TeaObjFiles);@(MasmObjFiles);@(ReferencePathWithRefAssemblies)" 
+        Name="CoreCompile"
+        DependsOnTargets="$(CoreCompileDependsOn);TeaCompile;MasmAssemble;GasAssemble"
+        Inputs="@(TeaObjFiles);@(MasmObjFiles);@(GasObjFiles);@(ReferencePathWithRefAssemblies)"
         Outputs="@(IntermediateAssembly)">
 
-		<ItemGroup>
-			<_Reference Include="@(Reference)" />
-			<_Reference Condition="'$(OS)' != 'Unix'" Include="@(ReferencePathWithRefAssemblies)" />
-			<_Reference Condition="'$(OS)' == 'Unix'" Include="@(ReferencePathWithRefAssemblies)" />
-		</ItemGroup>
-		
+        <ItemGroup>
+            <_PreReference Include="@(Reference)" />
+            <_PreReference Include="@(ReferencePathWithRefAssemblies)" />
+        </ItemGroup>
+
+        <ItemGroup>
+            <_Reference Include="@(_PreReference)" Condition="$([System.IO.Path]::GetFileName('%(_PreReference.fullpath)')) != 'System.a'"/>
+            <_Reference Include="@(_PreReference)" Condition="$([System.IO.Path]::GetFileName('%(_PreReference.fullpath)')) != 'System.lib'"/>
+        </ItemGroup>
+
+        <ItemGroup>
+            <_SystemReference Include="@(_PreReference)" />
+            <_SystemReference Remove="@(_Reference)" />
+        </ItemGroup>
+
         <!-- Windows Linking -->
         <Exec Condition="('$(OS)' != 'Unix') And ('$(OutputType)' == 'Exe')"
-            Command="link /SUBSYSTEM:CONSOLE /entry:mainCRTStartup /DEBUG /PDB:$(OutputPath)$(AssemblyName).pdb /out:$(IntermediateOutputPath)$(AssemblyName).exe @(TeaObjFiles->'%(fullpath)',' ') @(MasmObjFiles->'%(fullpath)',' ') @(_Reference->'%(fullpath)',' ') libvcruntimed.lib msvcrtd.lib legacy_stdio_definitions.lib" />
+            Command="link /SUBSYSTEM:CONSOLE /entry:mainCRTStartup /DEBUG /PDB:$(OutputPath)$(AssemblyName).pdb /out:$(IntermediateOutputPath)$(AssemblyName).exe @(TeaObjFiles->'%(fullpath)',' ') @(MasmObjFiles->'%(fullpath)',' ') @(_Reference->'%(fullpath)',' ') @(_SystemReference->'%(fullpath)',' ') libvcruntimed.lib msvcrtd.lib legacy_stdio_definitions.lib" />
         <Exec Condition="('$(OS)' != 'Unix') And ('$(OutputType)' == 'module')"
-            Command="lib /SUBSYSTEM:CONSOLE /out:$(IntermediateOutputPath)$(AssemblyName).lib @(TeaObjFiles->'%(fullpath)',' ') @(MasmObjFiles->'%(fullpath)',' ') @(_Reference->'%(fullpath)',' ')" />
+            Command="lib /SUBSYSTEM:CONSOLE /out:$(IntermediateOutputPath)$(AssemblyName).lib @(TeaObjFiles->'%(fullpath)',' ') @(MasmObjFiles->'%(fullpath)',' ') @(_Reference->'%(fullpath)',' ') @(_SystemReference->'%(fullpath)',' ')" />
         <!-- Unix Linking -->
         <Exec Condition="('$(OS)' == 'Unix') And ('$(OutputType)' == 'Exe')"
-            Command="gcc -m32 -lstdc++ -pthread -lpthread @(TeaObjFiles->'%(fullpath)',' ') @(_Reference->'%(fullpath)',' ') -lm -o $(IntermediateOutputPath)$(AssemblyName)" />
+            Command="gcc -m32 -lstdc++ -pthread -lpthread @(TeaObjFiles->'%(fullpath)',' ') @(_Reference->'%(fullpath)',' ') @(_SystemReference->'%(fullpath)',' ') -lm -o $(IntermediateOutputPath)$(AssemblyName)" />
         <Exec Condition="('$(OS)' == 'Unix') And ('$(OutputType)' == 'module')"
-            Command="ar rc --target=elf32-i386 $(IntermediateOutputPath)$(AssemblyName).a @(TeaObjFiles->'%(fullpath)',' ') @(_Reference->'%(fullpath)',' ')" />
+            Command="ar rc --target=elf32-i386 $(IntermediateOutputPath)$(AssemblyName).a @(TeaObjFiles->'%(fullpath)',' ') @(GasObjFiles->'%(fullpath)',' ') @(_Reference->'%(fullpath)',' ')" />
     </Target>
 </Project>

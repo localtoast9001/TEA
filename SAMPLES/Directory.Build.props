@@ -11,4 +11,11 @@
         <IncludePath Include="$(SystemIncludeRoot)IO" />
         <IncludePath Include="$(SystemIncludeRoot)Text" />
     </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="$(MSBuildThisFileDirectory)../System/System.proj">
+        <CopyLocal>false</CopyLocal>
+      </ProjectReference>
+    </ItemGroup>
+
 </Project>

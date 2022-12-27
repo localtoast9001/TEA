@@ -145,7 +145,7 @@ begin
     CanSeek := true;
 end;
 
-function FileStream.CanResize() : boolean;               
+function FileStream.CanResize() : boolean;
 begin
     CanResize := true;
 end;
@@ -187,10 +187,9 @@ function FileStream._lseek(
 extern '_lseek';
 
 function FileStream._close(
-    fd : integer) : integer;                
+    fd : integer) : integer;
 extern '_close';
 
 function FileStream._get_errno(
     pValue : ^integer) : integer;
 extern '_get_errno';
-
