@@ -530,22 +530,48 @@ namespace Tea.Compiler
                 throw new InvalidOperationException("Internal error: implicit arg not defined for scope.");
             }
 
-            return RM.Address(Register.EBP, (sbyte)thisRef!.Offset, $"_{thisRef!.Name}$");
+            return RM.Address(Register.EBP, thisRef!.Offset, $"_{thisRef!.Name}$");
         }
 
-        private static int GetOperandSize(int size)
+        /// <summary>
+        /// Gets the operand size for a memory reference.
+        /// </summary>
+        /// <param name="type">The type reference.</param>
+        /// <returns>The memory operand size.</returns>
+        private static int GetOperandSize(TypeDefinition type)
         {
-            return size < 3 ? size : sizeof(uint);
+            int size = type.Size;
+            if (type.IsFloatingPoint)
+            {
+                if (size <= sizeof(float))
+                {
+                    return sizeof(float);
+                }
+                else if (size <= sizeof(double))
+                {
+                    return sizeof(double);
+                }
+                else if (size <= RM.TWordSize)
+                {
+                    return RM.TWordSize;
+                }
+
+                throw new ArgumentOutOfRangeException(nameof(size));
+            }
+            else
+            {
+                return size > sizeof(ushort) ? sizeof(uint) : size;
+            }
         }
 
         private static RM FromLocalVariable(LocalVariable variable)
         {
-            return RM.Address(Register.EBP, (sbyte)-variable.Offset, $"_{variable.Name}$", GetOperandSize(variable.Type!.Size));
+            return RM.Address(Register.EBP, -variable.Offset, $"_{variable.Name}$", GetOperandSize(variable.Type!));
         }
 
         private static RM FromParameterVariable(ParameterVariable variable)
         {
-            return RM.Address(Register.EBP, (sbyte)variable.Offset, $"_{variable.Name}$", GetOperandSize(variable.Type!.Size));
+            return RM.Address(Register.EBP, variable.Offset, $"_{variable.Name}$", GetOperandSize(variable.Type!));
         }
 
         private bool TryImplementMethod(
@@ -924,12 +950,12 @@ namespace Tea.Compiler
             Scope scope,
             MethodImpl method)
         {
-            if (string.CompareOrdinal("[ebx]", sourceLocation.ToString()) != 0)
+            if (string.CompareOrdinal("dword ptr [ebx]", sourceLocation.ToString()) != 0)
             {
                 method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Lea(Register.EBX, sourceLocation) });
             }
 
-            if (string.CompareOrdinal("[edx]", targetLocation.ToString()) != 0)
+            if (string.CompareOrdinal("dword ptr [edx]", targetLocation.ToString()) != 0)
             {
                 method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Lea(Register.EDX, targetLocation) });
             }
@@ -991,45 +1017,35 @@ namespace Tea.Compiler
             {
                 return this.TryEmitAssignment(assignmentStatement, context, scope, method);
             }
-            else
+
+            CallStatement? callStatement = statement as CallStatement;
+            if (callStatement != null)
             {
-                CallStatement? callStatement = statement as CallStatement;
-                if (callStatement != null)
-                {
-                    return this.TryEmitCall(callStatement, context, scope, method);
-                }
-                else
-                {
-                    IfStatement? ifStatement = statement as IfStatement;
-                    if (ifStatement != null)
-                    {
-                        return this.TryEmitIfStatement(ifStatement, context, scope, method);
-                    }
-                    else
-                    {
-                        WhileStatement? whileStatement = statement as WhileStatement;
-                        if (whileStatement != null)
-                        {
-                            return this.TryEmitWhileStatement(whileStatement, context, scope, method);
-                        }
-                        else
-                        {
-                            BlockStatement? blockStatement = statement as BlockStatement;
-                            if (blockStatement != null)
-                            {
-                                return this.TryEmitBlockStatement(blockStatement, context, scope, method);
-                            }
-                            else
-                            {
-                                DeleteStatement? deleteStatement = statement as DeleteStatement;
-                                if (deleteStatement != null)
-                                {
-                                    return this.TryEmitDeleteStatement(deleteStatement, context, scope, method);
-                                }
-                            }
-                        }
-                    }
-                }
+                return this.TryEmitCallStatement(callStatement, context, scope, method);
+            }
+
+            IfStatement? ifStatement = statement as IfStatement;
+            if (ifStatement != null)
+            {
+                return this.TryEmitIfStatement(ifStatement, context, scope, method);
+            }
+
+            WhileStatement? whileStatement = statement as WhileStatement;
+            if (whileStatement != null)
+            {
+                return this.TryEmitWhileStatement(whileStatement, context, scope, method);
+            }
+
+            BlockStatement? blockStatement = statement as BlockStatement;
+            if (blockStatement != null)
+            {
+                return this.TryEmitBlockStatement(blockStatement, context, scope, method);
+            }
+
+            DeleteStatement? deleteStatement = statement as DeleteStatement;
+            if (deleteStatement != null)
+            {
+                return this.TryEmitDeleteStatement(deleteStatement, context, scope, method);
             }
 
             return false;
@@ -1242,7 +1258,7 @@ namespace Tea.Compiler
             return true;
         }
 
-        private bool TryEmitCall(CallStatement callStatement, CompilerContext context, Scope scope, MethodImpl method)
+        private bool TryEmitCallStatement(CallStatement callStatement, CompilerContext context, Scope scope, MethodImpl method)
         {
             TypeDefinition? typeDef = null;
             return this.TryEmitExpression(callStatement.Expression, context, scope, method, out typeDef);
@@ -1591,384 +1607,13 @@ namespace Tea.Compiler
             CallReferenceExpression? callExpr = expression as CallReferenceExpression;
             if (callExpr != null)
             {
-                int argSize = 0;
-                int argStatementStart = method.Statements.Count;
-                Expression[] arguments = callExpr.Arguments.ToArray();
-                List<TypeDefinition> argTypes = new List<TypeDefinition>();
-                List<int> argValueOffsets = new List<int>();
-                for (int i = arguments.Length - 1; i >= 0; i--)
-                {
-                    TypeDefinition? argType = null;
-                    if (!this.TryEmitExpression(arguments[i], context, scope, method, out argType))
-                    {
-                        valueType = null;
-                        return false;
-                    }
-
-                    argTypes.Insert(0, argType!);
-                    argSize += ((argType!.Size + 3) / 4) * 4;
-                    argValueOffsets.Insert(0, method.Statements.Count);
-                    this.PushResult(method, argType!);
-                }
-
-                bool hasDestructables = argTypes.Any(e => e.GetDestructor() != null);
-                bool savedRegResult = false;
-
-                RM? callLoc = null;
-                TypeDefinition? storageType = null;
-                MethodInfo? calleeMethod = null;
-                if (!this.TryEmitReference(callExpr.Inner, context, scope, method, out callLoc, out storageType, out calleeMethod))
-                {
-                    valueType = null;
-                    return false;
-                }
-
-                // fix up calling overloads here vs. inside TryEmitReference.
-                if (calleeMethod != null)
-                {
-                    MethodInfo? overload = calleeMethod!.Type!.FindMethod(calleeMethod!.Name!, argTypes);
-                    if (overload != null)
-                    {
-                        if (string.CompareOrdinal(calleeMethod!.MangledName, callLoc?.Relocation?.Symbol) == 0)
-                        {
-                            callLoc = RM.Address(overload!.MangledName);
-                        }
-
-                        method.Module!.AddProto(overload!);
-                        calleeMethod = overload;
-                        storageType = overload!.ReturnType;
-                    }
-                }
-
-                if (storageType != null)
-                {
-                    if (callLoc == null)
-                    {
-                        // must be a constructor call.
-                        MethodInfo? constructor = storageType.FindConstructor(argTypes);
-                        if (constructor == null)
-                        {
-                            string message = string.Format(
-                                System.Globalization.CultureInfo.CurrentCulture,
-                                Properties.Resources.CodeGenerator_CannotFindConstructor,
-                                storageType.FullName);
-                            this.log.Write(new Message(
-                                callExpr.Start.Path,
-                                callExpr.Start.Line,
-                                callExpr.Start.Column,
-                                Severity.Error,
-                                message));
-                            valueType = null;
-                            return false;
-                        }
-
-                        calleeMethod = constructor;
-                        callLoc = RM.Address(constructor.MangledName);
-                        method.Module!.AddProto(constructor);
-
-                        // create room on the stack for the result.
-                        AsmStatement resultPush = new AsmStatement { Instruction = X86Instruction.Sub(Register.ESP, (uint)storageType.Size) };
-                        method.Statements.Insert(argStatementStart, resultPush);
-
-                        // push the ref to the storage for the class on the stack.
-                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Lea(Register.EAX, RM.Address(Register.ESP, (sbyte)argSize, null)) });
-                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Push(Register.EAX) });
-                    }
-                    else if (storageType.IsClass || (!storageType.IsFloatingPoint && storageType.Size > 8))
-                    {
-                        // create room on the stack for the result.
-                        AsmStatement resultPush = new AsmStatement { Instruction = X86Instruction.Sub(Register.ESP, (uint)storageType.Size) };
-                        method.Statements.Insert(argStatementStart, resultPush);
-
-                        // push the ref to the storage for the class on the stack.
-                        method.Statements.Add(new AsmStatement
-                            {
-                                Instruction = X86Instruction.Lea(
-                                    Register.EBX,
-                                    RM.Address(Register.ESP, (sbyte)(calleeMethod!.IsStatic ? argSize : argSize + 4), null)),
-                            });
-                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Push(Register.EBX) });
-                        argSize += 4;
-                    }
-                    else if (hasDestructables)
-                    {
-                        // create room on the stack for the result.
-                        AsmStatement resultPush = new AsmStatement { Instruction = X86Instruction.Sub(Register.ESP, (uint)storageType.Size) };
-                        method.Statements.Insert(argStatementStart, resultPush);
-                        savedRegResult = true;
-                    }
-                }
-
-                if (calleeMethod == null && storageType != null && storageType.IsMethod)
-                {
-                    calleeMethod = storageType.CreateMethodInfoForMethodType();
-                    storageType = calleeMethod.ReturnType;
-                }
-
-                if (calleeMethod!.IsVirtual && callExpr!.Inner!.UseVirtualDispatch)
-                {
-                    FieldInfo? vtablePtr = calleeMethod!.Type!.GetVTablePointer();
-                    if (string.CompareOrdinal(callLoc!.ToString(), "dword ptr [eax]") != 0)
-                    {
-                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Lea(Register.EAX, callLoc!) });
-                    }
-
-                    if (vtablePtr!.Offset > 0)
-                    {
-                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Add(Register.EAX, (uint)vtablePtr!.Offset) });
-                    }
-
-                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(Register.ECX, RM.Address(Register.EAX)) });
-                    if (calleeMethod!.VTableIndex > 0)
-                    {
-                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Add(Register.ECX, (uint)calleeMethod!.VTableIndex * 4) });
-                    }
-
-                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Call(RM.Address(Register.ECX)) });
-                }
-                else
-                {
-                    if (callLoc!.Relocation != null && callLoc!.ToString().Equals($"dword ptr [{callLoc.Relocation!.Symbol}]", StringComparison.Ordinal))
-                    {
-                        // replace with an inline near call.
-                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Call(callLoc!.Relocation!.Symbol) });
-                    }
-                    else
-                    {
-                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Call(callLoc!) });
-                    }
-                }
-
-                if (!calleeMethod.IsStatic)
-                {
-                    argSize += 4;
-                }
-
-                if (argSize > 0)
-                {
-                    if (hasDestructables)
-                    {
-                        if (savedRegResult)
-                        {
-                            if (storageType!.IsFloatingPoint)
-                            {
-                                method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Fstp(RM.Address(Register.ESP, (sbyte)argSize, null, storageType!.Size)) });
-                            }
-                            else
-                            {
-                                if (storageType!.Size > 4)
-                                {
-                                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(RM.Address(Register.ESP, (sbyte)(argSize + 4), null), Register.EDX) });
-                                }
-
-                                switch (storageType!.Size % 4)
-                                {
-                                    case 2:
-                                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(RM.Address(Register.ESP, (sbyte)argSize, null, sizeof(ushort)), Register.AX) });
-                                        break;
-                                    case 1:
-                                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(RM.Address(Register.ESP, (sbyte)argSize, null, sizeof(byte)), Register.AL) });
-                                        break;
-                                    default:
-                                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(RM.Address(Register.ESP, (sbyte)argSize, null), Register.EAX) });
-                                        break;
-                                }
-                            }
-                        }
-
-                        if (!calleeMethod!.IsStatic)
-                        {
-                            method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Add(Register.ESP, 4) });
-                        }
-
-                        foreach (var arg in argTypes)
-                        {
-                            MethodInfo? argDes = arg.GetDestructor();
-                            if (argDes != null)
-                            {
-                                method.Module!.AddProto(argDes);
-                                method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Lea(Register.ECX, RM.Address(Register.ESP)) });
-                                method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Push(Register.ECX) });
-                                method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Call(argDes!.MangledName) });
-                                method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Add(Register.ESP, 4) });
-                            }
-
-                            method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Add(Register.ESP, (uint)arg!.Size) });
-                        }
-
-                        if (savedRegResult)
-                        {
-                            if (storageType!.IsFloatingPoint)
-                            {
-                                method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Fld(RM.Address(Register.ESP, storageType!.Size)) });
-                                method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Add(Register.ESP, (uint)storageType!.Size) });
-                            }
-                            else
-                            {
-                                if (storageType!.Size > 4)
-                                {
-                                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Pop(Register.EAX) });
-                                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Pop(Register.EDX) });
-                                }
-                                else
-                                {
-                                    switch (storageType!.Size)
-                                    {
-                                        case 4:
-                                            method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Pop(Register.EAX) });
-                                            break;
-                                        case 3:
-                                            method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Pop(Register.EAX) });
-                                            break;
-                                        case 2:
-                                            method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Pop(Register.AX) });
-                                            break;
-                                        case 1:
-                                            method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Pop(Register.AL) });
-                                            break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    else
-                    {
-                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Add(Register.ESP, (uint)argSize) });
-                    }
-                }
-
-                if (calleeMethod!.Parameters.Count != argTypes.Count)
-                {
-                    string message = string.Format(
-                        System.Globalization.CultureInfo.InvariantCulture,
-                        Properties.Resources.CodeGenerator_UnexpectedArgumentCount,
-                        calleeMethod.Name,
-                        calleeMethod!.Parameters.Count,
-                        argTypes.Count);
-                    this.log.Write(new Message(
-                        expression.Start.Path,
-                        expression.Start.Line,
-                        expression.Start.Column,
-                        Severity.Error,
-                        message));
-                    valueType = null;
-                    return false;
-                }
-
-                bool argsValid = true;
-                for (int i = 0; i < calleeMethod!.Parameters.Count; i++)
-                {
-                    int pointerCastOffset = 0;
-                    if (!this.ValidateCanCast(expression, calleeMethod!.Parameters[i].Type!, argTypes[i], out pointerCastOffset))
-                    {
-                        argsValid = false;
-                    }
-
-                    if (pointerCastOffset > 0)
-                    {
-                        method.Statements.Insert(
-                            argValueOffsets[i],
-                            new AsmStatement { Instruction = X86Instruction.Add(Register.EAX, (uint)pointerCastOffset) });
-                    }
-                }
-
-                valueType = storageType;
-                return argsValid;
+                return this.TryEmitCallReferenceExpression(callExpr!, context, scope, method, out valueType);
             }
 
             ReferenceExpression? refExpr = expression as ReferenceExpression;
             if (refExpr != null)
             {
-                RM? location = null;
-                TypeDefinition? storageType = null;
-                MethodInfo? calleeMethod = null;
-                if (!this.TryEmitReference(refExpr!, context, scope, method, out location, out storageType, out calleeMethod))
-                {
-                    valueType = null;
-                    return false;
-                }
-
-                // method pointer.
-                if (storageType == null)
-                {
-                    if (!calleeMethod!.IsVirtual)
-                    {
-                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(Register.EAX, 0, calleeMethod!.MangledName) });
-                    }
-
-                    valueType = context.GetMethodType(calleeMethod!);
-                    return true;
-                }
-
-                if (storageType!.IsFloatingPoint)
-                {
-                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Fld(location!) });
-                }
-                else if (storageType!.IsArray)
-                {
-                    if (storageType!.ArrayElementCount > 0)
-                    {
-                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Lea(Register.EAX, location!) });
-                        valueType = context.GetArrayType(storageType!.InnerType!, 0);
-                        return true;
-                    }
-                    else
-                    {
-                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(Register.EAX, location!) });
-                    }
-                }
-                else if (storageType!.Size <= 8 && !storageType!.IsClass)
-                {
-                    if (location != null)
-                    {
-                        switch (storageType!.Size)
-                        {
-                            case 8:
-                                method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(Register.ECX, location!) });
-                                method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(Register.EAX, RM.Address(Register.ECX)) });
-                                method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Add(Register.ECX, sizeof(uint)) });
-                                method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(Register.EDX, RM.Address(Register.ECX)) });
-                                break;
-                            case 4:
-                                method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(Register.EAX, location!) });
-                                break;
-                            case 2:
-                                method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(Register.AX, location!) });
-                                break;
-                            case 1:
-                                method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(Register.AL, location!) });
-                                break;
-                        }
-                    }
-                }
-                else if (storageType!.IsClass)
-                {
-                    // construct a new copy on the stack.
-                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Lea(Register.EAX, location!) });
-                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Sub(Register.ESP, (uint)storageType!.Size) });
-                    MethodInfo? copyConstructor = storageType!.GetCopyConstructor(context);
-                    if (copyConstructor != null)
-                    {
-                        method.Module!.AddProto(copyConstructor!);
-                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Lea(Register.ECX, RM.Address(Register.ESP)) });
-                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Push(Register.EAX) });
-                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Push(Register.ECX) });
-                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Call(copyConstructor!.MangledName) });
-                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Add(Register.ESP, 8) });
-                    }
-                    else
-                    {
-                        // raw copy.
-                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(Register.EDI, Register.ESP) });
-                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(Register.ESI, Register.EAX) });
-                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(Register.ECX, (uint)storageType.Size) });
-                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Cld() });
-                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Movsb().Rep() });
-                    }
-                }
-
-                valueType = storageType;
-                return true;
+                return this.TryEmitReferenceExpression(refExpr!, context, scope, method, out valueType);
             }
 
             SimpleExpression? simpleExpr = expression as SimpleExpression;
@@ -2015,6 +1660,397 @@ namespace Tea.Compiler
 
             valueType = null;
             return false;
+        }
+
+        private bool TryEmitCallReferenceExpression(
+            CallReferenceExpression callExpr,
+            CompilerContext context,
+            Scope scope,
+            MethodImpl method,
+            out TypeDefinition? valueType)
+        {
+            int argSize = 0;
+            int argStatementStart = method.Statements.Count;
+            Expression[] arguments = callExpr.Arguments.ToArray();
+            List<TypeDefinition> argTypes = new List<TypeDefinition>();
+            List<int> argValueOffsets = new List<int>();
+            for (int i = arguments.Length - 1; i >= 0; i--)
+            {
+                TypeDefinition? argType = null;
+                if (!this.TryEmitExpression(arguments[i], context, scope, method, out argType))
+                {
+                    valueType = null;
+                    return false;
+                }
+
+                argTypes.Insert(0, argType!);
+                argSize += ((argType!.Size + 3) / 4) * 4;
+                argValueOffsets.Insert(0, method.Statements.Count);
+                this.PushResult(method, argType!);
+            }
+
+            bool hasDestructables = argTypes.Any(e => e.GetDestructor() != null);
+            bool savedRegResult = false;
+
+            RM? callLoc = null;
+            TypeDefinition? storageType = null;
+            MethodInfo? calleeMethod = null;
+            if (!this.TryEmitReference(callExpr.Inner, context, scope, method, out callLoc, out storageType, out calleeMethod))
+            {
+                valueType = null;
+                return false;
+            }
+
+            // fix up calling overloads here vs. inside TryEmitReference.
+            if (calleeMethod != null)
+            {
+                MethodInfo? overload = calleeMethod!.Type!.FindMethod(calleeMethod!.Name!, argTypes);
+                if (overload != null)
+                {
+                    if (string.CompareOrdinal(calleeMethod!.MangledName, callLoc?.Relocation?.Symbol) == 0)
+                    {
+                        callLoc = RM.Address(overload!.MangledName);
+                    }
+
+                    method.Module!.AddProto(overload!);
+                    calleeMethod = overload;
+                    storageType = overload!.ReturnType;
+                }
+            }
+
+            if (storageType != null)
+            {
+                if (callLoc == null)
+                {
+                    // must be a constructor call.
+                    MethodInfo? constructor = storageType.FindConstructor(argTypes);
+                    if (constructor == null)
+                    {
+                        string message = string.Format(
+                            System.Globalization.CultureInfo.CurrentCulture,
+                            Properties.Resources.CodeGenerator_CannotFindConstructor,
+                            storageType.FullName);
+                        this.log.Write(new Message(
+                            callExpr.Start.Path,
+                            callExpr.Start.Line,
+                            callExpr.Start.Column,
+                            Severity.Error,
+                            message));
+                        valueType = null;
+                        return false;
+                    }
+
+                    calleeMethod = constructor;
+                    callLoc = RM.Address(constructor.MangledName);
+                    method.Module!.AddProto(constructor);
+
+                    // create room on the stack for the result.
+                    AsmStatement resultPush = new AsmStatement { Instruction = X86Instruction.Sub(Register.ESP, (uint)storageType.Size) };
+                    method.Statements.Insert(argStatementStart, resultPush);
+
+                    // push the ref to the storage for the class on the stack.
+                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Lea(Register.EAX, RM.Address(Register.ESP, argSize, null)) });
+                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Push(Register.EAX) });
+                }
+                else if (storageType.IsClass || (!storageType.IsFloatingPoint && storageType.Size > 8))
+                {
+                    // create room on the stack for the result.
+                    AsmStatement resultPush = new AsmStatement { Instruction = X86Instruction.Sub(Register.ESP, (uint)storageType.Size) };
+                    method.Statements.Insert(argStatementStart, resultPush);
+
+                    // push the ref to the storage for the class on the stack.
+                    method.Statements.Add(new AsmStatement
+                        {
+                            Instruction = X86Instruction.Lea(
+                                Register.EBX,
+                                RM.Address(Register.ESP, calleeMethod!.IsStatic ? argSize : argSize + 4, null)),
+                        });
+                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Push(Register.EBX) });
+                    argSize += 4;
+                }
+                else if (hasDestructables)
+                {
+                    // create room on the stack for the result.
+                    AsmStatement resultPush = new AsmStatement { Instruction = X86Instruction.Sub(Register.ESP, (uint)storageType.Size) };
+                    method.Statements.Insert(argStatementStart, resultPush);
+                    savedRegResult = true;
+                }
+            }
+
+            if (calleeMethod == null && storageType != null && storageType.IsMethod)
+            {
+                calleeMethod = storageType.CreateMethodInfoForMethodType();
+                storageType = calleeMethod.ReturnType;
+            }
+
+            if (calleeMethod!.IsVirtual && callExpr!.Inner!.UseVirtualDispatch)
+            {
+                FieldInfo? vtablePtr = calleeMethod!.Type!.GetVTablePointer();
+                if (string.CompareOrdinal(callLoc!.ToString(), "dword ptr [eax]") != 0)
+                {
+                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Lea(Register.EAX, callLoc!) });
+                }
+
+                if (vtablePtr!.Offset > 0)
+                {
+                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Add(Register.EAX, (uint)vtablePtr!.Offset) });
+                }
+
+                method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(Register.ECX, RM.Address(Register.EAX)) });
+                if (calleeMethod!.VTableIndex > 0)
+                {
+                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Add(Register.ECX, (uint)calleeMethod!.VTableIndex * 4) });
+                }
+
+                method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Call(RM.Address(Register.ECX)) });
+            }
+            else
+            {
+                if (callLoc!.Relocation != null && callLoc!.ToString().Equals($"dword ptr [{callLoc.Relocation!.Symbol}]", StringComparison.Ordinal))
+                {
+                    // replace with an inline near call.
+                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Call(callLoc!.Relocation!.Symbol) });
+                }
+                else
+                {
+                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Call(callLoc!) });
+                }
+            }
+
+            if (!calleeMethod.IsStatic)
+            {
+                argSize += 4;
+            }
+
+            if (argSize > 0)
+            {
+                if (hasDestructables)
+                {
+                    if (savedRegResult)
+                    {
+                        if (storageType!.IsFloatingPoint)
+                        {
+                            method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Fstp(RM.Address(Register.ESP, argSize, null, storageType!.Size)) });
+                        }
+                        else
+                        {
+                            if (storageType!.Size > 4)
+                            {
+                                method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(RM.Address(Register.ESP, argSize + 4, null), Register.EDX) });
+                            }
+
+                            switch (storageType!.Size % 4)
+                            {
+                                case 2:
+                                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(RM.Address(Register.ESP, argSize, null, sizeof(ushort)), Register.AX) });
+                                    break;
+                                case 1:
+                                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(RM.Address(Register.ESP, argSize, null, sizeof(byte)), Register.AL) });
+                                    break;
+                                default:
+                                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(RM.Address(Register.ESP, argSize, null), Register.EAX) });
+                                    break;
+                            }
+                        }
+                    }
+
+                    if (!calleeMethod!.IsStatic)
+                    {
+                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Add(Register.ESP, 4) });
+                    }
+
+                    foreach (var arg in argTypes)
+                    {
+                        MethodInfo? argDes = arg.GetDestructor();
+                        if (argDes != null)
+                        {
+                            method.Module!.AddProto(argDes);
+                            method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Lea(Register.ECX, RM.Address(Register.ESP)) });
+                            method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Push(Register.ECX) });
+                            method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Call(argDes!.MangledName) });
+                            method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Add(Register.ESP, 4) });
+                        }
+
+                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Add(Register.ESP, (uint)arg!.Size) });
+                    }
+
+                    if (savedRegResult)
+                    {
+                        if (storageType!.IsFloatingPoint)
+                        {
+                            method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Fld(RM.Address(Register.ESP, storageType!.Size)) });
+                            method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Add(Register.ESP, (uint)storageType!.Size) });
+                        }
+                        else
+                        {
+                            if (storageType!.Size > 4)
+                            {
+                                method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Pop(Register.EAX) });
+                                method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Pop(Register.EDX) });
+                            }
+                            else
+                            {
+                                switch (storageType!.Size)
+                                {
+                                    case 4:
+                                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Pop(Register.EAX) });
+                                        break;
+                                    case 3:
+                                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Pop(Register.EAX) });
+                                        break;
+                                    case 2:
+                                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Pop(Register.AX) });
+                                        break;
+                                    case 1:
+                                        method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Pop(Register.AL) });
+                                        break;
+                                }
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Add(Register.ESP, (uint)argSize) });
+                }
+            }
+
+            if (calleeMethod!.Parameters.Count != argTypes.Count)
+            {
+                string message = string.Format(
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    Properties.Resources.CodeGenerator_UnexpectedArgumentCount,
+                    calleeMethod.Name,
+                    calleeMethod!.Parameters.Count,
+                    argTypes.Count);
+                this.log.Write(new Message(
+                    callExpr.Start.Path,
+                    callExpr.Start.Line,
+                    callExpr.Start.Column,
+                    Severity.Error,
+                    message));
+                valueType = null;
+                return false;
+            }
+
+            bool argsValid = true;
+            for (int i = 0; i < calleeMethod!.Parameters.Count; i++)
+            {
+                int pointerCastOffset = 0;
+                if (!this.ValidateCanCast(callExpr, calleeMethod!.Parameters[i].Type!, argTypes[i], out pointerCastOffset))
+                {
+                    argsValid = false;
+                }
+
+                if (pointerCastOffset > 0)
+                {
+                    method.Statements.Insert(
+                        argValueOffsets[i],
+                        new AsmStatement { Instruction = X86Instruction.Add(Register.EAX, (uint)pointerCastOffset) });
+                }
+            }
+
+            valueType = storageType;
+            return argsValid;
+        }
+
+        private bool TryEmitReferenceExpression(
+            ReferenceExpression refExpr,
+            CompilerContext context,
+            Scope scope,
+            MethodImpl method,
+            out TypeDefinition? valueType)
+        {
+            RM? location = null;
+            TypeDefinition? storageType = null;
+            MethodInfo? calleeMethod = null;
+            if (!this.TryEmitReference(refExpr!, context, scope, method, out location, out storageType, out calleeMethod))
+            {
+                valueType = null;
+                return false;
+            }
+
+            // method pointer.
+            if (storageType == null)
+            {
+                if (!calleeMethod!.IsVirtual)
+                {
+                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(Register.EAX, 0, calleeMethod!.MangledName) });
+                }
+
+                valueType = context.GetMethodType(calleeMethod!);
+                return true;
+            }
+
+            if (storageType!.IsFloatingPoint)
+            {
+                method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Fld(location!) });
+            }
+            else if (storageType!.IsArray)
+            {
+                if (storageType!.ArrayElementCount > 0)
+                {
+                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Lea(Register.EAX, location!) });
+                    valueType = context.GetArrayType(storageType!.InnerType!, 0);
+                    return true;
+                }
+                else
+                {
+                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(Register.EAX, location!) });
+                }
+            }
+            else if (storageType!.Size <= 8 && !storageType!.IsClass)
+            {
+                if (location != null)
+                {
+                    switch (storageType!.Size)
+                    {
+                        case 8:
+                            method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(Register.ECX, location!) });
+                            method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(Register.EAX, RM.Address(Register.ECX)) });
+                            method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Add(Register.ECX, sizeof(uint)) });
+                            method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(Register.EDX, RM.Address(Register.ECX)) });
+                            break;
+                        case 4:
+                            method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(Register.EAX, location!) });
+                            break;
+                        case 2:
+                            method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(Register.AX, location!) });
+                            break;
+                        case 1:
+                            method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(Register.AL, location!) });
+                            break;
+                    }
+                }
+            }
+            else if (storageType!.IsClass)
+            {
+                // construct a new copy on the stack.
+                method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Lea(Register.EAX, location!) });
+                method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Sub(Register.ESP, (uint)storageType!.Size) });
+                MethodInfo? copyConstructor = storageType!.GetCopyConstructor(context);
+                if (copyConstructor != null)
+                {
+                    method.Module!.AddProto(copyConstructor!);
+                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Lea(Register.ECX, RM.Address(Register.ESP)) });
+                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Push(Register.EAX) });
+                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Push(Register.ECX) });
+                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Call(copyConstructor!.MangledName) });
+                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Add(Register.ESP, 8) });
+                }
+                else
+                {
+                    // raw copy.
+                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(Register.EDI, Register.ESP) });
+                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(Register.ESI, Register.EAX) });
+                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(Register.ECX, (uint)storageType.Size) });
+                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Cld() });
+                    method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Movsb().Rep() });
+                }
+            }
+
+            valueType = storageType;
+            return true;
         }
 
         private bool TryEmitNegativeExpression(
@@ -2668,7 +2704,7 @@ namespace Tea.Compiler
                         }
 
                         storageType = field.Type;
-                        location = RM.Address(Register.ECX, GetOperandSize(field.Type!.Size));
+                        location = RM.Address(Register.ECX, GetOperandSize(field.Type!));
                         return true;
                     }
                 }
@@ -2778,7 +2814,7 @@ namespace Tea.Compiler
                             }
 
                             storageType = field.Type;
-                            location = RM.Address(Register.ECX, GetOperandSize(field.Type!.Size));
+                            location = RM.Address(Register.ECX, GetOperandSize(field.Type!));
                             return true;
                         }
                     }
@@ -2933,7 +2969,7 @@ namespace Tea.Compiler
                 }
 
                 method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Add(Register.ECX, Register.EAX) });
-                location = RM.Address(Register.ECX, GetOperandSize(elementSize));
+                location = RM.Address(Register.ECX, GetOperandSize(innerType!.InnerType!));
                 storageType = innerType.InnerType;
                 return true;
             }
@@ -2972,7 +3008,7 @@ namespace Tea.Compiler
                 }
 
                 method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(Register.ECX, innerLoc!) });
-                location = RM.Address(Register.ECX, GetOperandSize(innerType.InnerType!.Size));
+                location = RM.Address(Register.ECX, GetOperandSize(innerType.InnerType!));
                 storageType = innerType.InnerType;
                 return true;
             }

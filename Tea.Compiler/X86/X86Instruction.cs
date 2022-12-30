@@ -124,7 +124,7 @@ namespace Tea.Compiler.X86
             {
                 byte[] code = new byte[sizeof(uint) + 1];
                 code[0] = 0x05;
-                Array.Copy(ToBytes(imm), 0, code, 1, sizeof(uint));
+                Array.Copy(imm.ToBytes(), 0, code, 1, sizeof(uint));
                 return new X86Instruction(code);
             }
             else
@@ -132,7 +132,7 @@ namespace Tea.Compiler.X86
                 byte[] code = new byte[2 + sizeof(uint)];
                 code[0] = 0x81;
                 code[1] = (byte)(0xC0 + reg.RegisterCode());
-                Array.Copy(ToBytes(imm), 0, code, 2, sizeof(uint));
+                Array.Copy(imm.ToBytes(), 0, code, 2, sizeof(uint));
                 return new X86Instruction(code);
             }
         }
@@ -198,14 +198,14 @@ namespace Tea.Compiler.X86
             {
                 code = new byte[1 + sizeof(uint)];
                 code[0] = 0x25;
-                Array.Copy(ToBytes(imm), 0, code, 1, sizeof(uint));
+                Array.Copy(imm.ToBytes(), 0, code, 1, sizeof(uint));
             }
             else
             {
                 code = new byte[2 + sizeof(uint)];
                 code[0] = 0x81;
                 code[1] = (byte)(0xe0 | reg.RegisterCode());
-                Array.Copy(ToBytes(imm), 0, code, 2, sizeof(uint));
+                Array.Copy(imm.ToBytes(), 0, code, 2, sizeof(uint));
             }
 
             return new X86Instruction(code);
@@ -272,7 +272,7 @@ namespace Tea.Compiler.X86
         /// <returns>A new instance of the <see cref="X86Instruction"/> class.</returns>
         public static X86Instruction Cld()
         {
-            return new X86Instruction(0xc);
+            return new X86Instruction(0xfc);
         }
 
         /// <summary>
@@ -588,7 +588,7 @@ namespace Tea.Compiler.X86
         {
             byte[] code = new byte[1 + sizeof(uint)];
             code[0] = (byte)(0xb8 + dest.RegisterCode());
-            Array.Copy(ToBytes(src), 0, code, 1, sizeof(uint));
+            Array.Copy(src.ToBytes(), 0, code, 1, sizeof(uint));
             RelocationEntry[] rel = Array.Empty<RelocationEntry>();
             if (!string.IsNullOrEmpty(symbol))
             {
@@ -719,11 +719,11 @@ namespace Tea.Compiler.X86
             index += src.Length;
             if (prefix)
             {
-                Array.Copy(ToBytes((ushort)imm), 0, code, index, sizeof(short));
+                Array.Copy(((ushort)imm).ToBytes(), 0, code, index, sizeof(short));
             }
             else
             {
-                Array.Copy(ToBytes((uint)imm), 0, code, index, sizeof(int));
+                Array.Copy(((uint)imm).ToBytes(), 0, code, index, sizeof(int));
             }
 
             return new X86Instruction(code);
@@ -1141,14 +1141,14 @@ namespace Tea.Compiler.X86
             {
                 code = new byte[1 + sizeof(uint)];
                 code[0] = 0x2d;
-                Array.Copy(ToBytes(imm), 0, code, 1, sizeof(uint));
+                Array.Copy(imm.ToBytes(), 0, code, 1, sizeof(uint));
             }
             else
             {
                 code = new byte[2 + sizeof(uint)];
                 code[0] = 0x81;
                 code[1] = (byte)(0xe8 | reg.RegisterCode());
-                Array.Copy(ToBytes(imm), 0, code, 2, sizeof(uint));
+                Array.Copy(imm.ToBytes(), 0, code, 2, sizeof(uint));
             }
 
             return new X86Instruction(code);
@@ -1363,9 +1363,6 @@ namespace Tea.Compiler.X86
                             result.Append($"or {DecodeModRMReg(modRM, operandSize).ToString().ToLowerInvariant()}, {rm}");
                         }
 
-                        break;
-                    case 0xc:
-                        result.Append("cld");
                         break;
                     case 0x0f:
                         {
@@ -1937,6 +1934,9 @@ namespace Tea.Compiler.X86
                         }
 
                         break;
+                    case 0xfc:
+                        result.Append("cld");
+                        break;
                     case 0xff:
                         {
                             byte modrm = this.machineCode[index];
@@ -1998,26 +1998,6 @@ namespace Tea.Compiler.X86
         private static byte DecodeModRMOpcode(byte modRM)
         {
             return (byte)((modRM >> 3) & 0x7);
-        }
-
-        private static byte[] ToBytes(ushort data)
-        {
-            return new byte[]
-            {
-                (byte)data,
-                (byte)(data >> 8),
-            };
-        }
-
-        private static byte[] ToBytes(uint data)
-        {
-            return new byte[]
-            {
-                (byte)data,
-                (byte)(data >> 8),
-                (byte)(data >> 16),
-                (byte)(data >> 24),
-            };
         }
 
         private static bool IsPrefix(byte code)

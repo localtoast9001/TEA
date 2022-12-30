@@ -71,7 +71,7 @@ namespace Tea.Language
         };
 
         private readonly string path;
-        private readonly StreamReader inner;
+        private readonly TextReader inner;
         private readonly MessageLog log;
         private Token? next;
         private int line;
@@ -83,9 +83,20 @@ namespace Tea.Language
         /// <param name="path">The source path.</param>
         /// <param name="log">The message log.</param>
         public TokenReader(string path, MessageLog log)
+        : this(new StreamReader(path, Encoding.ASCII), path, log)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TokenReader"/> class.
+        /// </summary>
+        /// <param name="reader">The inner text reader.</param>
+        /// <param name="path">The source path.</param>
+        /// <param name="log">The message log.</param>
+        public TokenReader(TextReader reader, string path, MessageLog log)
         {
             this.path = path;
-            this.inner = new StreamReader(path, Encoding.ASCII);
+            this.inner = reader;
             this.line = 1;
             this.column = 1;
             this.log = log;
