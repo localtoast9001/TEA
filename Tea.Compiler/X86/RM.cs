@@ -209,6 +209,68 @@ namespace Tea.Compiler.X86
         /// Creates a r/m8,16,32 to access memory address from the given register and displacement.
         /// </summary>
         /// <param name="reg">The register base.</param>
+        /// <param name="disp">The 32-bit displacement to add to the register.</param>
+        /// <param name="label">The optional label for the displacement value.</param>
+        /// <param name="size">The operand size.</param>
+        /// <returns>A new instance of the <see cref="RM"/> class.</returns>
+        public static RM Address(Register reg, int disp, string? label, int size = sizeof(uint))
+        {
+            if (disp <= sbyte.MaxValue && disp >= sbyte.MinValue)
+            {
+                return Address(reg, (sbyte)disp, label, size);
+            }
+
+            byte[] disp32 = disp.ToBytes();
+
+            byte rm = 0;
+            switch (reg)
+            {
+                case Register.EAX:
+                    rm = 0;
+                    break;
+                case Register.ECX:
+                    rm = 1;
+                    break;
+                case Register.EDX:
+                    rm = 2;
+                    break;
+                case Register.EBX:
+                    rm = 3;
+                    break;
+                case Register.EBP:
+                    rm = 5;
+                    break;
+                case Register.ESI:
+                    rm = 6;
+                    break;
+                case Register.EDI:
+                    rm = 7;
+                    break;
+                case Register.ESP:
+                    {
+                        // only support ESP for now.
+                        rm = 4;
+                        byte[] sibcode = new byte[2 + disp32.Length];
+                        sibcode[0] = (byte)(0x80 | rm);
+                        sibcode[1] = 0x24;
+                        Array.Copy(disp32, 0, sibcode, 2, disp32.Length);
+                        return new RM(sibcode, size, null, label);
+                    }
+
+                default:
+                    throw new NotImplementedException($"Register {reg} is either not implemented or not supported.");
+            }
+
+            byte[] code = new byte[1 + disp32.Length];
+            code[0] = (byte)(0x80 | rm);
+            Array.Copy(disp32, 0, code, 1, disp32.Length);
+            return new RM(code, size, null, label);
+        }
+
+        /// <summary>
+        /// Creates a r/m8,16,32 to access memory address from the given register and displacement.
+        /// </summary>
+        /// <param name="reg">The register base.</param>
         /// <param name="disp">The 8-bit displacement to add to the register.</param>
         /// <param name="label">The optional label for the displacement value.</param>
         /// <param name="size">The operand size.</param>
@@ -339,46 +401,7 @@ namespace Tea.Compiler.X86
 
                 case 1:
                     {
-                        string regBase = string.Empty;
-                        switch (rm)
-                        {
-                            case 0:
-                                regBase = "[eax]";
-                                break;
-                            case 1:
-                                regBase = "[ecx]";
-                                break;
-                            case 2:
-                                regBase = "[edx]";
-                                break;
-                            case 3:
-                                regBase = "[ebx]";
-                                break;
-                            case 4:
-                                {
-                                    byte sib = this.code[index++];
-                                    if (sib != 0x24)
-                                    {
-                                        throw new NotImplementedException();
-                                    }
-
-                                    regBase = "[esp]";
-                                }
-
-                                break;
-                            case 5:
-                                regBase = "[ebp]";
-                                break;
-                            case 6:
-                                regBase = "[esi]";
-                                break;
-                            case 7:
-                                regBase = "[edi]";
-                                break;
-                            default:
-                                return "TODO";
-                        }
-
+                        string regBase = this.DecodeRegBase(rm, ref index);
                         string disp8Str = string.Empty;
                         if (this.label != null)
                         {
@@ -394,12 +417,57 @@ namespace Tea.Compiler.X86
                     }
 
                 case 2:
-                    break;
+                    {
+                        string regBase = this.DecodeRegBase(rm, ref index);
+                        string disp32Str = string.Empty;
+                        if (this.label != null)
+                        {
+                            disp32Str = this.label!;
+                        }
+                        else
+                        {
+                            int disp32 = new ReadOnlySpan<byte>(this.code, index, sizeof(uint)).ToInt32();
+                            disp32Str = disp32.ToString();
+                        }
+
+                        return string.Concat(operandSize, disp32Str, regBase);
+                    }
+
                 default:
                     return rm.FromRegisterCode(this.size).ToString().ToLowerInvariant();
             }
+        }
 
-            return "<<TODO>>";
+        private string DecodeRegBase(byte rm, ref int index)
+        {
+            switch (rm)
+            {
+                case 0:
+                    return "[eax]";
+                case 1:
+                    return "[ecx]";
+                case 2:
+                    return "[edx]";
+                case 3:
+                    return "[ebx]";
+                case 4:
+                    {
+                        byte sib = this.code[index++];
+                        if (sib != 0x24)
+                        {
+                            throw new NotImplementedException();
+                        }
+
+                        return "[esp]";
+                    }
+
+                case 5:
+                    return "[ebp]";
+                case 6:
+                    return "[esi]";
+                default:
+                    return "[edi]";
+            }
         }
     }
 }

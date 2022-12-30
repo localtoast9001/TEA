@@ -198,5 +198,55 @@ namespace Tea.Compiler.X86
         {
             return (short)ToUInt16(data);
         }
+
+        /// <summary>
+        /// Encodes data to a byte array.
+        /// </summary>
+        /// <param name="data">The the data to encode.</param>
+        /// <returns>The encoded data.</returns>
+        internal static byte[] ToBytes(this ushort data)
+        {
+            return new byte[]
+            {
+                (byte)data,
+                (byte)(data >> 8),
+            };
+        }
+
+        /// <summary>
+        /// Encodes data to a byte array.
+        /// </summary>
+        /// <param name="data">The the data to encode.</param>
+        /// <returns>The encoded data.</returns>
+        internal static byte[] ToBytes(this short data)
+        {
+            return ToBytes((ushort)data);
+        }
+
+        /// <summary>
+        /// Encodes data to a byte array.
+        /// </summary>
+        /// <param name="data">The the data to encode.</param>
+        /// <returns>The encoded data.</returns>
+        internal static byte[] ToBytes(this uint data)
+        {
+            return new byte[]
+            {
+                (byte)data,
+                (byte)(data >> 8),
+                (byte)(data >> 16),
+                (byte)(data >> 24),
+            };
+        }
+
+        /// <summary>
+        /// Encodes data to a byte array.
+        /// </summary>
+        /// <param name="data">The the data to encode.</param>
+        /// <returns>The encoded data.</returns>
+        internal static byte[] ToBytes(this int data)
+        {
+            return ToBytes((uint)data);
+        }
     }
 }

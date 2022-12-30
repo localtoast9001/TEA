@@ -33,6 +33,8 @@ namespace Tea.Compiler.UnitTest.X86
                 new Tuple<RM, string>(RM.Address(Register.EBP, -4, "_x$"), "dword ptr _x$[ebp]"),
                 new Tuple<RM, string>(RM.Address(Register.EBP, -4, null), "dword ptr -4[ebp]"),
                 new Tuple<RM, string>(RM.Address(Register.ESP, 4, null), "dword ptr 4[esp]"),
+                new Tuple<RM, string>(RM.Address(Register.EBP, -256, null), "dword ptr -256[ebp]"),
+                new Tuple<RM, string>(RM.Address(Register.EBP, 320, null), "dword ptr 320[ebp]"),
             };
 
             foreach (var testCase in testCases)
