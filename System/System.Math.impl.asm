@@ -118,38 +118,26 @@ _roundi PROC C EXPORT
     mov ebp,esp
     fld qword ptr _value$[ebp]
     frndint
-    fistp dword ptr _roundi$[ebp]
+    fisttp dword ptr _roundi$[ebp]
     mov eax,_roundi$[ebp]
     mov esp,ebp
     pop ebp
-    ret    
+    ret
 _roundi ENDP
+
 _value$=8
-_floori$=-4
-_floori PROC C EXPORT
+_truncatei$=-4
+_truncatei PROC C EXPORT
     push ebp
     mov ebp,esp
     fld qword ptr _value$[ebp]
-    fistp dword ptr _floori$[ebp]
-    mov eax,_floori$[ebp]
+    fisttp dword ptr _truncatei$[ebp]
+    mov eax,_truncatei$[ebp]
     mov esp,ebp
     pop ebp
-    ret    
-_floori ENDP
-_value$=8
-_ceilingi$=-4
-_ceilingi PROC C EXPORT
-    push ebp
-    mov ebp,esp
-    fld qword ptr _value$[ebp]
-    fld1
-    faddp
-    fistp dword ptr _ceilingi$[ebp]
-    mov eax,_ceilingi$[ebp]
-    mov esp,ebp
-    pop ebp
-    ret    
-_ceilingi ENDP
+    ret
+_truncatei ENDP
+
 _pid PROC C EXPORT
     push ebp
     mov ebp,esp

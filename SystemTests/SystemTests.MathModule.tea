@@ -74,7 +74,39 @@ type
             virtual function Name() : array of character;
             virtual function Description() : array of character;
     end;
- 
+    MathPi = class(Test)
+        public
+            constructor();
+            virtual destructor();
+            virtual function Execute(context : ^TestContext) : boolean;
+            virtual function Name() : array of character;
+            virtual function Description() : array of character;
+    end;
+    MathCeiling1 = class(Test)
+        public
+            constructor();
+            virtual destructor();
+            virtual function Execute(context : ^TestContext) : boolean;
+            virtual function Name() : array of character;
+            virtual function Description() : array of character;
+    end;
+    MathFloor1 = class(Test)
+        public
+            constructor();
+            virtual destructor();
+            virtual function Execute(context : ^TestContext) : boolean;
+            virtual function Name() : array of character;
+            virtual function Description() : array of character;
+    end;
+    MathRound1 = class(Test)
+        public
+            constructor();
+            virtual destructor();
+            virtual function Execute(context : ^TestContext) : boolean;
+            virtual function Name() : array of character;
+            virtual function Description() : array of character;
+    end;
+
 constructor FloatCompare1();
 begin
 end;
@@ -282,6 +314,98 @@ begin
     Description := '-1.0 >= -1.0';
 end;
 
+constructor MathPi();
+begin
+end;
+
+destructor MathPi();
+begin
+end;
+
+function MathPi.Execute(context : ^TestContext) : boolean;
+begin
+    Execute := (Math.Pi() > 3.14) and (Math.Pi() < 3.15);
+end;
+
+function MathPi.Name() : array of character;
+begin
+    Name := 'MathPi';
+end;
+
+function MathPi.Description() : array of character;
+begin
+    Description := 'Math.Pi() > 3.14 and Math.Pi() < 3.15';
+end;
+
+constructor MathCeiling1();
+begin
+end;
+
+destructor MathCeiling1();
+begin
+end;
+
+function MathCeiling1.Execute(context : ^TestContext) : boolean;
+begin
+    Execute := (Math.Ceiling(4.4) = 5) and (Math.Ceiling(-3.9) = -3);
+end;
+
+function MathCeiling1.Name() : array of character;
+begin
+    Name := 'MathCeiling1';
+end;
+
+function MathCeiling1.Description() : array of character;
+begin
+    Description := '(Math.Ceiling(4.4) = 5) and (Math.Ceiling(-3.9) = -3)';
+end;
+
+constructor MathFloor1();
+begin
+end;
+
+destructor MathFloor1();
+begin
+end;
+
+function MathFloor1.Execute(context : ^TestContext) : boolean;
+begin
+    Execute := (Math.Floor(4.9) = 4) and (Math.Floor(-3.5) = -4);
+end;
+
+function MathFloor1.Name() : array of character;
+begin
+    Name := 'MathFloor1';
+end;
+
+function MathFloor1.Description() : array of character;
+begin
+    Description := '(Math.Floor(4.9) = 4) and (Math.Floor(-3.5) = -4)';
+end;
+
+constructor MathRound1();
+begin
+end;
+
+destructor MathRound1();
+begin
+end;
+
+function MathRound1.Execute(context : ^TestContext) : boolean;
+begin
+    Execute := (Math.Round(4.4) = 4) and (Math.Round(-3.6) = -4);
+end;
+
+function MathRound1.Name() : array of character;
+begin
+    Name := 'MathRound1';
+end;
+
+function MathRound1.Description() : array of character;
+begin
+    Description := '(Math.Round(4.4) = 4) and (Math.Round(-3.6) = -4)';
+end;
+
 constructor MathModule();
 begin
     _tests[0] := new FloatCompare1();
@@ -293,6 +417,10 @@ begin
     _tests[6] := new FloatCompare7();
     _tests[7] := new FloatCompare8();
     _tests[8] := new FloatCompare9();
+    _tests[9] := new MathPi();
+    _tests[10] := new MathCeiling1();
+    _tests[11] := new MathFloor1();
+    _tests[12] := new MathRound1();
 end;
 
 destructor MathModule();
@@ -306,6 +434,10 @@ begin
     delete _tests[6];
     delete _tests[7];
     delete _tests[8];
+    delete _tests[9];
+    delete _tests[10];
+    delete _tests[11];
+    delete _tests[12];
 end;
 
 function MathModule.Name() : array of character;
@@ -320,7 +452,7 @@ end;
 
 function MathModule.Tests() : ^TestIterator;
 begin
-    Tests := new ArrayTestIterator(_tests, 9);
+    Tests := new ArrayTestIterator(_tests, 13);
 end;
 
 function MathModule.Init(context : ^TestContext) : boolean;

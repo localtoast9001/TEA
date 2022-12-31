@@ -11,8 +11,7 @@
 .global _sqrd
 .global _expd
 .global _roundi
-.global _floori
-.global _ceilingi
+.global _truncatei
 .global _pid
 
 .set _value$,8
@@ -132,34 +131,20 @@ _roundi:
     mov %esp, %ebp
     fldl _value$(%ebp)
     frndint
-    fistpl _roundi$(%ebp)
-    mov %eax,_roundi$(%ebp)
+    fisttpl _roundi$(%ebp)
+    mov _roundi$(%ebp),%eax
     mov %ebp,%esp
     pop %ebp
     ret
 
 .set _value$,8
-.set _floori$,-4
-_floori:
+.set _truncatei$,-4
+_truncatei:
     push %ebp
     mov %esp, %ebp
     fldl _value$(%ebp)
-    fistpl _floori$(%ebp)
-    mov %eax,_floori$(%ebp)
-    mov %ebp,%esp
-    pop %ebp
-    ret
-
-.set _value$,8
-.set _ceilingi$,-4
-_ceilingi:
-    push %ebp
-    mov %esp, %ebp
-    fldl _value$(%ebp)
-    fld1
-    faddp
-    fistpl _ceilingi$(%ebp)
-    mov %eax,_ceilingi$(%ebp)
+    fisttpl _truncatei$(%ebp)
+    mov _truncatei$(%ebp),%eax
     mov %ebp,%esp
     pop %ebp
     ret
