@@ -35,10 +35,37 @@ function Math.Round(value : double) : integer;
 extern '_roundi';
 
 function Math.Floor(value : double) : integer;
-extern '_floori';
+var
+    trunc : integer = Truncate(value);
+begin
+    if value >= 0.0 then
+        Floor := trunc
+    else
+    begin
+        if value - Convert.ToDouble(trunc) = 0.0 then
+            Floor := trunc
+        else
+            Floor := trunc - 1;
+    end;
+end;
 
 function Math.Ceiling(value : double) : integer;
-extern '_ceilingi';
+var
+    trunc : integer = Truncate(value);
+begin
+    if value <= 0.0 then
+        Ceiling := trunc
+    else
+    begin
+        if value - Convert.ToDouble(trunc) = 0.0 then
+            Ceiling := trunc
+        else
+            Ceiling := 1 + trunc;
+    end;
+end;
+
+function Math.Truncate(value : double) : integer;
+extern '_truncatei';
 
 function Math.Pi() : double;
 extern '_pid';

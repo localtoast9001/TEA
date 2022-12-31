@@ -41,6 +41,7 @@ type
             static function Round(value : double) : integer;
             static function Floor(value : double) : integer;
             static function Ceiling(value : double) : integer;
+            static function Truncate(value : double) : integer;
             static function Pi() : double;
             static function Max(x, y : integer) : integer;
             static function Min(x, y : integer) : integer;
