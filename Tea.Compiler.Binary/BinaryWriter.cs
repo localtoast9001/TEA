@@ -4,12 +4,12 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-namespace Tea.Compiler.Elf
+namespace Tea.Compiler.Binary
 {
     /// <summary>
     /// Abstract binary writer.
     /// </summary>
-    internal abstract class BinaryWriter : IBinaryWriter
+    public abstract class BinaryWriter : IBinaryWriter
     {
         /// <summary>
         /// Writes the data to the underlying stream.

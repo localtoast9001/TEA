@@ -6,6 +6,8 @@
 
 namespace Tea.Compiler.Elf
 {
+    using Tea.Compiler.Binary;
+
     /// <summary>
     /// Abstract section in an ELF file.
     /// </summary>

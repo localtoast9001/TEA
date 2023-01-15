@@ -6,6 +6,8 @@
 
 namespace Tea.Compiler.Elf
 {
+    using Tea.Compiler.Binary;
+
     /// <summary>
     /// The type of relocation.
     /// </summary>

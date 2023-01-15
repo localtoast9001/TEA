@@ -4,12 +4,12 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-namespace Tea.Compiler.Elf
+namespace Tea.Compiler.Binary
 {
     /// <summary>
     /// Mandatory interface for serializable structs.
     /// </summary>
-    internal interface ISerializable
+    public interface ISerializable
     {
         /// <summary>
         /// Serialize to a <see cref="BinaryWriter"/>.

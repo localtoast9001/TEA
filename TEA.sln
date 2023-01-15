@@ -15,6 +15,14 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tea.Compiler.Elf.UnitTest",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tea.Compiler.UnitTest", "Tea.Compiler.UnitTest\Tea.Compiler.UnitTest.csproj", "{2A03E6BC-07A1-49BD-8063-C164CB668CE4}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tea.Compiler.Coff", "Tea.Compiler.Coff\Tea.Compiler.Coff.csproj", "{661D3DA3-F920-45F0-9DD8-9EB2E3177BEA}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tea.Compiler.Coff.UnitTest", "Tea.Compiler.Coff.UnitTest\Tea.Compiler.Coff.UnitTest.csproj", "{32A62FAB-6651-4BE3-AD82-4EA08AD6B976}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tea.Compiler.Binary", "Tea.Compiler.Binary\Tea.Compiler.Binary.csproj", "{DCD1D1BE-C7DC-4325-999E-3174F3D35972}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tea.Compiler.Binary.UnitTest", "Tea.Compiler.Binary.UnitTest\Tea.Compiler.Binary.UnitTest.csproj", "{67ACE1CA-F85E-4744-96C0-65936C9D857A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +53,22 @@ Global
 		{2A03E6BC-07A1-49BD-8063-C164CB668CE4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2A03E6BC-07A1-49BD-8063-C164CB668CE4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2A03E6BC-07A1-49BD-8063-C164CB668CE4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{661D3DA3-F920-45F0-9DD8-9EB2E3177BEA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{661D3DA3-F920-45F0-9DD8-9EB2E3177BEA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{661D3DA3-F920-45F0-9DD8-9EB2E3177BEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{661D3DA3-F920-45F0-9DD8-9EB2E3177BEA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{32A62FAB-6651-4BE3-AD82-4EA08AD6B976}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{32A62FAB-6651-4BE3-AD82-4EA08AD6B976}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{32A62FAB-6651-4BE3-AD82-4EA08AD6B976}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{32A62FAB-6651-4BE3-AD82-4EA08AD6B976}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DCD1D1BE-C7DC-4325-999E-3174F3D35972}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DCD1D1BE-C7DC-4325-999E-3174F3D35972}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DCD1D1BE-C7DC-4325-999E-3174F3D35972}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DCD1D1BE-C7DC-4325-999E-3174F3D35972}.Release|Any CPU.Build.0 = Release|Any CPU
+		{67ACE1CA-F85E-4744-96C0-65936C9D857A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{67ACE1CA-F85E-4744-96C0-65936C9D857A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{67ACE1CA-F85E-4744-96C0-65936C9D857A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{67ACE1CA-F85E-4744-96C0-65936C9D857A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

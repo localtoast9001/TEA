@@ -7,6 +7,7 @@
 namespace Tea.Compiler.Elf.UnitTest
 {
     using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using Tea.Compiler.Binary;
 
     /// <summary>
     /// Unit test for the <see cref="Rel32"/> struct.

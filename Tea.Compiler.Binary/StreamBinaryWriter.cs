@@ -4,14 +4,14 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-namespace Tea.Compiler.Elf
+namespace Tea.Compiler.Binary
 {
     using System.IO;
 
     /// <summary>
     /// Implementation of a <see cref="BinaryWriter"/> that writes to a stream.
     /// </summary>
-    internal class StreamBinaryWriter : BinaryWriter
+    public class StreamBinaryWriter : BinaryWriter
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="StreamBinaryWriter"/> class.

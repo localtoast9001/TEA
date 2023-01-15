@@ -4,7 +4,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-namespace Tea.Compiler.Elf
+namespace Tea.Compiler.Binary
 {
     /// <summary>
     /// Binary writer interface.

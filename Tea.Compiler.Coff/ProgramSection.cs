@@ -1,16 +1,15 @@
-//-----------------------------------------------------------------------
-// <copyright file="ProgramSection.cs" company="Jon Rowlett">
-//     Copyright (C) Jon Rowlett. All rights reserved.
+﻿// <copyright file="ProgramSection.cs" company="Jon Rowlett">
+// Copyright (C) Jon Rowlett. All rights reserved.
 // </copyright>
-//-----------------------------------------------------------------------
 
-namespace Tea.Compiler.Elf
+namespace Tea.Compiler.Coff
 {
+    using System.Collections.Generic;
     using System.Collections.ObjectModel;
     using Tea.Compiler.Binary;
 
     /// <summary>
-    /// Program (code or data) section.
+    /// Code or data sections.
     /// </summary>
     public class ProgramSection : Section
     {
@@ -47,57 +46,12 @@ namespace Tea.Compiler.Elf
         /// <summary>
         /// Gets the collection of symbols.
         /// </summary>
-        public IReadOnlyCollection<Symbol> Symbols => new ReadOnlyCollection<Symbol>(this.symbols);
+        public override IReadOnlyCollection<Symbol> Symbols => new ReadOnlyCollection<Symbol>(this.symbols);
 
         /// <summary>
         /// Gets the collection of relocations.
         /// </summary>
-        public IReadOnlyCollection<Relocation> Relocations => new ReadOnlyCollection<Relocation>(this.relocations);
-
-        /// <inheritdoc/>
-        internal override uint Align => 16;
-
-        /// <inheritdoc/>
-        internal override uint Size => (uint)this.content.Length;
-
-        /// <inheritdoc/>
-        internal override SectionFlags Flags =>
-            SectionFlags.Alloc |
-            (this.Executable ? SectionFlags.ExecInstr : SectionFlags.None) |
-            (this.Writeable ? SectionFlags.Write : SectionFlags.None);
-
-        /// <inheritdoc/>
-        internal override SectionType Type => SectionType.ProgBits;
-
-        /// <summary>
-        /// Starts a new symbol definition.
-        /// </summary>
-        /// <param name="name">The symbol name.</param>
-        /// <param name="type">The symbol type.</param>
-        /// <param name="binding">The symbol binding.</param>
-        /// <returns>A new instance of the <see cref="Symbol"/> class.</returns>
-        public Symbol StartSymbol(
-            string name,
-            SymbolType type,
-            SymbolBinding binding)
-        {
-            Symbol sym = new Symbol(
-                name,
-                this.content.Position,
-                type,
-                binding);
-            this.symbols.Add(sym);
-            return sym;
-        }
-
-        /// <summary>
-        /// Ends a symbol definition.
-        /// </summary>
-        /// <param name="symbol">The symbol to end.</param>
-        public void EndSymbol(Symbol symbol)
-        {
-            symbol.Complete((uint)(this.content.Position - symbol.Offset));
-        }
+        public override IReadOnlyCollection<Relocation> Relocations => new ReadOnlyCollection<Relocation>(this.relocations);
 
         /// <summary>
         /// Defines a new relocation at the current position in the content stream.
@@ -111,6 +65,18 @@ namespace Tea.Compiler.Elf
             Relocation rel = new Relocation((uint)this.content.Position + offset, relative, symbol);
             this.relocations.Add(rel);
             return rel;
+        }
+
+        /// <summary>
+        /// Defines a symbol that points to the current location in the section.
+        /// </summary>
+        /// <param name="name">The symbol name.</param>
+        /// <returns>A new instance of the <see cref="Symbol"/> class.</returns>
+        public Symbol DefineSymbol(string name)
+        {
+            Symbol symbol = new Symbol();
+            this.symbols.Add(symbol);
+            return symbol;
         }
 
         /// <inheritdoc/>

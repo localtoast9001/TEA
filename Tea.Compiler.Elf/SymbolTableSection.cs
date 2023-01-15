@@ -6,6 +6,8 @@
 
 namespace Tea.Compiler.Elf
 {
+    using Tea.Compiler.Binary;
+
     /// <summary>
     /// Section for symbol entries.
     /// </summary>

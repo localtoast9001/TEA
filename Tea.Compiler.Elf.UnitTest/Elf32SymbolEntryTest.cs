@@ -7,6 +7,7 @@
 namespace Tea.Compiler.Elf.UnitTest
 {
     using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using Tea.Compiler.Binary;
 
     /// <summary>
     /// Unit tests for the <see cref="Elf32SymbolEntry"/> class.
