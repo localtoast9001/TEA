@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "TEAC": {
+      "commandName": "Project",
+      "commandLineArgs": "/ID:\\code\\TEA\\System /ID:\\code\\TEA\\System\\Text /FoD:\\code\\TEA\\System\\obj\\x86\\Debug\\System.Text.Encoding.obj D:\\code\\TEA\\System\\Text\\System.Text.Encoding.tea"
+    }
+  }
+}

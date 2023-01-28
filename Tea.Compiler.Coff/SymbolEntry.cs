@@ -11,6 +11,11 @@ namespace Tea.Compiler.Coff
     /// </summary>
     internal class SymbolEntry : ISerializable
     {
+        /// <summary>
+        /// The size of the structure in bytes when serialized.
+        /// </summary>
+        public const int BinarySize = 0x12;
+
         private const int NameSize = 8;
 
         /// <summary>
@@ -42,14 +47,33 @@ namespace Tea.Compiler.Coff
         public byte StorageClass { get; set; }
 
         /// <summary>
-        /// Gets or sets the auxiliary count.
+        /// Gets or sets the auxiliary data.
         /// </summary>
-        public byte AuxCount { get; set; }
+        public byte[] AuxData { get; set; } = Array.Empty<byte>();
+
+        /// <summary>
+        /// Gets the number of auxiliary entries occupied by the auxiliary data.
+        /// </summary>
+        public byte AuxCount => (byte)((this.AuxData.Length + BinarySize - 1) / BinarySize);
 
         /// <inheritdoc/>
         public void Serialize(BinaryWriter writer)
         {
-            throw new NotImplementedException();
+            writer.WriteBytes(this.Name);
+            writer.WriteInt32(this.Value);
+            writer.WriteInt16(this.SectionNumber);
+            writer.WriteUInt16(this.Type);
+            writer.WriteByte(this.StorageClass);
+
+            byte auxCount = this.AuxCount;
+            writer.WriteByte(auxCount);
+            if (auxCount > 0)
+            {
+                writer.WriteBytes(this.AuxData);
+
+                int padding = (auxCount * BinarySize) - this.AuxData.Length;
+                writer.Skip((uint)padding);
+            }
         }
     }
 }

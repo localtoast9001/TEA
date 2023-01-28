@@ -16,7 +16,7 @@ namespace Tea.Compiler.Coff
     {
         private readonly List<string> strings = new List<string>();
         private readonly Dictionary<string, uint> indexes = new Dictionary<string, uint>(StringComparer.Ordinal);
-        private uint offset;
+        private uint offset = sizeof(uint);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="StringTable"/> class.
@@ -45,6 +45,28 @@ namespace Tea.Compiler.Coff
             this.indexes.Add(value, result);
             this.offset += (uint)size;
             return result;
+        }
+
+        /// <summary>
+        /// Sets a string field, defining an entry in the string table if neccessary.
+        /// </summary>
+        /// <param name="value">The string value.</param>
+        /// <param name="field">The field to set, usually an 8 byte field.</param>
+        public void SetStringField(string value, Span<byte> field)
+        {
+            byte[] utf8 = Encoding.UTF8.GetBytes(value);
+            if (utf8.Length <= field.Length)
+            {
+                utf8.CopyTo(field);
+            }
+            else
+            {
+                uint index = this.DefineString(value);
+                field[4] = (byte)index;
+                field[5] = (byte)(index >> 8);
+                field[6] = (byte)(index >> 16);
+                field[7] = (byte)(index >> 24);
+            }
         }
 
         /// <inheritdoc/>

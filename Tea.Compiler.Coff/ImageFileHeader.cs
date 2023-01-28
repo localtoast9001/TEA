@@ -17,21 +17,6 @@ namespace Tea.Compiler.Coff
         public const int BinarySize = 0x14;
 
         /// <summary>
-        /// The header magic number for X86 (32-bit) files.
-        /// </summary>
-        internal const ushort MachineI386 = 0x014C;
-
-        /// <summary>
-        /// The header magic number for Itanium files.
-        /// </summary>
-        internal const ushort MachineIA64 = 0x8664;
-
-        /// <summary>
-        /// The header magic number for AMD64 files.
-        /// </summary>
-        internal const ushort MachineAMD64 = 0x0200;
-
-        /// <summary>
         /// Gets or sets the architecture type of the computer.
         /// </summary>
         public Machine Machine { get; set; }
@@ -69,26 +54,13 @@ namespace Tea.Compiler.Coff
         /// <inheritdoc/>
         public void Serialize(BinaryWriter writer)
         {
-            writer.WriteUInt16(this.GetMachineMagic());
+            writer.WriteUInt16(this.Machine.ToMagicNumber());
             writer.WriteUInt16(this.NumberOfSections);
             writer.WriteUInt32(this.GetTimeDateStampUnixTime());
             writer.WriteUInt32(this.PointerToSymbolTable);
             writer.WriteUInt32(this.NumberOfSymbols);
             writer.WriteUInt16(this.SizeOfOptionalHeader);
             writer.WriteUInt16(this.Characteristics);
-        }
-
-        private ushort GetMachineMagic()
-        {
-            switch (this.Machine)
-            {
-                case Machine.I386:
-                    return MachineI386;
-                case Machine.IA64:
-                    return MachineIA64;
-                default:
-                    return MachineAMD64;
-            }
         }
 
         private uint GetTimeDateStampUnixTime()

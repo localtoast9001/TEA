@@ -4,7 +4,141 @@
 
 namespace Tea.Compiler.Coff
 {
+    using System;
     using Tea.Compiler.Binary;
+
+    /// <summary>
+    /// Flags for the image section characteristics member.
+    /// </summary>
+    [Flags]
+    internal enum ImageSectionCharacteristicFlags : uint
+    {
+        /// <summary>
+        /// No flags for the section.
+        /// </summary>
+        None = 0,
+
+        /// <summary>
+        /// IMAGE_SCN_TYPE_NO_PAD. The section should not be padded to the next boundary. This flag is obsolete and is replaced by IMAGE_SCN_ALIGN_1BYTES.
+        /// </summary>
+        NoPad = 0x8,
+
+        /// <summary>
+        /// IMAGE_SCN_CNT_CODE. The section contains executable code.
+        /// </summary>
+        Code = 0x20,
+
+        /// <summary>
+        /// IMAGE_SCN_CNT_INITIALIZED_DATA. The section contains initialized data.
+        /// </summary>
+        InitializedData = 0x40,
+
+        /// <summary>
+        /// IMAGE_SCN_CNT_UNINITIALIZED_DATA. The section contains uninitialized data.
+        /// </summary>
+        UninitializedData = 0x80,
+
+        /// <summary>
+        /// IMAGE_SCN_LNK_OTHER. Reserved.
+        /// </summary>
+        LinkOther = 0x100,
+
+        /// <summary>
+        /// IMAGE_SCN_LNK_INFO. The section contains comments or other information. This is valid only for object files.
+        /// </summary>
+        LinkInfo = 0x200,
+
+        /// <summary>
+        /// IMAGE_SCN_LNK_REMOVE. The section will not become part of the image. This is valid only for object files.
+        /// </summary>
+        LinkRemove = 0x800,
+
+        /// <summary>
+        /// IMAGE_SCN_LNK_COMDAT. The section contains COMDAT data. This is valid only for object files.
+        /// </summary>
+        LinkComdat = 0x1000,
+
+        /// <summary>
+        /// IMAGE_SCN_NO_DEFER_SPEC_EXC. Reset speculative exceptions handling bits in the TLB entries for this section.
+        /// </summary>
+        NoDeferSpeculativeExceptions = 0x4000,
+
+        /// <summary>
+        /// IMAGE_SCN_GPREL. The section contains data referenced through the global pointer.
+        /// </summary>
+        GPRel = 0x8000,
+
+        /// <summary>
+        /// IMAGE_SCN_MEM_PURGEABLE. Reserved.
+        /// </summary>
+        MemPurgeable = 0x20000,
+
+        /// <summary>
+        /// IMAGE_SCN_MEM_LOCKED. Reserved.
+        /// </summary>
+        MemLocked = 0x40000,
+
+        /// <summary>
+        /// IMAGE_SCN_MEM_PRELOAD. Reserved.
+        /// </summary>
+        MemPreload = 0x80000,
+
+        /// <summary>
+        /// IMAGE_SCN_ALIGN_1BYTES. Align data on a 1-byte boundary. This is valid only for object files.
+        /// </summary>
+        Align1Bytes = 0x100000,
+
+        /// <summary>
+        /// IMAGE_SCN_ALIGN_8192BYTES. Align data on a 8192-byte boundary. This is valid only for object files.
+        /// </summary>
+        Align8192Bytes = 0x00E00000,
+
+        /// <summary>
+        /// IMAGE_SCN_LNK_NRELOC_OVFL.
+        /// The section contains extended relocations.
+        /// </summary>
+        /// <remarks>
+        /// The count of relocations for the section exceeds the 16 bits that is reserved for it in the section header.
+        /// If the NumberOfRelocations field in the section header is 0xffff, the actual relocation count is stored in the VirtualAddress field of the first relocation.
+        /// It is an error if IMAGE_SCN_LNK_NRELOC_OVFL is set and there are fewer than 0xffff relocations in the section.
+        /// </remarks>
+        LinkRelocOverflow = 0x01000000,
+
+        /// <summary>
+        /// IMAGE_SCN_MEM_DISCARDABLE. The section can be discarded as needed.
+        /// </summary>
+        MemDiscardable = 0x02000000,
+
+        /// <summary>
+        /// IMAGE_SCN_MEM_NOT_CACHED. The section cannot be cached.
+        /// </summary>
+        MemNotCached = 0x04000000,
+
+        /// <summary>
+        /// IMAGE_SCN_MEM_NOT_PAGED. The section cannot be paged.
+        /// </summary>
+        MemNotPaged = 0x08000000,
+
+        /// <summary>
+        /// IMAGE_SCN_MEM_SHARED. The section can be shared in memory.
+        /// </summary>
+        MemShared = 0x10000000,
+
+        /// <summary>
+        /// IMAGE_SCN_MEM_EXECUTE. The section can be executed as code.
+        /// </summary>
+        MemExecute = 0x20000000,
+
+        /// <summary>
+        /// IMAGE_SCN_MEM_READ. The section can be read.
+        /// </summary>
+        MemRead = 0x40000000,
+
+        /// <summary>
+        /// IMAGE_SCN_MEM_WRITE. The section can be written to.
+        /// </summary>
+        MemWrite = 0x80000000,
+    }
 
     /// <summary>
     /// Image section header structure.
@@ -93,7 +227,7 @@ namespace Tea.Compiler.Coff
         /// <summary>
         /// Gets or sets characteristics flags.
         /// </summary>
-        public uint Characteristics { get; set; }
+        public ImageSectionCharacteristicFlags Characteristics { get; set; }
 
         /// <inheritdoc/>
         public void Serialize(BinaryWriter writer)
@@ -107,7 +241,7 @@ namespace Tea.Compiler.Coff
             writer.WriteUInt32(this.PointerToLineNumbers);
             writer.WriteUInt16(this.NumberOfRelocations);
             writer.WriteUInt16(this.NumberOfLineNumbers);
-            writer.WriteUInt32(this.Characteristics);
+            writer.WriteUInt32((uint)this.Characteristics);
         }
     }
 }

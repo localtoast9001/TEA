@@ -55,5 +55,23 @@ namespace Tea.Compiler.Binary
         {
             this.WriteBytes(new byte[] { (byte)value, (byte)(value >> 8), (byte)(value >> 16), (byte)(value >> 24) });
         }
+
+        /// <summary>
+        /// Writes a signed short to the stream.
+        /// </summary>
+        /// <param name="value">The value to write.</param>
+        public virtual void WriteInt16(short value)
+        {
+            this.WriteUInt16((ushort)value);
+        }
+
+        /// <summary>
+        /// Writes a signed int to the stream.
+        /// </summary>
+        /// <param name="value">The value to write.</param>
+        public virtual void WriteInt32(int value)
+        {
+            this.WriteUInt32((uint)value);
+        }
     }
 }

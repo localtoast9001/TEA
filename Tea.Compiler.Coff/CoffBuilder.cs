@@ -20,6 +20,11 @@ namespace Tea.Compiler.Coff
         public Collection<Section> Sections { get; } = new Collection<Section>();
 
         /// <summary>
+        /// Gets the collection of external symbols.
+        /// </summary>
+        public Collection<Symbol> ExternalSymbols { get; } = new Collection<Symbol>();
+
+        /// <summary>
         /// Gets or sets the machine architecture.
         /// </summary>
         public Machine Machine { get; set; }
@@ -28,6 +33,18 @@ namespace Tea.Compiler.Coff
         /// Gets or sets the timestamp inside the header.
         /// </summary>
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+
+        /// <summary>
+        /// Defines an external symbol.
+        /// </summary>
+        /// <param name="name">The name of the external symbol.</param>
+        /// <returns>A new instance of the <see cref="Symbol"/> class.</returns>
+        public Symbol DefineExternalSymbol(string name)
+        {
+            Symbol sym = new Symbol(name, 0, true);
+            this.ExternalSymbols.Add(sym);
+            return sym;
+        }
 
         /// <summary>
         /// Saves the contents to disk.
@@ -49,6 +66,11 @@ namespace Tea.Compiler.Coff
         {
             // Create in-memory structures and calculate offsets before serializing.
             StringTable stringTable = new StringTable();
+            SymbolTable symbolTable = new SymbolTable(stringTable);
+            foreach (Symbol sym in this.ExternalSymbols)
+            {
+                symbolTable.DefineSymbol(sym, 0);
+            }
 
             // 1. File header.
             ImageFileHeader header = this.CreateHeader();
@@ -68,12 +90,23 @@ namespace Tea.Compiler.Coff
                     PointerToRawData = offset,
                     PointerToRelocations = sectionRels.Count > 0 ? offset + section.Length : 0,
                     NumberOfRelocations = (ushort)sectionRels.Count,
+                    Characteristics = section.Characteristics,
                 };
 
-                SetStringField(section.Name, new Span<byte>(sectionHeader.Name, 0, sectionHeader.Name.Length), stringTable);
+                stringTable.SetStringField(section.Name, new Span<byte>(sectionHeader.Name, 0, sectionHeader.Name.Length));
 
                 sectionHeaders[i] = sectionHeader;
+                offset += section.Length;
+                offset += (uint)(sectionRels.Count * Rel.BinarySize);
+
+                foreach (Symbol sym in section.Symbols)
+                {
+                    _ = symbolTable.DefineSymbol(sym, i + 1);
+                }
             }
+
+            header.PointerToSymbolTable = offset;
+            header.NumberOfSymbols = (uint)symbolTable.Count;
 
             // 4. For each section:
             // 4a. Section data (aligned).
@@ -90,26 +123,23 @@ namespace Tea.Compiler.Coff
                 sectionHeader.Serialize(writer);
             }
 
+            foreach (Section section in this.Sections)
+            {
+                ((ISerializable)section).Serialize(writer);
+                foreach (Relocation rel in section.Relocations)
+                {
+                    Rel r = new ()
+                    {
+                        Addr = rel.Offset,
+                        SymbolIndex = (uint)symbolTable.FindSymbol(rel.Symbol),
+                    };
 
+                    r.Serialize(writer);
+                }
+            }
 
+            symbolTable.Serialize(writer);
             stringTable.Serialize(writer);
-        }
-
-        private static void SetStringField(string value, Span<byte> field, StringTable stringTable)
-        {
-            byte[] utf8 = Encoding.UTF8.GetBytes(value);
-            if (utf8.Length <= field.Length)
-            {
-                utf8.CopyTo(field);
-            }
-            else
-            {
-                uint index = stringTable.DefineString(value);
-                field[4] = (byte)index;
-                field[5] = (byte)(index >> 8);
-                field[6] = (byte)(index >> 16);
-                field[7] = (byte)(index >> 24);
-            }
         }
 
         private ImageFileHeader CreateHeader()

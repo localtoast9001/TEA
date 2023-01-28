@@ -37,6 +37,19 @@ namespace Tea.Compiler
             builder.Sections.Add(BuildCodeSection(module.CodeSegment));
             builder.Sections.Add(BuildDataSection(module.DataSegment));
 
+            foreach (MethodInfo meth in module.ProtoList)
+            {
+                if (!module.CodeSegment.Any(e => e.Method! == meth))
+                {
+                    builder.DefineExternalSymbol(meth.MangledName);
+                }
+            }
+
+            foreach (string symbol in module.ExternList)
+            {
+                builder.DefineExternalSymbol(symbol);
+            }
+
             builder.Save(this.Output);
             return true;
         }
@@ -68,7 +81,7 @@ namespace Tea.Compiler
                     mainMethod = method.Method?.MangledName;
                 }
 
-                Symbol sym = textSection.DefineSymbol(method.Method!.MangledName);
+                Symbol sym = textSection.DefineSymbol(method.Method!.MangledName, true);
                 WriteStatements(textSection, method.Statements);
             }
 
@@ -86,7 +99,7 @@ namespace Tea.Compiler
             {
                 if (statement.Label != null)
                 {
-                    Symbol label = textSection.DefineSymbol(statement.Label!);
+                    Symbol label = textSection.DefineSymbol(statement.Label!, false);
                 }
 
                 foreach (RelocationEntry relEntry in statement.Instruction!.RelocationEntries)
@@ -100,7 +113,7 @@ namespace Tea.Compiler
 
         private static void BuildMainWrapper(ProgramSection textSection, string mainMethod)
         {
-            Symbol sym = textSection.DefineSymbol("main");
+            Symbol sym = textSection.DefineSymbol("main", true);
             AsmStatement[] mainBody = new AsmStatement[]
             {
                 new AsmStatement { Instruction = X86.X86Instruction.Jmp(mainMethod) },
@@ -123,7 +136,8 @@ namespace Tea.Compiler
                 if (!string.IsNullOrEmpty(dataEntry.Label))
                 {
                     sym = dataSection.DefineSymbol(
-                        dataEntry.Label!);
+                        dataEntry.Label!,
+                        false);
                 }
 
                 BuildDataEntry(dataSection, dataEntry);
@@ -149,7 +163,11 @@ namespace Tea.Compiler
                 else if (obj is string)
                 {
                     string symbolRef = (string)obj;
-                    dataSection.DefineRelocation(symbolRef, false);
+                    if (!string.Equals(symbolRef, "0", StringComparison.Ordinal))
+                    {
+                        dataSection.DefineRelocation(symbolRef, false);
+                    }
+
                     dataSection.ContentWriter.WriteUInt32(0);
                 }
                 else

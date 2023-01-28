@@ -53,6 +53,19 @@ namespace Tea.Compiler.Coff
         /// </summary>
         public override IReadOnlyCollection<Relocation> Relocations => new ReadOnlyCollection<Relocation>(this.relocations);
 
+        /// <inheritdoc/>
+        internal override uint Length => (uint)this.content.Length;
+
+        /// <inheritdoc/>
+        internal override ImageSectionCharacteristicFlags Characteristics =>
+            base.Characteristics |
+            ImageSectionCharacteristicFlags.MemRead |
+            (this.Executable ? (ImageSectionCharacteristicFlags.Code | ImageSectionCharacteristicFlags.MemExecute) : ImageSectionCharacteristicFlags.InitializedData) |
+            (this.Writeable ? ImageSectionCharacteristicFlags.MemWrite : ImageSectionCharacteristicFlags.None);
+
+        /// <inheritdoc/>
+        internal override int Align => 16;
+
         /// <summary>
         /// Defines a new relocation at the current position in the content stream.
         /// </summary>
@@ -71,10 +84,11 @@ namespace Tea.Compiler.Coff
         /// Defines a symbol that points to the current location in the section.
         /// </summary>
         /// <param name="name">The symbol name.</param>
+        /// <param name="global">True if the symbol is global; otherwise, false.</param>
         /// <returns>A new instance of the <see cref="Symbol"/> class.</returns>
-        public Symbol DefineSymbol(string name)
+        public Symbol DefineSymbol(string name, bool global)
         {
-            Symbol symbol = new Symbol();
+            Symbol symbol = new Symbol(name, this.content.Position, global);
             this.symbols.Add(symbol);
             return symbol;
         }

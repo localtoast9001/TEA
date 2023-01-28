@@ -12,6 +12,11 @@ namespace Tea.Compiler.Coff
     internal class Rel : ISerializable
     {
         /// <summary>
+        /// The size of the structure in bytes when serialized.
+        /// </summary>
+        public const int BinarySize = 0x0a;
+
+        /// <summary>
         /// Gets or sets the section relative address of the relocation.
         /// </summary>
         public uint Addr { get; set; }
@@ -29,7 +34,9 @@ namespace Tea.Compiler.Coff
         /// <inheritdoc/>
         public void Serialize(BinaryWriter writer)
         {
-            throw new NotImplementedException();
+            writer.WriteUInt32(this.Addr);
+            writer.WriteUInt32(this.SymbolIndex);
+            writer.WriteUInt16(this.Type);
         }
     }
 }

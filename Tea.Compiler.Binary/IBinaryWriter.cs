@@ -40,5 +40,17 @@ namespace Tea.Compiler.Binary
         /// </summary>
         /// <param name="value">The value to write.</param>
         void WriteUInt32(uint value);
+
+        /// <summary>
+        /// Writes a signed short to the stream.
+        /// </summary>
+        /// <param name="value">The value to write.</param>
+        void WriteInt16(short value);
+
+        /// <summary>
+        /// Writes a signed int to the stream.
+        /// </summary>
+        /// <param name="value">The value to write.</param>
+        void WriteInt32(int value);
     }
 }
