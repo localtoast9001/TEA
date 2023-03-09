@@ -10,6 +10,7 @@ namespace Tea.Compiler
     using System.Collections.Generic;
     using System.Linq;
     using System.Text;
+    using Tea.Compiler.X86;
 
     /// <summary>
     /// Module that is output from a code generator.
@@ -205,11 +206,12 @@ namespace Tea.Compiler
                             MethodImpl jumpMethodImpl = new MethodImpl(this);
                             jumpMethodImpl.Method = jumpMethod;
                             this.CodeSegment.Add(jumpMethodImpl);
-                            jumpMethodImpl.Symbols.Add(new KeyValuePair<string, int>("_this$", 4));
-                            jumpMethodImpl.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("mov eax,_this$[esp]") });
-                            jumpMethodImpl.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction(string.Format("sub eax,{0}", pair.Value)) });
-                            jumpMethodImpl.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("mov _this$[esp],eax") });
-                            jumpMethodImpl.Statements.Add(new AsmStatement { Instruction = new UnknownInstruction("jmp " + implMethod.MangledName) });
+                            KeyValuePair<string, int> thisSymbol = new KeyValuePair<string, int>("_this$", 4);
+                            jumpMethodImpl.Symbols.Add(thisSymbol);
+                            jumpMethodImpl.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(Register.EAX, RM.Address(Register.ESP, thisSymbol.Value, thisSymbol.Key)) });
+                            jumpMethodImpl.Statements.Add(new AsmStatement { Instruction = X86Instruction.Sub(Register.EAX, (uint)pair.Value) });
+                            jumpMethodImpl.Statements.Add(new AsmStatement { Instruction = X86Instruction.Mov(RM.Address(Register.ESP, thisSymbol.Value, thisSymbol.Key), Register.EAX) });
+                            jumpMethodImpl.Statements.Add(new AsmStatement { Instruction = X86Instruction.Jmp(implMethod.MangledName) });
                         }
                     }
                 }
