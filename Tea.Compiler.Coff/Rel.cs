@@ -7,6 +7,30 @@ namespace Tea.Compiler.Coff
     using Tea.Compiler.Binary;
 
     /// <summary>
+    /// The type of relocation.
+    /// </summary>
+    /// <remarks>
+    /// Information comes from http://www.delorie.com/djgpp/doc/coff/reloc.html.
+    /// </remarks>
+    internal enum RelType : ushort
+    {
+        /// <summary>
+        /// No type or default (invalid).
+        /// </summary>
+        None = 0,
+
+        /// <summary>
+        /// 32-bit absolute reference.
+        /// </summary>
+        Addr32 = 6,
+
+        /// <summary>
+        /// 32-bit relative reference.
+        /// </summary>
+        Rel32 = 20,
+    }
+
+    /// <summary>
     /// Relocation serialized structure.
     /// </summary>
     internal class Rel : ISerializable
@@ -29,14 +53,14 @@ namespace Tea.Compiler.Coff
         /// <summary>
         /// Gets or sets the relocation type.
         /// </summary>
-        public ushort Type { get; set; }
+        public RelType Type { get; set; }
 
         /// <inheritdoc/>
         public void Serialize(BinaryWriter writer)
         {
             writer.WriteUInt32(this.Addr);
             writer.WriteUInt32(this.SymbolIndex);
-            writer.WriteUInt16(this.Type);
+            writer.WriteUInt16((ushort)this.Type);
         }
     }
 }

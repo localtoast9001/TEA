@@ -5,6 +5,7 @@
 namespace Tea.Compiler
 {
     using Tea.Compiler.Coff;
+    using Tea.Compiler.X86;
 
     /// <summary>
     /// Writes the module to a COFF binary.
@@ -41,13 +42,13 @@ namespace Tea.Compiler
             {
                 if (!module.CodeSegment.Any(e => e.Method! == meth))
                 {
-                    builder.DefineExternalSymbol(meth.MangledName);
+                    builder.DefineExternalSymbol(DecorateSymbol(meth.MangledName), SymbolType.Function);
                 }
             }
 
             foreach (string symbol in module.ExternList)
             {
-                builder.DefineExternalSymbol(symbol);
+                builder.DefineExternalSymbol(DecorateSymbol(symbol), SymbolType.Function);
             }
 
             builder.Save(this.Output);
@@ -59,6 +60,20 @@ namespace Tea.Compiler
         {
             base.Dispose(disposing);
             this.Output.Close();
+        }
+
+        /// <summary>
+        /// Adds an extra underscore to the name when needed to be compatible with the MS compilers.
+        /// </summary>
+        /// <param name="symbol">The symbol name.</param>
+        /// <returns>The decorated string.</returns>
+        /// <remarks>
+        /// The MS compilers prepend an extra underscore to the symbol name inside the obj files.
+        /// For internally generated symbols, the extra underscore is not there and those will start with '$'.
+        /// </remarks>
+        private static string DecorateSymbol(string symbol)
+        {
+            return !symbol.StartsWith("$") ? "_" + symbol : symbol;
         }
 
         private static ProgramSection BuildCodeSection(IList<MethodImpl> codeSegment)
@@ -81,7 +96,7 @@ namespace Tea.Compiler
                     mainMethod = method.Method?.MangledName;
                 }
 
-                Symbol sym = textSection.DefineSymbol(method.Method!.MangledName, true);
+                Symbol sym = textSection.DefineSymbol(DecorateSymbol(method.Method!.MangledName), StorageClass.External, SymbolType.Function);
                 WriteStatements(textSection, method.Statements);
             }
 
@@ -90,7 +105,29 @@ namespace Tea.Compiler
                 BuildMainWrapper(textSection, mainMethod!);
             }
 
+            FixRelocationOffsets(textSection);
+
             return textSection;
+        }
+
+        /// <summary>
+        /// Corrects relative offsets in relocation data.
+        /// </summary>
+        /// <param name="textSection">The text section to modify.</param>
+        /// <remarks>
+        /// The <see cref="CodeGenerator"/> emits relative relocation bases natively for ELF assuming the instruction pointer is the byte after the relocation.
+        /// For example, the data at the relocation of 32-bit pointer size will be -4 (0xfffffffc or 0xfc 0xff 0xff 0xff in bytes).
+        /// COFF assumes the instruction pointer is at the start of the relocation, so the data at the relocation will change to be 0.
+        /// </remarks>
+        private static void FixRelocationOffsets(ProgramSection textSection)
+        {
+            foreach (Relocation rel in textSection.Relocations)
+            {
+                if (rel.Relative)
+                {
+                    textSection.ModifyContent(rel, new ReadOnlySpan<byte>(0.ToBytes()));
+                }
+            }
         }
 
         private static void WriteStatements(ProgramSection textSection, IEnumerable<AsmStatement> statements)
@@ -99,12 +136,12 @@ namespace Tea.Compiler
             {
                 if (statement.Label != null)
                 {
-                    Symbol label = textSection.DefineSymbol(statement.Label!, false);
+                    _ = textSection.DefineSymbol(statement.Label!, StorageClass.Label, SymbolType.None);
                 }
 
                 foreach (RelocationEntry relEntry in statement.Instruction!.RelocationEntries)
                 {
-                    textSection.DefineRelocation(relEntry.Symbol, relEntry.Relative, relEntry.Offset);
+                    textSection.DefineRelocation(DecorateSymbol(relEntry.Symbol), relEntry.Relative, relEntry.Offset);
                 }
 
                 textSection.ContentWriter.WriteBytes(statement.Instruction!.ToArray());
@@ -113,7 +150,7 @@ namespace Tea.Compiler
 
         private static void BuildMainWrapper(ProgramSection textSection, string mainMethod)
         {
-            Symbol sym = textSection.DefineSymbol("main", true);
+            _ = textSection.DefineSymbol("_main", StorageClass.External, SymbolType.Function);
             AsmStatement[] mainBody = new AsmStatement[]
             {
                 new AsmStatement { Instruction = X86.X86Instruction.Jmp(mainMethod) },
@@ -132,12 +169,12 @@ namespace Tea.Compiler
 
             foreach (DataEntry dataEntry in dataSegment)
             {
-                Symbol? sym = null;
                 if (!string.IsNullOrEmpty(dataEntry.Label))
                 {
-                    sym = dataSection.DefineSymbol(
+                    _ = dataSection.DefineSymbol(
                         dataEntry.Label!,
-                        false);
+                        StorageClass.Static,
+                        SymbolType.None);
                 }
 
                 BuildDataEntry(dataSection, dataEntry);
@@ -160,12 +197,11 @@ namespace Tea.Compiler
                     ushort val = (ushort)obj;
                     dataSection.ContentWriter.WriteUInt16(val);
                 }
-                else if (obj is string)
+                else if (obj is string symbolRef)
                 {
-                    string symbolRef = (string)obj;
                     if (!string.Equals(symbolRef, "0", StringComparison.Ordinal))
                     {
-                        dataSection.DefineRelocation(symbolRef, false);
+                        dataSection.DefineRelocation(DecorateSymbol(symbolRef), false);
                     }
 
                     dataSection.ContentWriter.WriteUInt32(0);

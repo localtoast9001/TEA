@@ -14,7 +14,7 @@ namespace Tea.Compiler.Coff
     /// </summary>
     internal class StringTable : ISerializable
     {
-        private readonly List<string> strings = new List<string>();
+        private readonly List<string> strings = new ();
         private readonly Dictionary<string, uint> indexes = new Dictionary<string, uint>(StringComparer.Ordinal);
         private uint offset = sizeof(uint);
 

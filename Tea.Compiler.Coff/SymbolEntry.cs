@@ -39,12 +39,12 @@ namespace Tea.Compiler.Coff
         /// <summary>
         /// Gets or sets the symbol type.
         /// </summary>
-        public ushort Type { get; set; }
+        public SymbolType Type { get; set; }
 
         /// <summary>
         /// Gets or sets the storage class.
         /// </summary>
-        public byte StorageClass { get; set; }
+        public StorageClass StorageClass { get; set; }
 
         /// <summary>
         /// Gets or sets the auxiliary data.
@@ -62,8 +62,8 @@ namespace Tea.Compiler.Coff
             writer.WriteBytes(this.Name);
             writer.WriteInt32(this.Value);
             writer.WriteInt16(this.SectionNumber);
-            writer.WriteUInt16(this.Type);
-            writer.WriteByte(this.StorageClass);
+            writer.WriteUInt16(this.Type.Value);
+            writer.WriteByte((byte)this.StorageClass);
 
             byte auxCount = this.AuxCount;
             writer.WriteByte(auxCount);

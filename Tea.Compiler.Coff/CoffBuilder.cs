@@ -38,10 +38,11 @@ namespace Tea.Compiler.Coff
         /// Defines an external symbol.
         /// </summary>
         /// <param name="name">The name of the external symbol.</param>
+        /// <param name="type">The symbol type.</param>
         /// <returns>A new instance of the <see cref="Symbol"/> class.</returns>
-        public Symbol DefineExternalSymbol(string name)
+        public Symbol DefineExternalSymbol(string name, SymbolType type)
         {
-            Symbol sym = new Symbol(name, 0, true);
+            Symbol sym = new Symbol(name, 0, StorageClass.External, type);
             this.ExternalSymbols.Add(sym);
             return sym;
         }
@@ -132,6 +133,7 @@ namespace Tea.Compiler.Coff
                     {
                         Addr = rel.Offset,
                         SymbolIndex = (uint)symbolTable.FindSymbol(rel.Symbol),
+                        Type = rel.Relative ? RelType.Rel32 : RelType.Addr32,
                     };
 
                     r.Serialize(writer);

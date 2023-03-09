@@ -4,6 +4,7 @@
 
 namespace Tea.Compiler.Coff
 {
+    using System;
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
     using Tea.Compiler.Binary;
@@ -84,13 +85,27 @@ namespace Tea.Compiler.Coff
         /// Defines a symbol that points to the current location in the section.
         /// </summary>
         /// <param name="name">The symbol name.</param>
-        /// <param name="global">True if the symbol is global; otherwise, false.</param>
+        /// <param name="storage">Storage class for the symbol.</param>
+        /// <param name="type">The symbol type.</param>
         /// <returns>A new instance of the <see cref="Symbol"/> class.</returns>
-        public Symbol DefineSymbol(string name, bool global)
+        public Symbol DefineSymbol(string name, StorageClass storage, SymbolType type)
         {
-            Symbol symbol = new Symbol(name, this.content.Position, global);
+            Symbol symbol = new Symbol(name, this.content.Position, storage, type);
             this.symbols.Add(symbol);
             return symbol;
+        }
+
+        /// <summary>
+        /// Modifies the content data in the section at the address given by the relocation.
+        /// </summary>
+        /// <param name="rel">The relocation with the address in the section to modify.</param>
+        /// <param name="data">The new data to write at the location.</param>
+        public void ModifyContent(Relocation rel, ReadOnlySpan<byte> data)
+        {
+            long pos = this.content.Position;
+            this.content.Seek(rel.Offset, SeekOrigin.Begin);
+            this.content.Write(data);
+            this.content.Seek(pos, SeekOrigin.Begin);
         }
 
         /// <inheritdoc/>

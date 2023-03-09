@@ -7,7 +7,7 @@ namespace Tea.Compiler.Coff
     /// <summary>
     /// Lower 4 bits of the symbol type.
     /// </summary>
-    internal enum BaseSymbolType : byte
+    public enum BaseSymbolType : byte
     {
         /// <summary>
         /// No type specified.
@@ -93,7 +93,7 @@ namespace Tea.Compiler.Coff
     /// <summary>
     /// Upper 4 bits of the symbol type.
     /// </summary>
-    internal enum DerivedSymbolType : byte
+    public enum DerivedSymbolType : byte
     {
         /// <summary>
         /// No derivation.
@@ -122,21 +122,28 @@ namespace Tea.Compiler.Coff
     /// <remarks>
     /// Information was sourced from http://www.delorie.com/djgpp/doc/coff/symtab.html.
     /// </remarks>
-    internal struct SymbolType
+    public readonly struct SymbolType
     {
+        /// <summary>
+        /// No symbol type specified.
+        /// </summary>
+        public static readonly SymbolType None = new SymbolType(BaseSymbolType.Null, DerivedSymbolType.None);
 
         /// <summary>
         /// A symbol type for a function.
         /// </summary>
         public static readonly SymbolType Function = new SymbolType(BaseSymbolType.Null, DerivedSymbolType.Func);
 
-        private readonly byte value;
+        private readonly ushort value;
 
         private SymbolType(BaseSymbolType b, DerivedSymbolType d)
         {
-            this.value = (byte)((byte)b | (byte)d);
+            this.value = (ushort)((byte)b | (byte)d);
         }
 
-        public byte Value => this.value;
+        /// <summary>
+        /// Gets the value of the symbol type.
+        /// </summary>
+        public ushort Value => this.value;
     }
 }

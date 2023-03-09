@@ -58,13 +58,9 @@ namespace Tea.Compiler.Coff
             {
                 SectionNumber = (short)sectionIndex,
                 Value = (int)symbol.Offset,
-                StorageClass = 0,
+                StorageClass = symbol.Storage,
+                Type = symbol.Type,
             };
-
-            if (sectionIndex > 0)
-            {
-                entry.StorageClass = symbol.Global ? (byte)2 : (byte)3;
-            }
 
             this.stringTable.SetStringField(symbol.Name, new Span<byte>(entry.Name, 0, entry.Name.Length));
             this.symbols.Add(entry);
