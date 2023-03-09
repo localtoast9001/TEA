@@ -7,6 +7,7 @@
 namespace Tea.Compiler.Elf
 {
     using System.Collections.ObjectModel;
+    using Tea.Compiler.Binary;
 
     /// <summary>
     /// Program (code or data) section.

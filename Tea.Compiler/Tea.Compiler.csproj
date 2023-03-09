@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
@@ -22,7 +22,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Tea.Language\Tea.Language.csproj" />
-    <ProjectReference Include="..\Tea.Compiler.Elf\Tea.Compiler.Elf.csproj" />
+	  <ProjectReference Include="..\Tea.Compiler.Coff\Tea.Compiler.Coff.csproj" />
+	  <ProjectReference Include="..\Tea.Compiler.Elf\Tea.Compiler.Elf.csproj" />
   </ItemGroup>
 
 </Project>

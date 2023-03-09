@@ -8,6 +8,7 @@ namespace Tea.Compiler
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics.Contracts;
     using System.Linq;
     using System.Text;
     using Tea.Compiler.X86;
@@ -116,339 +117,25 @@ namespace Tea.Compiler
                 EnumDeclaration? enumDecl = typeDecl as EnumDeclaration;
                 if (enumDecl != null)
                 {
-                    typeDef!.IsEnum = true;
-                    typeDef!.IsPublic = true;
-                    typeDef!.Size = 4;
-                    int constVal = 0;
-                    foreach (string val in enumDecl.Values)
-                    {
-                        typeDef.EnumValues.Add(val, constVal++);
-                    }
+                    failed |= !this.PopulateTypeDefinition(enumDecl, typeDef!);
                 }
 
                 MethodTypeDeclaration? methodDecl = typeDecl as MethodTypeDeclaration;
                 if (methodDecl != null)
                 {
-                    typeDef!.IsMethod = true;
-                    typeDef!.IsPublic = true;
-                    typeDef!.Size = 4;
-                    if (methodDecl!.ImplicitArgType != null)
-                    {
-                        TypeDefinition? implicitArgType = null;
-                        if (!this.TryResolveTypeReference(context, methodDecl!.ImplicitArgType, out implicitArgType))
-                        {
-                            failed = true;
-                        }
-                        else
-                        {
-                            typeDef!.MethodImplicitArgType = implicitArgType;
-                        }
-
-                        TypeDefinition? returnType = null;
-                        if (!this.TryResolveTypeReference(context, methodDecl!.ReturnType!, out returnType))
-                        {
-                            failed = true;
-                        }
-                        else
-                        {
-                            typeDef!.MethodReturnType = returnType;
-                        }
-
-                        foreach (ParameterDeclaration paramDecl in methodDecl.Parameters)
-                        {
-                            TypeDefinition? paramType = null;
-                            if (!this.TryResolveTypeReference(context, paramDecl.Type, out paramType))
-                            {
-                                failed = true;
-                            }
-                            else
-                            {
-                                foreach (string name in paramDecl.ParameterNames)
-                                {
-                                    typeDef!.MethodParamTypes.Add(paramType!);
-                                }
-                            }
-                        }
-                    }
+                    failed |= !this.PopulateTypeDefinition(context, methodDecl, typeDef!);
                 }
 
                 InterfaceDeclaration? interfaceDecl = typeDecl as InterfaceDeclaration;
                 if (interfaceDecl != null)
                 {
-                    typeDef!.IsInterface = true;
-                    typeDef!.IsPublic = interfaceDecl.IsPublic;
-                    if (interfaceDecl!.BaseInterfaceType != null)
-                    {
-                        TypeDefinition? baseType = null;
-                        if (!context.TryFindTypeByName(interfaceDecl!.BaseInterfaceType!, out baseType))
-                        {
-                            string message = string.Format(
-                                System.Globalization.CultureInfo.CurrentCulture,
-                                Properties.Resources.CodeGenerator_UndefinedType,
-                                interfaceDecl.BaseInterfaceType);
-                            this.log.Write(new Message(
-                                interfaceDecl.Start.Path,
-                                interfaceDecl.Start.Line,
-                                interfaceDecl.Start.Column,
-                                Severity.Error,
-                                message));
-                            failed = true;
-                        }
-
-                        if (!baseType!.IsInterface)
-                        {
-                            string message = string.Format(
-                                System.Globalization.CultureInfo.CurrentCulture,
-                                Properties.Resources.CodeGenerator_BaseInterfaceIsNotInterface,
-                                interfaceDecl!.BaseInterfaceType!);
-                            this.log.Write(new Message(
-                                interfaceDecl!.Start.Path,
-                                interfaceDecl!.Start.Line,
-                                interfaceDecl!.Start.Column,
-                                Severity.Error,
-                                message));
-                            failed = true;
-                        }
-
-                        typeDef.BaseClass = baseType;
-                    }
-
-                    foreach (MethodDeclaration meth in interfaceDecl.Methods)
-                    {
-                        MethodInfo? methodInfo = null;
-                        if (!this.TryCreateMethod(context, typeDef!, meth, out methodInfo))
-                        {
-                            failed = true;
-                            continue;
-                        }
-
-                        methodInfo!.IsPublic = true;
-                        typeDef!.Methods.Add(methodInfo!);
-                    }
-
-                    FieldInfo? vtblPtr = typeDef.GetVTablePointer();
-                    if (vtblPtr == null)
-                    {
-                        vtblPtr = typeDef!.AddVTablePointer(context, 0);
-                    }
-
-                    typeDef!.Size = vtblPtr!.Type!.Size;
+                    failed |= !this.PopulateTypeDefinition(context, interfaceDecl, typeDef!);
                 }
 
                 ClassDeclaration? classDecl = typeDecl as ClassDeclaration;
                 if (classDecl != null)
                 {
-                    typeDef!.IsClass = true;
-                    typeDef!.IsPublic = classDecl!.IsPublic;
-                    typeDef!.IsStaticClass = classDecl!.IsStatic;
-                    if (classDecl!.BaseType != null)
-                    {
-                        TypeDefinition? baseType = null;
-                        if (!context.TryFindTypeByName(classDecl!.BaseType, out baseType))
-                        {
-                            string message = string.Format(
-                                System.Globalization.CultureInfo.CurrentCulture,
-                                Properties.Resources.CodeGenerator_UndefinedType,
-                                classDecl!.BaseType);
-                            this.log.Write(new Message(
-                                classDecl!.Start.Path,
-                                classDecl!.Start.Line,
-                                classDecl!.Start.Column,
-                                Severity.Error,
-                                message));
-                            failed = true;
-                        }
-                        else
-                        {
-                            if (!baseType!.IsClass || baseType!.IsStaticClass)
-                            {
-                                string message = string.Format(
-                                    System.Globalization.CultureInfo.CurrentCulture,
-                                    Properties.Resources.CodeGenerator_BaseTypeNotClass,
-                                    baseType!.FullName);
-                                this.log.Write(new Message(
-                                    classDecl!.Start.Path,
-                                    classDecl!.Start.Line,
-                                    classDecl!.Start.Column,
-                                    Severity.Error,
-                                    message));
-                                failed = true;
-                            }
-                            else
-                            {
-                                typeDef!.BaseClass = baseType;
-                            }
-                        }
-                    }
-
-                    bool hasVirtualMethods = false;
-                    foreach (MethodDeclaration meth in classDecl.PublicMethods)
-                    {
-                        MethodInfo? methodInfo = null;
-                        if (!this.TryCreateMethod(context, typeDef, meth, out methodInfo))
-                        {
-                            failed = true;
-                            continue;
-                        }
-
-                        methodInfo!.IsPublic = true;
-                        typeDef.Methods.Add(methodInfo!);
-                        if (methodInfo!.IsVirtual)
-                        {
-                            hasVirtualMethods = true;
-                        }
-                    }
-
-                    foreach (MethodDeclaration meth in classDecl.ProtectedMethods)
-                    {
-                        MethodInfo? methodInfo = null;
-                        if (!this.TryCreateMethod(context, typeDef, meth, out methodInfo))
-                        {
-                            failed = true;
-                            continue;
-                        }
-
-                        methodInfo!.IsProtected = true;
-                        typeDef.Methods.Add(methodInfo!);
-                        if (methodInfo!.IsVirtual)
-                        {
-                            hasVirtualMethods = true;
-                        }
-                    }
-
-                    foreach (MethodDeclaration meth in classDecl.PrivateMethods)
-                    {
-                        MethodInfo? methodInfo = null;
-                        if (!this.TryCreateMethod(context, typeDef, meth, out methodInfo))
-                        {
-                            failed = true;
-                            continue;
-                        }
-
-                        typeDef.Methods.Add(methodInfo!);
-                        if (methodInfo!.IsVirtual)
-                        {
-                            hasVirtualMethods = true;
-                        }
-                    }
-
-                    int size = 0;
-                    if (typeDef.BaseClass != null)
-                    {
-                        size = typeDef.BaseClass.Size;
-                    }
-
-                    if (hasVirtualMethods || classDecl.Interfaces.Count() > 0)
-                    {
-                        FieldInfo? vtblPtr = typeDef.GetVTablePointer();
-                        if (vtblPtr == null)
-                        {
-                            vtblPtr = typeDef.AddVTablePointer(context, size);
-                            size += vtblPtr!.Type!.Size;
-                        }
-                    }
-
-                    foreach (var intfDecl in classDecl.Interfaces)
-                    {
-                        TypeDefinition? intfDef = null;
-                        if (!context.TryFindTypeByName(intfDecl, out intfDef))
-                        {
-                            string message = string.Format(
-                                System.Globalization.CultureInfo.CurrentCulture,
-                                Properties.Resources.CodeGenerator_UndefinedType,
-                                intfDecl);
-                            this.log.Write(new Message(
-                                classDecl.Start.Path,
-                                classDecl.Start.Line,
-                                classDecl.Start.Column,
-                                Severity.Error,
-                                message));
-                            failed = true;
-                            continue;
-                        }
-
-                        FieldInfo? intfTable = typeDef.GetInterfaceTablePointer(intfDef!);
-                        if (intfTable == null)
-                        {
-                            intfTable = typeDef.AddInterfaceTablePointer(context, size, intfDef!);
-                            size += intfTable!.Type!.Size;
-                        }
-
-                        typeDef.AddInterface(intfDef!, intfTable!.Offset);
-
-                        TypeDefinition? intf = intfDef;
-                        while (intf != null)
-                        {
-                            foreach (var meth in intf.Methods)
-                            {
-                                MethodInfo? matchingMeth = typeDef.FindMethod(meth.Name!, meth.Parameters.Select(e => e.Type!).ToList());
-                                if (matchingMeth == null || !matchingMeth.IsVirtual)
-                                {
-                                    failed = true;
-                                    string message = string.Format(
-                                        System.Globalization.CultureInfo.CurrentCulture,
-                                        Properties.Resources.CodeGenerator_ClassDoesNotDeclareInterfaceMethod,
-                                        typeDef.FullName,
-                                        intf.FullName,
-                                        meth.Name);
-                                    this.log.Write(new Message(
-                                        classDecl.Start.Path,
-                                        classDecl.Start.Line,
-                                        classDecl.Start.Column,
-                                        Severity.Error,
-                                        message));
-                                }
-                            }
-
-                            intf = intf.BaseClass;
-                        }
-                    }
-
-                    if (classDecl.Fields != null)
-                    {
-                        foreach (var field in classDecl.Fields.Variables)
-                        {
-                            TypeDefinition? fieldType = null;
-                            if (!this.TryResolveTypeReference(context, field.Type, out fieldType))
-                            {
-                                failed = true;
-                                continue;
-                            }
-
-                            foreach (string identifier in field.VariableNames)
-                            {
-                                FieldInfo fieldInfo = new FieldInfo();
-                                fieldInfo.Name = identifier;
-                                fieldInfo.Type = fieldType;
-                                fieldInfo.IsStatic = classDecl.IsStatic;
-                                if (!fieldInfo.IsStatic)
-                                {
-                                    fieldInfo.Offset = size;
-                                    if (fieldType!.Size == 0)
-                                    {
-                                        string message = string.Format(
-                                            System.Globalization.CultureInfo.InvariantCulture,
-                                            "The Type [{0}] for field [{1}] must be defined before it can be used as a field.",
-                                            fieldInfo.Type!.FullName,
-                                            identifier);
-                                        this.log.Write(new Message(
-                                            field.Start.Path,
-                                            field.Start.Line,
-                                            field.Start.Column,
-                                            Severity.Error,
-                                            message));
-                                        failed = true;
-                                    }
-
-                                    size += fieldType!.Size;
-                                }
-
-                                typeDef.Fields.Add(fieldInfo);
-                            }
-                        }
-                    }
-
-                    typeDef.Size = size;
+                    failed |= !this.PopulateTypeDefinition(context, classDecl, typeDef!);
                 }
             }
 
@@ -556,7 +243,7 @@ namespace Tea.Compiler
                     return RM.TWordSize;
                 }
 
-                throw new ArgumentOutOfRangeException(nameof(size));
+                throw new ArgumentOutOfRangeException(nameof(type));
             }
             else
             {
@@ -572,6 +259,363 @@ namespace Tea.Compiler
         private static RM FromParameterVariable(ParameterVariable variable)
         {
             return RM.Address(Register.EBP, variable.Offset, $"_{variable.Name}$", GetOperandSize(variable.Type!));
+        }
+
+        private bool PopulateTypeDefinition(EnumDeclaration enumDecl, TypeDefinition typeDef)
+        {
+            typeDef!.IsEnum = true;
+            typeDef!.IsPublic = true;
+            typeDef!.Size = 4;
+            int constVal = 0;
+            foreach (string val in enumDecl.Values)
+            {
+                typeDef.EnumValues.Add(val, constVal++);
+            }
+
+            return true;
+        }
+
+        private bool PopulateTypeDefinition(
+            CompilerContext context,
+            MethodTypeDeclaration methodDecl,
+            TypeDefinition typeDef)
+        {
+            bool failed = false;
+
+            typeDef!.IsMethod = true;
+            typeDef!.IsPublic = true;
+            typeDef!.Size = 4;
+            if (methodDecl.ImplicitArgType != null)
+            {
+                TypeDefinition? implicitArgType = null;
+                if (!this.TryResolveTypeReference(context, methodDecl.ImplicitArgType, out implicitArgType))
+                {
+                    failed = true;
+                }
+                else
+                {
+                    typeDef.MethodImplicitArgType = implicitArgType;
+                }
+
+                TypeDefinition? returnType = null;
+                if (!this.TryResolveTypeReference(context, methodDecl.ReturnType!, out returnType))
+                {
+                    failed = true;
+                }
+                else
+                {
+                    typeDef.MethodReturnType = returnType;
+                }
+
+                foreach (ParameterDeclaration paramDecl in methodDecl.Parameters)
+                {
+                    TypeDefinition? paramType = null;
+                    if (!this.TryResolveTypeReference(context, paramDecl.Type, out paramType))
+                    {
+                        failed = true;
+                    }
+                    else
+                    {
+                        foreach (string name in paramDecl.ParameterNames)
+                        {
+                            typeDef.MethodParamTypes.Add(paramType!);
+                        }
+                    }
+                }
+            }
+
+            return !failed;
+        }
+
+        private bool PopulateTypeDefinition(
+            CompilerContext context,
+            InterfaceDeclaration interfaceDecl,
+            TypeDefinition typeDef)
+        {
+            bool failed = false;
+
+            typeDef!.IsInterface = true;
+            typeDef!.IsPublic = interfaceDecl.IsPublic;
+            if (interfaceDecl.BaseInterfaceType != null)
+            {
+                TypeDefinition? baseType = null;
+                if (!context.TryFindTypeByName(interfaceDecl.BaseInterfaceType!, out baseType))
+                {
+                    string message = string.Format(
+                        System.Globalization.CultureInfo.CurrentCulture,
+                        Properties.Resources.CodeGenerator_UndefinedType,
+                        interfaceDecl.BaseInterfaceType);
+                    this.log.Write(new Message(
+                        interfaceDecl.Start.Path,
+                        interfaceDecl.Start.Line,
+                        interfaceDecl.Start.Column,
+                        Severity.Error,
+                        message));
+                    failed = true;
+                }
+
+                if (!baseType!.IsInterface)
+                {
+                    string message = string.Format(
+                        System.Globalization.CultureInfo.CurrentCulture,
+                        Properties.Resources.CodeGenerator_BaseInterfaceIsNotInterface,
+                        interfaceDecl!.BaseInterfaceType!);
+                    this.log.Write(new Message(
+                        interfaceDecl!.Start.Path,
+                        interfaceDecl!.Start.Line,
+                        interfaceDecl!.Start.Column,
+                        Severity.Error,
+                        message));
+                    failed = true;
+                }
+
+                typeDef.BaseClass = baseType;
+            }
+
+            foreach (MethodDeclaration meth in interfaceDecl.Methods)
+            {
+                MethodInfo? methodInfo = null;
+                if (!this.TryCreateMethod(context, typeDef!, meth, out methodInfo))
+                {
+                    failed = true;
+                    continue;
+                }
+
+                methodInfo!.IsPublic = true;
+                typeDef.Methods.Add(methodInfo!);
+            }
+
+            FieldInfo? vtblPtr = typeDef.GetVTablePointer();
+            if (vtblPtr == null)
+            {
+                vtblPtr = typeDef.AddVTablePointer(context, 0);
+            }
+
+            typeDef.Size = vtblPtr!.Type!.Size;
+
+            return !failed;
+        }
+
+        private bool PopulateTypeDefinition(
+            CompilerContext context,
+            ClassDeclaration classDecl,
+            TypeDefinition typeDef)
+        {
+            bool failed = false;
+
+            typeDef!.IsClass = true;
+            typeDef!.IsPublic = classDecl!.IsPublic;
+            typeDef!.IsStaticClass = classDecl!.IsStatic;
+            if (classDecl!.BaseType != null)
+            {
+                TypeDefinition? baseType = null;
+                if (!context.TryFindTypeByName(classDecl!.BaseType, out baseType))
+                {
+                    string message = string.Format(
+                        System.Globalization.CultureInfo.CurrentCulture,
+                        Properties.Resources.CodeGenerator_UndefinedType,
+                        classDecl!.BaseType);
+                    this.log.Write(new Message(
+                        classDecl!.Start.Path,
+                        classDecl!.Start.Line,
+                        classDecl!.Start.Column,
+                        Severity.Error,
+                        message));
+                    failed = true;
+                }
+                else
+                {
+                    if (!baseType!.IsClass || baseType!.IsStaticClass)
+                    {
+                        string message = string.Format(
+                            System.Globalization.CultureInfo.CurrentCulture,
+                            Properties.Resources.CodeGenerator_BaseTypeNotClass,
+                            baseType!.FullName);
+                        this.log.Write(new Message(
+                            classDecl!.Start.Path,
+                            classDecl!.Start.Line,
+                            classDecl!.Start.Column,
+                            Severity.Error,
+                            message));
+                        failed = true;
+                    }
+                    else
+                    {
+                        typeDef!.BaseClass = baseType;
+                    }
+                }
+            }
+
+            bool hasVirtualMethods = false;
+            foreach (MethodDeclaration meth in classDecl.PublicMethods)
+            {
+                MethodInfo? methodInfo = null;
+                if (!this.TryCreateMethod(context, typeDef, meth, out methodInfo))
+                {
+                    failed = true;
+                    continue;
+                }
+
+                methodInfo!.IsPublic = true;
+                typeDef.Methods.Add(methodInfo!);
+                if (methodInfo!.IsVirtual)
+                {
+                    hasVirtualMethods = true;
+                }
+            }
+
+            foreach (MethodDeclaration meth in classDecl.ProtectedMethods)
+            {
+                MethodInfo? methodInfo = null;
+                if (!this.TryCreateMethod(context, typeDef, meth, out methodInfo))
+                {
+                    failed = true;
+                    continue;
+                }
+
+                methodInfo!.IsProtected = true;
+                typeDef.Methods.Add(methodInfo!);
+                if (methodInfo!.IsVirtual)
+                {
+                    hasVirtualMethods = true;
+                }
+            }
+
+            foreach (MethodDeclaration meth in classDecl.PrivateMethods)
+            {
+                MethodInfo? methodInfo = null;
+                if (!this.TryCreateMethod(context, typeDef, meth, out methodInfo))
+                {
+                    failed = true;
+                    continue;
+                }
+
+                typeDef.Methods.Add(methodInfo!);
+                if (methodInfo!.IsVirtual)
+                {
+                    hasVirtualMethods = true;
+                }
+            }
+
+            int size = 0;
+            if (typeDef.BaseClass != null)
+            {
+                size = typeDef.BaseClass.Size;
+            }
+
+            if (hasVirtualMethods || classDecl.Interfaces.Count() > 0)
+            {
+                FieldInfo? vtblPtr = typeDef.GetVTablePointer();
+                if (vtblPtr == null)
+                {
+                    vtblPtr = typeDef.AddVTablePointer(context, size);
+                    size += vtblPtr!.Type!.Size;
+                }
+            }
+
+            foreach (var intfDecl in classDecl.Interfaces)
+            {
+                TypeDefinition? intfDef = null;
+                if (!context.TryFindTypeByName(intfDecl, out intfDef))
+                {
+                    string message = string.Format(
+                        System.Globalization.CultureInfo.CurrentCulture,
+                        Properties.Resources.CodeGenerator_UndefinedType,
+                        intfDecl);
+                    this.log.Write(new Message(
+                        classDecl.Start.Path,
+                        classDecl.Start.Line,
+                        classDecl.Start.Column,
+                        Severity.Error,
+                        message));
+                    failed = true;
+                    continue;
+                }
+
+                FieldInfo? intfTable = typeDef.GetInterfaceTablePointer(intfDef!);
+                if (intfTable == null)
+                {
+                    intfTable = typeDef.AddInterfaceTablePointer(context, size, intfDef!);
+                    size += intfTable!.Type!.Size;
+                }
+
+                typeDef.AddInterface(intfDef!, intfTable!.Offset);
+
+                TypeDefinition? intf = intfDef;
+                while (intf != null)
+                {
+                    foreach (var meth in intf.Methods)
+                    {
+                        MethodInfo? matchingMeth = typeDef.FindMethod(meth.Name!, meth.Parameters.Select(e => e.Type!).ToList());
+                        if (matchingMeth == null || !matchingMeth.IsVirtual)
+                        {
+                            failed = true;
+                            string message = string.Format(
+                                System.Globalization.CultureInfo.CurrentCulture,
+                                Properties.Resources.CodeGenerator_ClassDoesNotDeclareInterfaceMethod,
+                                typeDef.FullName,
+                                intf.FullName,
+                                meth.Name);
+                            this.log.Write(new Message(
+                                classDecl.Start.Path,
+                                classDecl.Start.Line,
+                                classDecl.Start.Column,
+                                Severity.Error,
+                                message));
+                        }
+                    }
+
+                    intf = intf.BaseClass;
+                }
+            }
+
+            if (classDecl.Fields != null)
+            {
+                foreach (var field in classDecl.Fields.Variables)
+                {
+                    TypeDefinition? fieldType = null;
+                    if (!this.TryResolveTypeReference(context, field.Type, out fieldType))
+                    {
+                        failed = true;
+                        continue;
+                    }
+
+                    foreach (string identifier in field.VariableNames)
+                    {
+                        FieldInfo fieldInfo = new FieldInfo();
+                        fieldInfo.Name = identifier;
+                        fieldInfo.Type = fieldType;
+                        fieldInfo.IsStatic = classDecl.IsStatic;
+                        if (!fieldInfo.IsStatic)
+                        {
+                            fieldInfo.Offset = size;
+                            if (fieldType!.Size == 0)
+                            {
+                                string message = string.Format(
+                                    System.Globalization.CultureInfo.InvariantCulture,
+                                    "The Type [{0}] for field [{1}] must be defined before it can be used as a field.",
+                                    fieldInfo.Type!.FullName,
+                                    identifier);
+                                this.log.Write(new Message(
+                                    field.Start.Path,
+                                    field.Start.Line,
+                                    field.Start.Column,
+                                    Severity.Error,
+                                    message));
+                                failed = true;
+                            }
+
+                            size += fieldType!.Size;
+                        }
+
+                        typeDef.Fields.Add(fieldInfo);
+                    }
+                }
+            }
+
+            typeDef.Size = size;
+
+            return !failed;
         }
 
         private bool TryImplementMethod(
@@ -1712,7 +1756,11 @@ namespace Tea.Compiler
                         callLoc = RM.Address(overload!.MangledName);
                     }
 
-                    method.Module!.AddProto(overload!);
+                    if (!overload!.IsVirtual || !(callExpr.Inner?.UseVirtualDispatch ?? false))
+                    {
+                        method.Module!.AddProto(overload!);
+                    }
+
                     calleeMethod = overload;
                     storageType = overload!.ReturnType;
                 }
@@ -2712,7 +2760,6 @@ namespace Tea.Compiler
                 var memberMethod = method.Method!.Type!.FindMethod(namedRef!.Identifier);
                 if (memberMethod != null)
                 {
-                    method.Module!.AddProto(memberMethod!);
                     if (!memberMethod.IsStatic)
                     {
                         ParameterVariable? symThis = null;
@@ -2738,6 +2785,7 @@ namespace Tea.Compiler
                     }
                     else
                     {
+                        method.Module!.AddProto(memberMethod!);
                         location = RM.Address(memberMethod.MangledName);
                     }
 
@@ -2822,7 +2870,6 @@ namespace Tea.Compiler
                     var memberMethod = innerType.FindMethod(memberRef.MemberName);
                     if (memberMethod != null)
                     {
-                        method.Module?.AddProto(memberMethod);
                         if (!memberMethod.IsStatic)
                         {
                             method.Statements.Add(new AsmStatement { Instruction = X86Instruction.Lea(Register.EAX, innerLoc!) });
@@ -2835,6 +2882,7 @@ namespace Tea.Compiler
                         }
                         else
                         {
+                            method.Module?.AddProto(memberMethod);
                             location = RM.Address(memberMethod.MangledName);
                         }
 

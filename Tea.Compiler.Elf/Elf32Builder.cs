@@ -9,6 +9,7 @@ namespace Tea.Compiler.Elf
     using System;
     using System.Collections.ObjectModel;
     using System.IO;
+    using Tea.Compiler.Binary;
 
     /// <summary>
     /// Builder pattern for a 32bit little endian ELF file.

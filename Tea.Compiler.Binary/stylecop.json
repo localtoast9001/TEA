@@ -1,0 +1,11 @@
+{
+    "settings": {
+        "documentationRules": {
+          "companyName": "Jon Rowlett",
+          "copyrightText": "Copyright (C) {companyName}. All rights reserved.",
+          "variables": {
+          }
+        }
+      }
+    
+}

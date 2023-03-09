@@ -19,17 +19,19 @@ namespace TEAC
         /// <summary>
         /// List of search directories for includes.
         /// </summary>
-        private List<string> includes = new List<string>();
+        private readonly List<string> includes = new List<string>();
 
         private Arguments(
             string inputFile,
             string outputListing,
-            string outputObj,
+            string? outputElfObj,
+            string? outputCoffObj,
             IEnumerable<string> includeDirs)
         {
             this.InputFile = inputFile;
             this.OutputListing = outputListing;
-            this.OutputObj = outputObj;
+            this.OutputElfObj = outputElfObj;
+            this.OutputCoffObj = outputCoffObj;
             this.includes.AddRange(includeDirs);
         }
 
@@ -44,9 +46,14 @@ namespace TEAC
         public string OutputListing { get; }
 
         /// <summary>
-        /// Gets the output obj path.
+        /// Gets the output ELF obj path.
         /// </summary>
-        public string OutputObj { get; }
+        public string? OutputElfObj { get; }
+
+        /// <summary>
+        /// Gets the output COFF obj path.
+        /// </summary>
+        public string? OutputCoffObj { get; }
 
         /// <summary>
         /// Gets the list of include search paths.
@@ -67,7 +74,7 @@ namespace TEAC
             result = null;
             string? inputFile = null;
             string? outputListing = null;
-            string? outputObj = null;
+            List<string> outputObjs = new List<string>();
             List<string> includes = new List<string>();
             if (args.Length < 1)
             {
@@ -94,7 +101,8 @@ namespace TEAC
                 }
                 else if (arg.StartsWith("/Fo", StringComparison.Ordinal))
                 {
-                    outputObj = arg.Substring(3);
+                    string outputObj = arg.Substring(3);
+                    outputObjs.Add(outputObj);
                 }
                 else if (arg.StartsWith("/I", StringComparison.Ordinal))
                 {
@@ -118,12 +126,31 @@ namespace TEAC
                 outputListing = GetOutputPath(inputFile, ".asm");
             }
 
-            if (string.IsNullOrEmpty(outputObj))
+            if (outputObjs.Count == 0)
             {
-                outputObj = GetOutputPath(inputFile, ".o");
+                outputObjs.Add(GetOutputPath(inputFile, ".o"));
             }
 
-            result = new Arguments(inputFile, outputListing, outputObj, includes);
+            string? outputElfObj = null;
+            string? outputCoffObj = null;
+            foreach (string o in outputObjs)
+            {
+                if (o.EndsWith(".o"))
+                {
+                    outputElfObj = o;
+                }
+                else if (o.EndsWith(".obj"))
+                {
+                    outputCoffObj = o;
+                }
+            }
+
+            result = new Arguments(
+                inputFile,
+                outputListing,
+                outputElfObj,
+                outputCoffObj,
+                includes);
             return true;
         }
 

@@ -89,15 +89,15 @@
             Directories="$(IntermediateOutputPath)" />
         <Exec
             ContinueOnError="ErrorAndContinue"
-            Command="$(TeacToolPath) $(_Includes) /Fa$(IntermediateOutputPath)%(TeaCompile.filename).asm /Fo$(IntermediateOutputPath)%(TeaCompile.filename).o %(TeaCompile.fullpath)"
-            Outputs="$(IntermediateOutputPath)%(TeaCompile.filename).asm;$(IntermediateOutputPath)%(TeaCompile.filename).o">
+            Command="$(TeacToolPath) $(_Includes) /Fa$(IntermediateOutputPath)%(TeaCompile.filename).asm /Fo$(IntermediateOutputPath)%(TeaCompile.filename).o /Fo$(IntermediateOutputPath)%(TeaCompile.filename).obj %(TeaCompile.fullpath)"
+            Outputs="$(IntermediateOutputPath)%(TeaCompile.filename).asm;$(IntermediateOutputPath)%(TeaCompile.filename).o;$(IntermediateOutputPath)%(TeaCompile.filename).obj">
             <Output TaskParameter="Outputs" ItemName="FileWrites" />
         </Exec>
         <Exec
             Condition="'$(OS)' != 'Unix'"
             ContinueOnError="ErrorAndContinue"
-            Command="ml /c /Cp /Cx /Zi /Fo $(IntermediateOutputPath)%(TeaCompile.filename).obj $(IntermediateOutputPath)%(TeaCompile.filename).asm"
-            Outputs="$(IntermediateOutputPath)%(TeaCompile.filename).obj">
+            Command="ml /c /Cp /Cx /Zi /Fo $(IntermediateOutputPath)%(TeaCompile.filename).obj2 $(IntermediateOutputPath)%(TeaCompile.filename).asm"
+            Outputs="$(IntermediateOutputPath)%(TeaCompile.filename).obj2`">
             <Output TaskParameter="Outputs" ItemName="FileWrites" />
         </Exec>
     </Target>

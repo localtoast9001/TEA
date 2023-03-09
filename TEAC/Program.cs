@@ -59,9 +59,20 @@ namespace TEAC
                                     moduleWriter.Write(module!);
                                 }
 
-                                using (Elf32ModuleWriter objWriter = new Elf32ModuleWriter(arguments!.OutputObj))
+                                if (arguments!.OutputElfObj != null)
                                 {
-                                    objWriter.Write(module!);
+                                    using (Elf32ModuleWriter objWriter = new Elf32ModuleWriter(arguments!.OutputElfObj))
+                                    {
+                                        objWriter.Write(module!);
+                                    }
+                                }
+
+                                if (arguments!.OutputCoffObj != null)
+                                {
+                                    using (CoffModuleWriter objWriter = new CoffModuleWriter(arguments!.OutputCoffObj))
+                                    {
+                                        objWriter.Write(module!);
+                                    }
                                 }
                             }
                         }
