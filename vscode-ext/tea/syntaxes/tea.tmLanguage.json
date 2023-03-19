@@ -1,0 +1,112 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "TEA",
+	"patterns": [
+		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#strings"
+		},
+		{
+			"include": "#doccomments"
+		},
+		{
+			"include": "#comments"
+		},
+		{
+			"include": "#comments2"
+		}
+	],
+	"repository": {
+		"keywords": {
+			"patterns": [{
+				"name": "keyword.control.tea",
+				"match": "\\b(abstract|array|begin|case|delete|do|downto|else|end|extern|for|if|in|inherited|namespace|of|program|repeat|set|then|to|type|until|uses|var|while)\\b"
+			},
+			{
+				"name": "constant.language.tea",
+				"match": "\\b(false|nil|true)\\b"
+			},
+			{
+				"name": "constant.numeric.tea",
+				"match": "(?<!\\w)\\.?\\d(?:(?:[0-9a-zA-Z_\\.]|')|(?<=[eEpP])[+-])*"
+			},
+			{
+				"name": "keyword.other.tea",
+				"match": "\\b(class|record|interface|constructor|destructor|function|procedure)\\b"
+			},
+			{
+				"name": "keyword.operator.assignment.tea",
+				"match": ":\\="
+			},
+			{
+				"name": "keyword.operator.logical.tea",
+				"match": "\\b(and|not|or)\\b"
+			},
+			{
+				"name": "keyword.operator.comparison.tea",
+				"match": "=|<>|<|<=|>|>="
+			},			
+			{
+				"name": "keyword.operator.arithmatic.tea",
+				"match": "\\b(div|mod)\\b|\\*|\\/|\\+|-"
+			},
+			{
+				"name": "keyword.operator.new.tea",
+				"match": "\\b(new)\\b"
+			},
+			{
+				"name": "keyword.type.tea",
+				"match": "\\b(boolean|byte|character|double|extended|integer|long|short|single)\\b"
+			},
+			{
+				"name": "storage.modifier.tea",
+				"match": "\\b(const|packed|public|protected|private|static|virtual)\\b"
+			},
+			{
+				"name": "punctuation.separator.pointer-access.tea",
+				"match": "\\^\\."
+			},
+			{
+				"name": "punctuation.separator.dot-access.tea",
+				"match": "\\."
+			},
+			{
+				"name": "punctuation.separator.comma.tea",
+				"match": ","
+			},
+			{
+				"name": "punctuation.separator.colon.tea",
+				"match": "\\:"
+			}]
+		},
+		"strings": {
+			"name": "string.quoted.single.tea",
+			"begin": "'",
+			"end": "'",
+			"patterns": [
+				{
+					"name": "constant.character.escape.tea",
+					"match": "''"
+				}
+			]
+		},
+		"comments": {
+			"name": "comment.block.paren.tea",
+			"begin": "\\(\\*",
+			"end": "\\*\\)"
+		},
+		"comments2": {
+			"name": "comment.block.curly.tea",
+			"begin": "{",
+			"end": "}"
+		},
+		"doccomments": {
+			"name": "comment.block.documentation.paren.tea",
+			"begin": "\\(\\*\\*",
+			"end": "\\*\\*\\)"
+		}
+	},
+	"scopeName": "source.tea"
+}
