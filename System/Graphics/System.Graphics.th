@@ -1,40 +1,142 @@
+(******************************************************************************
+ Copyright (C) 2013-2022 Jon Rowlett. All rights reserved.
+ System.Graphics.th - Declarations for the System.Graphics namespace.
+******************************************************************************)
 namespace System.Graphics;
 uses System;
 
 type
+    {
+        A point for 2D raster graphics.
+    }
     Point = public class
         public
+            {
+                Initializes a new instance of the Point class.
+            }
             constructor();
+
+            {
+                Initializes a new instance of the Point class.
+                @param x the X coordinate.
+                @param y the Y coordinate.
+            }
             constructor(x, y : integer);
+
+            {
+                Gets the X coordinate.
+                @returns the X coordinate.
+            }
             function GetX() : integer;
+
+            {
+                Gets the Y coordinate.
+                @returns the Y coordinate.
+            }
             function GetY() : integer;
+
+            {
+                Sets the X coordinate.
+                @param value the X coordinate.
+            }
             procedure SetX(value : integer);
+
+            {
+                Sets the Y coordinate.
+                @param value the Y coordinate.
+            }
             procedure SetY(value : integer);
         var
             _x, _y : integer;
     end;
 
+    {
+        Represents the size of an area for 2D raster graphics.
+    }
     Size = public class
         public
+            {
+                Initializes a new instance of the Size class.
+            }
             constructor();
+
+            {
+                Initializes a new instance of the Size class.
+                @param width the width of the size.
+                @param height the height of the size.
+            }
             constructor(width, height : integer);
+
+            {
+                Gets the width.
+                @returns the width.
+            }
             function GetWidth() : integer;
+
+            {
+                Gets the height.
+                @returns the height.
+            }
             function GetHeight() : integer;
+
+            {
+                Sets the width.
+                @param value the value for the width.
+            }
             procedure SetWidth(value : integer);
+
+            {
+                Sets the height.
+                @param value the value for the height.
+            }
             procedure SetHeight(value : integer);
         var
             _width, _height : integer;
     end;
 
+    {
+        Describes the format of pixel data in raster images.
+    }
     PixelFormat = public class
         public
+            {
+                Initializes a new instance of the PixelFormat class.
+            }
             constructor();
+
+            {
+                Initializes a new instance of the PixelFormat class.
+                @param bpp bits per pixel.
+                @param channels the number of color channels.
+                @param colorDepth the number of bits per color.
+                @param isFloat true if the pixel values are floating point; false if ordinal.
+            }
             constructor(
                 bpp, channels, colorDepth : integer;
                 isFloat : boolean);
+
+            {
+                Gets the bits per pixel.
+                @returns The number of bits per pixel.
+            }
             function GetBpp() : integer;
+
+            {
+                Gets the number of color channels.
+                @returns the number of color channels.
+            }
             function GetChannels() : integer;
+
+            {
+                Gets the color depth in bits per color.
+                @returns the color depth.
+            }
             function GetColorDepth() : integer;
+
+            {
+                Gets a value indicating whether the color data is floating point.
+                @returns true if the pixel format uses floating point; false if it uses ordinal values.
+            }
             function IsFloat() : boolean;
  
         var
@@ -44,19 +146,57 @@ type
             _isFloat : boolean;
     end;
 
+    {
+        An in-memory image.
+    }
     Image = public class
         public
+            {
+                Initializes a new instance of the Image class.
+            }
             constructor();
+
+            {
+                Destroys the instance.
+            }
             destructor();
 
+            {
+                Gets the size of the image.
+                @returns the size of the image.
+            }
             function GetSize() : Size;
+
+            {
+                Gets the pixel format of the image.
+                @returns the pixel format of the image.
+            }
             function GetFormat() : PixelFormat;
+
+            {
+                Gets a reference to the raw image data.
+                @returns a reference to the raw image data.
+            }
             function GetRawImageData() : array of byte;
+
+            {
+                Gets the row size in bytes.
+                @returns the row size in bytes.
+            }
             function GetRowSize() : integer;
 
+            {
+                Allocates memory for the image given the size and pixel format.
+                @param size the size of the image.
+                @param format the pixel format.
+            }
             function Create(
                 size : Size;
                 format : PixelFormat) : boolean;
+
+            {
+                Clears the image and frees its memory.
+            }
             procedure Clear(); 
         private
             static function GetRowSizeFromFormat(

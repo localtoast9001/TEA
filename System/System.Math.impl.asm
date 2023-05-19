@@ -1,3 +1,5 @@
+; Copyright (C) 2013-2023 Jon Rowlett. All rights reserved.
+; System.Math.impl.asm - Implementation of math routines for MASM.
 .model flat,C
 
 .code

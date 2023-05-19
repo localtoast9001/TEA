@@ -1,9 +1,23 @@
+(******************************************************************************
+ Copyright (C) 2013-2022 Jon Rowlett. All rights reserved.
+ System.Diagnostics.th - Declarations for the System.Diagnostics namespace.
+******************************************************************************)
 namespace System.Diagnostics;
 
 type
+    {
+        Debug helper routines.
+    }
     Debug = public static class
         public
+            {
+                Generates a debug break if the given condition is not met.
+                @param condition if false, the program will generate a debug break.
+            }
             static procedure Assert(condition : boolean);
         private
+            {
+                Generates a processor specific debug break.
+            }
             static procedure DebugBreak();
     end;

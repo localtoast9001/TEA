@@ -1,15 +1,54 @@
+(******************************************************************************
+ Copyright (C) 2013-2022 Jon Rowlett. All rights reserved.
+ System.th - Declarations for the System namespace.
+******************************************************************************)
 namespace System;
 
 type
+    {
+        Console I/O.
+    }
     Console = public static class
         public
+            {
+                Writes a line of text with carriage return to STDOUT.
+                @param text null terminated array of characters to write.
+                @returns the number of characters written.
+            }
             static function WriteLine(text : array of character) : integer;
+
+            {
+                Writes text to STDOUT.
+                @param text null terminated array of characters to write.
+                @returns the number of characters written.
+            }
             static function Write(text : array of character) : integer;
+
+            {
+                Writes a character to STDOUT.
+                @param ch the character to write.
+                @returns the number of characters written.
+            }
             static function Write(ch : character) : integer;
     end;
+
+    {
+        Type converstion routines.
+    }
     Convert = public static class
         public
+            {
+                Gets the lower 32 bits of the given 64 bit signed value.
+                @param value the 64 bit value to convert.
+                @returns the lower 32 bits of the given value as an integer.
+            }
             static function Lo(value : long) : integer;
+
+            {
+                Gets the high 32 bits of the given 64 bit signed value.
+                @param value the 64 bit value to convert.
+                @returns the high 32 bits of the given value as an integer.
+            }
             static function Hi(value : long) : integer;
             static function Lo(value : integer) : short;
             static function Hi(value : integer) : short;
@@ -26,8 +65,17 @@ type
             static function ToDouble(value : integer) : double;
             static function ToExtended(value : integer) : extended;
     end;
+
+    {
+        Math routines.
+    }
     Math = public static class
         public
+            {
+                Computes the square root of the given value.
+                @param value the input value.
+                @returns The square root of the given value.
+            }
             static function Sqrt(value : double) : double;
             static function Sin(value : double) : double;
             static function Cos(value : double) : double;
@@ -46,11 +94,29 @@ type
             static function Max(x, y : integer) : integer;
             static function Min(x, y : integer) : integer;
     end;
+
+    {
+        Dynamic memory routines.
+    }
     Memory = public static class
         public
+            {
+                Allocates memory on the heap.
+                @param size the number of bytes to allocate.
+                @returns a pointer to the allocated bytes or nil if out of memory.
+            }
             static function Alloc(size : integer) : ^byte;
+
+            {
+                Frees memory on the heap allocated with a previous call to Memory.Alloc.
+                @param the pointer to the memory previously allocated by Memory.Alloc.
+            }
             static procedure Free(p : ^byte);
     end;
+
+    {
+        Internal string buffer used by the String class.
+    }
     StringBuffer = class
         public
             constructor();
@@ -67,6 +133,10 @@ type
             _refCount : integer;
             _buffer : array of character;
     end;
+
+    {
+        Immutable string reference class.
+    }
     String = public class
         public
             constructor();
@@ -102,11 +172,19 @@ type
         var
             _bufferRef : ^StringBuffer;
     end;
+
+    {
+        Internal node for the LinkedList class.
+    }
     LinkedListNode = class
         var
             _next : ^LinkedListNode;
             _data : integer;
     end;
+
+    {
+        A singly-linked list of integers.
+    }
     LinkedList = public class
         public 
             constructor();
@@ -117,6 +195,10 @@ type
             _head : ^LinkedListNode;
             _tail : ^LinkedListNode;
     end;
+
+    {
+        A structed representation of a span of time.
+    }
     TimeSpan = public class
         public
             constructor();
@@ -132,11 +214,15 @@ type
             function GetTotalDays() : double;
             function GetTotalHours() : double;
             function GetTotalMinutes() : double;
-            function GetTotalSeconds() : double;    
+            function GetTotalSeconds() : double;
             function GetTotalMilliseconds() : double;
         var
             _ticks : long;
     end;
+
+    {
+        A structured date and time representation.
+    }
     DateTime = public class
         var
             _ticks : long;

@@ -1,26 +1,117 @@
+(******************************************************************************
+ Copyright (C) 2013-2023 Jon Rowlett. All rights reserved.
+ System.Text.th - Declaration of types in the System.Text namespace.
+******************************************************************************)
 namespace System.Text;
 uses System;
 
 type
+    {
+        Utility for testing qualities of a character.
+    }
     CharacterUtility = public static class
         public
+            {
+                Tests whether or not the given character is a whitespace char.
+                @param ch the character to test.
+                @returns true if the character is whitespace; otherwise, false.
+            }
             static function IsWhiteSpace(ch : character) : boolean;
+
+            {
+                Tests whether or not the given character is a digit.
+                @param ch the character to test.
+                @returns true if the character is a digit; otherwise, false.
+            }
             static function IsDigit(ch : character) : boolean;
+
+            {
+                Tests whether or not the given character is a latter.
+                @param ch the character to test.
+                @returns true if the character is a letter; otherwise, false.
+            }
             static function IsLetter(ch : character) : boolean;
+
+            {
+                Tests whether or not the given character is a letter or digit.
+                @param ch the character to test.
+                @returns true if the character is a letter or digit; otherwise, false.
+            }
             static function IsLetterOrDigit(ch : character) : boolean;
     end;
+
+    {
+        A heap allocated string builder.
+    }
     SimpleStringBuilder = public class
         public
+            {
+                Initializes a new instance of the SimpleStringBuilder class.
+            }
             constructor();
+
+            {
+                Initializes a new instance of the SimpleStringBuilder class.
+                @param capacity the initial capacity for the buffer.
+            }
             constructor(capacity : integer);
+
+            {
+                Destroys this instance.
+            }
             virtual destructor();
+
+            {
+                Tries to append a character.
+                @param source the character to append.
+                @returns true if the character was appended; false if memory could not be allocated.
+            }
             function TryAppend(source : character) : boolean;
+
+            {
+                Tries to append a string.
+                @param source the string to append.
+                @returns true if the string was appended; false if memory could not be allocated.
+            }
             function TryAppend(source : ^String) : boolean;
+
+            {
+                Tries to append a null terminated array of characters.
+                @param source the string to append.
+                @returns true if the string was appended; false if memory could not be allocated.
+            }
             function TryAppend(source : array of character) : boolean;
+
+            {
+                Tries to clear and copy a null terminated array of characters.
+                @param source the string to assign.
+                @returns true if the string was assigned; false if memory could not be allocated.
+            }
             function TryAssign(source : array of character) : boolean;
+
+            {
+                Tries to clear and copy a string.
+                @param source the string to assign.
+                @returns true if the string was assigned; false if memory could not be allocated.
+            }
             function TryAssign(source : ^String) : boolean;
+
+            {
+                Copies the contents of the builder to a string.
+                @returns true if the string could be allocated and copied thereto; false if memory could not be allocated.
+            }
             function ToString(value : ^String) : boolean;
+
+            {
+                Gets a pointer to the internal string buffer.
+                @returns a pointer to the internal buffer.
+            }
             function GetBuffer() : array of character;
+
+            {
+                Gets the length of the accumulated string in the buffer.
+                @returns the length of the string.
+            }
             function Length() : integer;
         private
             function GrowBuffer(newSize : integer) : boolean;
@@ -29,44 +120,131 @@ type
             _buffer : array of character;
             _length, _size, _capacity, _growth : integer;
     end;
+
+    {
+        Interface that formats values to strings.
+    }
     IFormatter = public interface
+        {
+            Tries to format an integer to a text representation.
+            @param value the value to format.
+            @param format the format string.
+            @param outputBuffer the string builder to receive the formatted value.
+            @returns true if the value was formatter; false if the value could not be formatted.
+        }
         function TryFormat(
             value : integer; 
             format : array of character; 
             outputBuffer : ^SimpleStringBuilder) : boolean;
     end;
+
+    {
+        Default implementations of the IFormatter methods.
+    }
     DefaultFormatter = public static class
         public
+            {
+                Tries to format an integer to a text representation.
+                @param value the value to format.
+                @param format the format string.
+                @param outputBuffer the string builder to receive the formatted value.
+                @returns true if the value was formatter; false if the value could not be formatted.
+            }
             static function TryFormat(
                 value : integer; 
                 format : array of character; 
                 outputBuffer : ^SimpleStringBuilder) : boolean;
     end;
+
+    {
+        Text encoding for use in serialization and deserialization of text.
+    }
     Encoding = public {abstract} class
         public
+            {
+                Destroys this instance.
+            }
             virtual destructor();
+
+            {
+                Decodes the encoded text into characters.
+                @param bytes the input buffer of encoded text.
+                @param byteIndex the index into the buffer to start decoding.
+                @param byteCount the count of bytes to decode.
+                @param chars the buffer to receive the decoded characters.
+                @param charsSize the size of the buffer.
+                @param charIndex the offset into the chars buffer to place the fist decoded character.
+                @returns the number of characters decoded.
+            }
             abstract function GetChars(
                 bytes : array of byte;
                 byteIndex, byteCount : integer;
                 chars : array of character;
                 charsSize, charIndex : integer) : integer;
+
+            {
+                Encodes the characters into bytes.
+                @param chars the input buffer of characters.
+                @param charIndex the index of the first character in the buffer to encode.
+                @param charCount the count of characters to encode.
+                @param bytes the buffer to receive the encoded text.
+                @param bytesSize the size of the buffer.
+                @param byteIndex the offset into the bytes buffer to place the fist encoded byte.
+                @returns the number of bytes encoded.
+            }
             abstract function GetBytes(
                 chars : array of character;
                 charIndex, charCount : integer;
                 bytes : array of byte;
                 bytesSize, byteIndex : integer) : integer;
         protected
+            {
+                Initializes a new instance of the Encoding class.
+            }
             constructor();
     end;
+
+    {
+        Encoding for single byte ASCII characters.
+    }
     ASCIIEncoding = public class(Encoding)
         public
+            {
+                Initializes a new instance of the ASCIIEncoding class.
+            }
             constructor();
+
+            {
+                Destroys this instance.
+            }
             virtual destructor();
+
+            {
+                Decodes the encoded text into characters.
+                @param bytes the input buffer of encoded text.
+                @param byteIndex the index into the buffer to start decoding.
+                @param byteCount the count of bytes to decode.
+                @param chars the buffer to receive the decoded characters.
+                @param charsSize the size of the buffer.
+                @param charIndex the offset into the chars buffer to place the fist decoded character.
+                @returns the number of characters decoded.
+            }
             virtual function GetChars(
                 bytes : array of byte;
                 byteIndex, byteCount : integer;
                 chars : array of character;
                 charsSize, charIndex : integer) : integer;
+
+            {
+                Encodes the characters into bytes.
+                @param chars the input buffer of characters.
+                @param charIndex the index of the first character in the buffer to encode.
+                @param charCount the count of characters to encode.
+                @param bytes the buffer to receive the encoded text.
+                @param bytesSize the size of the buffer.
+                @param byteIndex the offset into the bytes buffer to place the fist encoded byte.
+                @returns the number of bytes encoded.
+            }
             virtual function GetBytes(
                 chars : array of character;
                 charIndex, charCount : integer;

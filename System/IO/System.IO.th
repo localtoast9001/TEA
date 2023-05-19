@@ -1,63 +1,247 @@
+(******************************************************************************
+ Copyright (C) 2013-2022 Jon Rowlett. All rights reserved.
+ System.IO.th - Declarations for the System.IO namespace.
+******************************************************************************)
 namespace System.IO;
 uses System, System.Text;
 
 type
+    {
+        Abstract stream class.
+    }
     Stream = public {abstract} class
         public
+            {
+                Destructor for an instance of the stream class.
+            }
             virtual destructor();
+
+            {
+                Closes a stream.
+            }
             abstract procedure Close();
+
+            {
+                Reads bytes from the stream into a buffer.
+                @param buffer the buffer to recieve data.
+                @param offset the offset into the buffer in which to receive data.
+                @param count the number of bytes to read.
+                @returns the number of bytes read.
+            }
             abstract function Read(
                 buffer : array of byte;
                 offset, count : integer) : integer;
+
+            {
+                Writes bytes from a buffer into the stream.
+                @param buffer the buffer that has the data to write.
+                @param offset the offset into the buffer for the start of the write.
+                @param count the number of bytes to write.
+                @returns the number of bytes written.
+            }
             abstract function Write(
                 buffer : array of byte;
                 offset, count : integer) : boolean;
+
+            {
+                Flushes any unwritten buffers to the underlying stream.
+                @returns true if the flush was successful; otherwise, false.
+            }
             virtual function Flush() : boolean; 
+
+            {
+                Gets the length of the stream.
+                @returns the length of the stream in bytes.
+            }
             abstract function GetLength() : long;
+
+            {
+                Resizes the stream to the given length.
+                @param length the new length of the stream.
+                @returns true if the resize is succesful; otherwise, false.
+            }
             abstract function Resize(
                 length : long) : boolean;
+
+            {
+                Seeks the stream to an offset from the beginning of the stream.
+                @param offset the offset from the beginning to seek the stream.
+                @returns true if the operation was succesful; otherwise, false.
+            }
             abstract function SeekBegin(
-                offset : integer) : boolean;  
+                offset : integer) : boolean;
+
+            {
+                Seeks the stream to an offset based on the current position of the stream.
+                @param offset the offset to seek based on the current position of the stream.
+                @returns true if the operation was succesful; otherwise, false.
+            }
             abstract function SeekCurrent(
-                offset : integer) : boolean;  
+                offset : integer) : boolean;
+
+            {
+                Seeks the stream to an offset based on the end of the stream.
+                @param offset the offset to seek the stream based on the end of the stream.
+                @returns true if the operation was succesful; otherwise, false.
+            }
             abstract function SeekEnd(
                 offset : integer) : boolean;
+
+            {
+                Gets a value indicating whether the stream can be written to.
+                @returns true if the stream can be written to; otherwise, false.
+            }
             abstract function CanWrite() : boolean;
+
+            {
+                Gets a value indicating whether the stream can be read from.
+                @returns true if the stream can be read from; otherwise, false.
+            }
             abstract function CanRead() : boolean;
+
+            {
+                Gets a value indicating whether the stream supports seeking.
+                @returns true if the stream supports seeking; otherwise, false.
+            }
             abstract function CanSeek() : boolean;
-            abstract function CanResize() : boolean;               
+
+            {
+                Gets a value indicating whether the stream can be resized.
+                @returns true if the stream can be resized; otherwise, false.
+            }
+            abstract function CanResize() : boolean;
         protected
+            {
+                Initializes a new instance of the Stream class.
+            }
             constructor();
     end;
     
+    {
+        A file stream.
+    }
     FileStream = public class(Stream)
         public
+            {
+                Initializes a new instance of the FileStream class.
+            }
             constructor();
+
+            {
+                Destroys an instance of the FileStream class.
+            }
             virtual destructor();
+
+            {
+                Opens a file stream.
+                @param path the file to open.
+                @param read true to open the file to read; otherwise, false.
+                @param write true to open the file for writing; otherwise, false.
+                @return true if the file was opened; otherwise, false.
+            }
             function Open(
                 path : array of character;
                 read, write : boolean) : boolean;
-            function LastError() : integer; 
+
+            {
+                Gets the last error from the system.
+                @returns a value for the last error.
+            }
+            function LastError() : integer;
+
+            {
+                Closes the file.
+            }
             virtual procedure Close();
+
+            {
+                Reads bytes from the stream into a buffer.
+                @param buffer the buffer to recieve data.
+                @param offset the offset into the buffer in which to receive data.
+                @param count the number of bytes to read.
+                @returns the number of bytes read.
+            }
             virtual function Read(
                 buffer : array of byte;
                 offset, count : integer) : integer;
+
+            {
+                Writes bytes from a buffer into the stream.
+                @param buffer the buffer that has the data to write.
+                @param offset the offset into the buffer for the start of the write.
+                @param count the number of bytes to write.
+                @returns the number of bytes written.
+            }
             virtual function Write(
                 buffer : array of byte;
                 offset, count : integer) : boolean;
+
+            {
+                Flushes any unwritten buffers to the underlying stream.
+                @returns true if the flush was successful; otherwise, false.
+            }
             virtual function Flush() : boolean; 
+
+            {
+                Gets the length of the stream.
+                @returns the length of the stream in bytes.
+            }
             virtual function GetLength() : long;
+
+            {
+                Resizes the stream to the given length.
+                @param length the new length of the stream.
+                @returns true if the resize is succesful; otherwise, false.
+            }
             virtual function Resize(
                 length : long) : boolean;
+
+            {
+                Seeks the stream to an offset from the beginning of the stream.
+                @param offset the offset from the beginning to seek the stream.
+                @returns true if the operation was succesful; otherwise, false.
+            }
             virtual function SeekBegin(
-                offset : integer) : boolean;  
+                offset : integer) : boolean;
+
+            {
+                Seeks the stream to an offset based on the current position of the stream.
+                @param offset the offset to seek based on the current position of the stream.
+                @returns true if the operation was succesful; otherwise, false.
+            }
             virtual function SeekCurrent(
-                offset : integer) : boolean;  
+                offset : integer) : boolean;
+
+            {
+                Seeks the stream to an offset based on the end of the stream.
+                @param offset the offset to seek the stream based on the end of the stream.
+                @returns true if the operation was succesful; otherwise, false.
+            }
             virtual function SeekEnd(
                 offset : integer) : boolean;
+
+            {
+                Gets a value indicating whether the stream can be written to.
+                @returns true if the stream can be written to; otherwise, false.
+            }
             virtual function CanWrite() : boolean;
+
+            {
+                Gets a value indicating whether the stream can be read from.
+                @returns true if the stream can be read from; otherwise, false.
+            }
             virtual function CanRead() : boolean;
+
+            {
+                Gets a value indicating whether the stream supports seeking.
+                @returns true if the stream supports seeking; otherwise, false.
+            }
             virtual function CanSeek() : boolean;
+
+            {
+                Gets a value indicating whether the stream can be resized.
+                @returns true if the stream can be resized; otherwise, false.
+            }
             virtual function CanResize() : boolean;
         private
             static function _wopen(
@@ -80,14 +264,17 @@ type
                 offset : long;
                 origin : integer) : long;
             static function _close(
-                fd : integer) : integer;   
+                fd : integer) : integer;
             static function _get_errno(
-                pValue : ^integer) : integer;             
+                pValue : ^integer) : integer;
         var
             _fd : integer;
             _canRead, _canWrite : boolean;
     end;
 
+    {
+        An in-memory stream.
+    }
     MemoryStream = public class(Stream)
         public
             constructor();
@@ -111,15 +298,15 @@ type
             virtual function Resize(
                 length : long) : boolean;
             virtual function SeekBegin(
-                offset : integer) : boolean;  
+                offset : integer) : boolean;
             virtual function SeekCurrent(
-                offset : integer) : boolean;  
+                offset : integer) : boolean;
             virtual function SeekEnd(
                 offset : integer) : boolean;
             virtual function CanWrite() : boolean;
             virtual function CanRead() : boolean;
             virtual function CanSeek() : boolean;
-            virtual function CanResize() : boolean;               
+            virtual function CanResize() : boolean;
         var
             _buffer : array of byte;
             _index, _count, _capacity, _currentIndex : integer;
@@ -127,33 +314,127 @@ type
             _canWrite : boolean;
     end;
 
+    {
+        A text reader to read text from an abstract source.
+    }
     TextReader = public {abstract} class
         public
+            {
+                Destroys the reader.
+            }
             virtual destructor();
+
+            {
+                Closes the reader.
+            }
             virtual procedure Close();
+
+            {
+                Peeks the next character.
+                @returns the integer value for the next character or -1 at the end.
+            }
             abstract function Peek() : integer;
+
+            {
+                Reads the next character.
+                @returns the integer value for the next character or -1 at the end.
+            }
             abstract function Read() : integer;
+
+            {
+                Reads a sequence of characters.
+                @param buffer the buffer to receive the characters.
+                @param index the index into the buffer to start receiving characters.
+                @param count the maximum count of characters to read.
+                @returns the number of characters read.
+            }
             abstract function Read(
                 buffer : array of character;
                 index, count : integer) : integer;
+
+            {
+                Reads the next line of text.
+                @param line a string that will receive the line.
+                @returns true if successful; otherwise, false.
+            }
             virtual function ReadLine(
                 line : ^String) : boolean;
+
+            {
+                Reads to the end of the underlying source.
+                @param value a string that will receive the text.
+                @returns true if successful; otherwise, false.
+            }
             virtual function ReadToEnd(
                 value : ^String) : boolean;
         protected
+
+            {
+                Initializes a new instance of the TextReader class.
+            }
             constructor();
     end;
 
+    {
+        A text writer that writes text to an abstract destination.
+    }
     TextWriter = public {abstract} class
         public
+            {
+                Destroys this instance.
+            }
             virtual destructor();
+
+            {
+                Closes this instance.
+            }
             virtual procedure Close();
+
+            {
+                Flushes any buffered output.
+                @returns true if the flush was successful; otherwise, false.
+            }
             virtual function Flush() : boolean;
+
+            {
+                Writes a character.
+                @param value the character to write.
+                @returns true if the character was written; otherwise, false.
+            }
             virtual function Write(value : character) : boolean;
+
+            {
+                Writes a string.
+                @param value the string to write.
+                @returns true if the entire string was written; otherwise, false.
+            }
             virtual function Write(value : ^String) : boolean;
+
+            {
+                Writes a null terminated string of characters.
+                @param value a null terminated array of characters to write.
+                @returns true if the array was written; otherwise, false.
+            }
             virtual function Write(value : array of character) : boolean;
+
+            {
+                Writes an integer converted to text.
+                @value the integer to write.
+                @returns true if the interger was written; otherwise, false.
+            }
             virtual function Write(value : integer) : boolean;
+
+            {
+                Writes a new line break.
+                @returns true if the break was written; otherwise, false.
+            }
             virtual function WriteLine() : boolean;
+
+            {
+                Writes a character and new line.
+                @param value the character to write.
+                @returns true if the text was written; otherwise, false.
+            }
             virtual function WriteLine(value : character) : boolean;
             virtual function WriteLine(value : ^String) : boolean;
             virtual function WriteLine(value : array of character) : boolean;
@@ -163,6 +444,9 @@ type
                 index, count : integer) : boolean;
     end;
 
+    {
+        A text reader that reads from a stream.
+    }
     StreamReader = public class(TextReader)
         public
             constructor();
@@ -187,17 +471,46 @@ type
             _peekChar : integer;
     end;
 
+    {
+        A text writer that writes to a stream.
+    }
     StreamWriter = public class(TextWriter)
         public
+            {
+                Initializes a new instance of the StreamWriter class.
+            }
             constructor();
+
+            {
+                Initializes a new instance of the StreamWriter class.
+                @param stream the underlying stream.
+                @param ownStream true if the writer owns the stream; otherwise, false.
+                @param encoding the encoding to use.
+                @param ownEncoding true if the writer owns the encoding; otherwise, false.
+            }
             constructor(
                 stream : ^Stream; 
                 ownStream : boolean;
                 encoding : ^Encoding;
                 ownEncoding : boolean);
+
+            {
+                Destroys the instance and closes the underlying stream.
+            }
             virtual destructor();
+
+            {
+                Closes the underlying stream if it owned by this instance.
+            }
             virtual procedure Close();
+
+            {
+                Flushes any buffered output to the stream.
+            }
             virtual function Flush() : boolean;
+
+            {
+            }
             virtual function Write(
                 buffer : array of character;
                 index, count : integer) : boolean;
