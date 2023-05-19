@@ -1,3 +1,5 @@
+; Copyright (C) 2013-2023 Jon Rowlett. All rights reserved.
+; System.Convert.impl.S - Implementation of convert routines for GAS.
 .code32
 
 .global _loi8

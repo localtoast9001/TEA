@@ -1,3 +1,5 @@
+; Copyright (C) 2013-2023 Jon Rowlett. All rights reserved.
+; System.Convert.impl.asm - Implementation of convert routines for MASM.
 .model flat,C
 
 .code
@@ -10,7 +12,6 @@ _loi8 PROC C EXPORT
     pop ebp
     ret
 _loi8 ENDP
-
 _value$=12
 _hii8 PROC C EXPORT
     push ebp

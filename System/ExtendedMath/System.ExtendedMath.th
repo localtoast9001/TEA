@@ -1,19 +1,85 @@
+(******************************************************************************
+ Copyright (C) 2013-2022 Jon Rowlett. All rights reserved.
+ System.ExtendedMath.th - Declarations for the System.ExtendedMath namespace.
+******************************************************************************)
 namespace System.ExtendedMath;
 uses System;
 
 type
+    {
+        Complex number representation.
+    }
     Complex = public class
         public
+            {
+                Initializes a new instance of the Complex class.
+            }
             constructor();
+
+            {
+                Initializes a new instance of the Complex class.
+                @param r the real component.
+                @param i the imaginary component.
+            }
             constructor(r, i : double);
 
+            {
+                Gets the real component of the complex number.
+                @returns the real component.
+            }
             function Real() : double;
+
+            {
+                Gets the imaginary component of the complex number.
+                @returns the imaginary component.
+            }
             function Imaginary() : double;
+
+            {
+                Adds two given complex numbers together.
+                @param a the first operand.
+                @param b the second operand.
+                @returns the sum of a and b.
+            }
             static function add(a, b : Complex) : Complex;
+
+            {
+                Subtracts one complex number from another.
+                @param a the number from which to subtract.
+                @param b the number to subtract.
+                @returns the result of subtracting b from a.
+            }
             static function subtract(a, b : Complex) : Complex;
+
+            {
+                Multiples a complex number by a scaler value.
+                @param a the complex number to multiply.
+                @param b the scaler value.
+                @returns the complex number that is the result of multiplying a by b.
+            }
             static function multiply(a : Complex; b : double) : Complex;
+
+            {
+                Multiplies two complex numbers together.
+                @param a the first operand.
+                @param b the second operand.
+                @returns the product of a and b.
+            }
             static function multiply(a, b : Complex) : Complex;
+
+            {
+                Divides a complex number by a scaler value.
+                @param a the numerator.
+                @param b the denominator.
+                @returns the result of dividing a by b.
+            }
             static function divide(a : Complex; b : double) : Complex;
+
+            {
+                Calculates the begative of a given complex number.
+                @param a the complex number to negate.
+                @returns the negative value of a.
+            }
             static function negative(a : Complex) : Complex; 
         var
             _r, _i : double;

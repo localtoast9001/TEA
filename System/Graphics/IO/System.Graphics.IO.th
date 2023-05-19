@@ -1,33 +1,105 @@
+(******************************************************************************
+ Copyright (C) 2013-2022 Jon Rowlett. All rights reserved.
+ System.Graphics.IO.th - Declarations for the System.Graphics.IO namespace.
+******************************************************************************)
 namespace System.Graphics.IO;
 uses System.IO, System.Graphics;
 
 type
+    {
+        Abstract image writer used to write images to output streams.
+    }
     ImageWriter = public {abstract} class
         public
+            {
+                Destroys this instance.
+            }
             virtual destructor();
+
+            {
+                Determines if the writer supports writing the given image.
+                @param image a reference to the image to test.
+                @returns true if the writer supports writing the image; otherwise, false.
+            }
             abstract function CanWrite(image : ^Image) : boolean;
+
+            {
+                Writes the given image to the given stream
+                @param image the image to write.
+                @param stream the stream to which the image will be written.
+                @returns true if the operation was successful; otherwise, false.
+            }
             abstract function Write(
                 image : ^Image;
                 stream : ^Stream) : boolean;
         protected
+            {
+                Initializes a new instance of the ImageWriter class.
+            }
             constructor();
     end;
 
+    {
+        Writes images using the Windows Bitmap (BMP) format.
+    }
     WindowsBitmapImageWriter = public class(ImageWriter)
-        public 
+        public
+            {
+                Initializes a new instance of the WindowsBitmapImageWriter class.
+            }
             constructor();
+
+            {
+                Destroys this instance.
+            }
             virtual destructor();
+
+            {
+                Determines if the writer supports writing the given image.
+                @param image a reference to the image to test.
+                @returns true if the writer supports writing the image; otherwise, false.
+            }
             virtual function CanWrite(image : ^Image) : boolean;
+
+            {
+                Writes the given image to the given stream
+                @param image the image to write.
+                @param stream the stream to which the image will be written.
+                @returns true if the operation was successful; otherwise, false.
+            }
             virtual function Write(
                 image : ^Image;
                 stream : ^Stream) : boolean;
     end;
 
+    {
+        Writes images using the Targa (TGA) format.
+    }
     TargaImageWriter = public class(ImageWriter)
         public
+            {
+                Initializes a new instance of the TargetImageWriter class.
+            }
             constructor();
+
+            {
+                Destroys this instance.
+            }
             virtual destructor();
+
+            {
+                Determines if the writer supports writing the given image.
+                @param image a reference to the image to test.
+                @returns true if the writer supports writing the image; otherwise, false.
+            }
             virtual function CanWrite(image : ^Image) : boolean;
+
+            {
+                Writes the given image to the given stream
+                @param image the image to write.
+                @param stream the stream to which the image will be written.
+                @returns true if the operation was successful; otherwise, false.
+            }
             virtual function Write(
                 image : ^Image;
                 stream : ^Stream) : boolean;

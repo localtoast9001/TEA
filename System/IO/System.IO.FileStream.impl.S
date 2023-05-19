@@ -1,3 +1,5 @@
+; Copyright (C) 2022 Jon Rowlett. All rights reserved.
+; System.IO.FileStream.impl.S - Extern wrappers for GCC.
 .global _open
 .global _close
 .global _read
