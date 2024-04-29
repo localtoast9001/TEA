@@ -1,3 +1,5 @@
+# Copyright (C) 2013-2023 Jon Rowlett. All rights reserved.
+# System.Diagnostics.Debug.impl.S - Implementation of debug routines for GAS.
 .code32
 
 .global _int3

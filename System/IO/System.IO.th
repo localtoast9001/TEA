@@ -307,6 +307,12 @@ type
             virtual function CanRead() : boolean;
             virtual function CanSeek() : boolean;
             virtual function CanResize() : boolean;
+
+            {
+                Gets a reference to the internal buffer.
+                @returns the pointer to the internal buffer.
+            }
+            function GetBuffer() : array of byte;
         var
             _buffer : array of byte;
             _index, _count, _capacity, _currentIndex : integer;

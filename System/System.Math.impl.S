@@ -1,5 +1,5 @@
-; Copyright (C) 2013-2023 Jon Rowlett. All rights reserved.
-; System.Math.impl.S - Implementation of math routines for GAS.
+# Copyright (C) 2013-2023 Jon Rowlett. All rights reserved.
+# System.Math.impl.S - Implementation of math routines for GAS.
 .code32
 
 .global _sqrtd
