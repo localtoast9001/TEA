@@ -221,7 +221,16 @@ begin
     CanSeek := true;
 end;
 
-function MemoryStream.CanResize() : boolean;               
+function MemoryStream.CanResize() : boolean;
 begin
     CanResize := _ownsBuffer;
+end;
+
+{
+    Gets a reference to the internal buffer.
+    @returns the pointer to the internal buffer.
+}
+function MemoryStream.GetBuffer() : array of byte;
+begin
+    GetBuffer := _buffer;
 end;
