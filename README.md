@@ -17,4 +17,4 @@ As a language, it has the following goals:
 * No goto or jump support.
 
 ## More Information
-* (language.md)[TEA Language Specification]
+* [TEA Language Specification](language.md)
